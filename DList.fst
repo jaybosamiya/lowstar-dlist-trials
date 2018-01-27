@@ -87,14 +87,16 @@ let dlist_is_member_of (#t:eqtype) (h0:mem) (e:pointer (dlist t)) (h:dlisthead t
 unfold inline_for_extraction
 let (<&) (#t:Type) (p:pointer t) (x:t) : ST unit
     (fun h0 -> live h0 p)
-    (fun h1 () h2 -> modifies_1 p h1 h2) =
+    (fun h1 () h2 -> modifies_1 p h1 h2 /\ h2@! p == x) =
   p.(0ul) <- x
 
 unfold inline_for_extraction
 let (<~) (#t:Type) (p:pointer t) (q:pointer t) : ST unit
     (fun h0 -> live h0 p /\ live h0 q)
-    (fun h1 () h2 -> modifies_1 p h1 h2)
+    (fun h1 () h2 -> modifies_1 p h1 h2 /\ h2@! p == h1@! q)
   = p <& !*q
+
+#set-options "--z3rlimit 10"
 
 (** Insert an element e as the first element in a doubly linked list *)
 let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisthead t)
@@ -106,8 +108,7 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisth
     // e <& { !*e with flink=null; blink = null }; // isn't this inefficient?
     assert (not_null e);
     let y = { lhead = e; ltail = e; nodes = hide (Seq.create 1 !*e) } in
-    // admit ();
-    // let h2 = ST.get () in assert ( dlisthead_is_valid h2 y ); // not sure why F* needs this coaxing
+    let h2 = ST.get () in assert ( dlisthead_is_valid h2 y ); // not sure why F* needs this coaxing
     y
   ) else (
     let next = h.lhead in
