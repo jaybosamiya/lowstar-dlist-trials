@@ -56,10 +56,11 @@ let empty_entry (#t:Type) (payload:t): dlist(t) =
 let empty_list (#t:Type) : dlisthead t =
   { lhead = null; ltail = null; nodes = hide createEmpty}
 
-let op_At_Bang (#t:Type) (h0:mem) (p:pointer t) = Buffer.get h0 p 0
-let op_String_Access = Seq.index
-let not_null a = ~(is_null a)
+unfold let op_At_Bang (#t:Type) (h0:mem) (p:pointer t) = Buffer.get h0 p 0
+unfold let op_String_Access = Seq.index
+unfold let not_null a = ~(is_null a)
 
+unfold
 let dlisthead_is_valid (#t:Type) (h0:mem) (h:dlisthead t) =
   let nodes = Ghost.reveal h.nodes in
   let l = Seq.length nodes in
@@ -81,22 +82,23 @@ let dlisthead_is_valid (#t:Type) (h0:mem) (h:dlisthead t) =
 
 let _ = assert_norm (forall t. forall h0. dlisthead_is_valid #t h0 empty_list)
 
+unfold
 let dlist_is_member_of (#t:eqtype) (h0:mem) (e:pointer (dlist t)) (h:dlisthead t) =
   Seq.mem (h0@! e) (Ghost.reveal h.nodes)
 
 unfold inline_for_extraction
-let (<&) (#t:Type) (p:pointer t) (x:t) : ST unit
-    (fun h0 -> live h0 p)
-    (fun h1 () h2 -> modifies_1 p h1 h2 /\ h2@! p == x) =
+let (<&) (#t:Type) (p:pointer t) (x:t)
+  // : ST unit
+  //   (fun h0 -> live h0 p)
+  //   (fun h1 () h2 -> modifies_1 p h1 h2 /\ h2@! p == x /\ live h2 p)
+  =
   p.(0ul) <- x
 
-unfold inline_for_extraction
-let (<~) (#t:Type) (p:pointer t) (q:pointer t) : ST unit
-    (fun h0 -> live h0 p /\ live h0 q)
-    (fun h1 () h2 -> modifies_1 p h1 h2 /\ h2@! p == h1@! q)
-  = p <& !*q
+unfold
+let erased_single_node (#t:eqtype) (e:pointer (dlist t)) =
+  hide (Seq.create 1 !*e)
 
-#set-options "--z3rlimit 10"
+#set-options "--z3rlimit 50"
 
 (** Insert an element e as the first element in a doubly linked list *)
 let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisthead t)
@@ -106,9 +108,43 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisth
   if is_null h.lhead then ( // the list is empty
     e.(0ul) <- { e.(0ul) with flink=null; blink = null }; // isn't this inefficient?
     // e <& { !*e with flink=null; blink = null }; // isn't this inefficient?
-    assert (not_null e);
-    let y = { lhead = e; ltail = e; nodes = hide (Seq.create 1 !*e) } in
-    let h2 = ST.get () in assert ( dlisthead_is_valid h2 y ); // not sure why F* needs this coaxing
+    let h1' = ST.get () in
+    let y : dlisthead t = { lhead = e; ltail = e; nodes = erased_single_node e } in
+    // let h2 = ST.get () in assert ( dlisthead_is_valid h2 y ); // not sure why F* needs this coaxing
+    let h2 = ST.get () in
+    assert (h1' == h2);
+    // admit ();
+    // assert (dlist_is_member_of h2 e y);
+    // admit ();
+    assert (
+      let nodes = Ghost.reveal y.nodes in
+      let l = Seq.length nodes in
+      let empty : bool = l = 0 in
+      (~empty) /\
+      True);
+    admit ();
+    assert (
+      let nodes = Ghost.reveal y.nodes in
+      let l = Seq.length nodes in
+      let empty = l = 0 in
+      (empty <==> is_null y.ltail) /\
+      // (empty <==> is_null y.lhead) /\
+      // (~empty ==> (is_null (h2@! y.lhead).blink) /\
+      //             (is_null (h2@! y.ltail).flink) /\
+      //             (h2@! y.ltail == nodes.[l-1]) /\
+      //             (h2@! y.lhead == nodes.[0]) /\
+      //             (forall i. {:pattern (nodes.[i]).blink}
+      //                ((1 <= i /\ i < Seq.length nodes) ==>
+      //                 not_null (nodes.[i]).blink /\
+      //                 h2@! (nodes.[i]).blink == nodes.[i-1])) /\
+      //             (forall i. {:pattern (nodes.[i]).flink}
+      //                ((0 <= i /\ i < Seq.length nodes - 1) ==>
+      //                 not_null (nodes.[i]).flink /\
+      //                 h2@! (nodes.[i]).flink == nodes.[i+1])) /\
+      //             True
+      // ) /\
+      True
+    );
     y
   ) else (
     let next = h.lhead in
