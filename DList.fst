@@ -77,10 +77,12 @@ let dlisthead_is_valid (#t:Type) (h0:mem) (h:dlisthead t) =
               (forall i. {:pattern (nodes.[i]).blink}
                  ((1 <= i /\ i < l) ==>
                   not_null (nodes.[i]).blink /\
+                  live h0 (nodes.[i]).blink /\
                   h0@! (nodes.[i]).blink == nodes.[i-1])) /\
               (forall i. {:pattern (nodes.[i]).flink}
                  ((0 <= i /\ i < l - 1) ==>
                   not_null (nodes.[i]).flink /\
+                  live h0 (nodes.[i]).flink /\
                   h0@! (nodes.[i]).flink == nodes.[i+1])))
 
 let _ = assert_norm (forall t. forall h0. dlisthead_is_valid #t h0 empty_list)
@@ -96,9 +98,9 @@ let (<&) (#t:Type) (p:pointer t) (x:t) =
 let erased_single_node (#t:eqtype) (e:pointer (dlist t)) =
   hide (Seq.create 1 !*e)
 
-// #set-options "--z3rlimit 1" // Forces it to quickly hit resource bounds and then --detail_errors seems to get it through ¯\_(ツ)_/¯
+#set-options "--z3rlimit 1" // Forces it to quickly hit resource bounds and then --detail_errors seems to get it through ¯\_(ツ)_/¯
 
-#set-options "--max_fuel 64 --max_ifuel 64 --z3rlimit 10"
+// #set-options "--max_fuel 64 --max_ifuel 64 --z3rlimit 10"
 
 let createSingletonList (#t:eqtype) (e:pointer (dlist t)): ST (dlisthead t)
     (requires (fun h0 -> live h0 e))
