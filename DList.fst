@@ -68,7 +68,6 @@ let dlist_is_valid (#t:Type) (d:dlist t) =
 
 let _ = assert_norm (forall t p. dlist_is_valid (empty_entry #t p))
 
-unfold
 let dlisthead_nullness (#t:Type) (h0:mem) (h:dlisthead t) =
   let nodes = Ghost.reveal h.nodes in
   let l : nat = Seq.length nodes in
@@ -77,17 +76,11 @@ let dlisthead_nullness (#t:Type) (h0:mem) (h:dlisthead t) =
               is_null (h0@! h.ltail).flink)) /\
   (l = 0 ==> (is_null h.ltail /\ is_null h.lhead))
 
-unfold
 let dlisthead_liveness (#t:Type) (h0:mem) (h:dlisthead t) =
   let nodes = Ghost.reveal h.nodes in
   let l = Seq.length nodes in
     live h0 h.lhead /\ live h0 h.ltail
-    // (forall i. {:pattern (nodes.[i]).blink}
-    //    0 <= i /\ i < l ==> live h0 (nodes.[i]).blink) /\
-    // (forall i. {:pattern (nodes.[i]).flink}
-    //    0 <= i /\ i < l ==> live h0 (nodes.[i]).flink)
 
-unfold
 let non_empty_dlisthead_connect_to_nodes (#t:Type) (h0:mem) (h:dlisthead t) =
   let nodes = Ghost.reveal h.nodes in
   let l : nat = Seq.length nodes in
@@ -95,22 +88,21 @@ let non_empty_dlisthead_connect_to_nodes (#t:Type) (h0:mem) (h:dlisthead t) =
   (l > 0 ==> (h0@! h.ltail == nodes.[l-1] /\
               h0@! h.lhead == nodes.[0]))
 
-unfold
 let non_empty_dlisthead_is_valid (#t:Type) (h0:mem) (h:dlisthead t) =
   let nodes = Ghost.reveal h.nodes in
   let l = Seq.length nodes in
   let nonempty = l > 0 in
   non_empty_dlisthead_connect_to_nodes h0 h /\
-  (nonempty ==> (forall i. {:pattern (nodes.[i]).blink}
-                   ((1 <= i /\ i < l) ==>
-                    not_null (nodes.[i]).blink /\
-                    h0@! (nodes.[i]).blink == nodes.[i-1])) /\
-                (forall i. {:pattern (nodes.[i]).flink}
-                   ((0 <= i /\ i < l - 1) ==>
-                    not_null (nodes.[i]).flink /\
-                    h0@! (nodes.[i]).flink == nodes.[i+1])))
+  // (nonempty ==> (forall i. {:pattern (nodes.[i]).blink}
+  //                  ((1 <= i /\ i < l) ==>
+  //                   not_null (nodes.[i]).blink /\
+  //                   h0@! (nodes.[i]).blink == nodes.[i-1])) /\
+  //               (forall i. {:pattern (nodes.[i]).flink}
+  //                  ((0 <= i /\ i < l - 1) ==>
+  //                   not_null (nodes.[i]).flink /\
+  //                   h0@! (nodes.[i]).flink == nodes.[i+1])))
+  True
 
-unfold
 let dlisthead_is_valid (#t:Type) (h0:mem) (h:dlisthead t) =
   dlisthead_liveness h0 h /\
   non_empty_dlisthead_is_valid h0 h
@@ -133,48 +125,26 @@ let erased_single_node (#t:eqtype) (e:pointer (dlist t)) =
 
 // #set-options "--z3rlimit 40"
 
-let createSingletonList (#t:eqtype) (e:pointer (dlist t)): ST (dlisthead t)
+let foobar (#t:eqtype) (h0:mem) (y:dlisthead t) (h1:mem) =
+  dlisthead_liveness h0 y /\ dlisthead_is_valid h1 y
+
+let createSingletonList (#t:eqtype) (e:pointer (dlist t)): StackInline (dlisthead t)
     (requires (fun h0 -> live h0 e))
-    (ensures (fun h1 y h2 -> modifies_1 e h1 h2 /\ live h2 e /\ dlisthead_is_valid h2 y)) =
-  // let h1 = ST.get () in
-  e <& { !*e with flink=null; blink = null }; // isn't this inefficient?
+    (ensures (fun h1 y h2 -> modifies_1 e h1 h2 /\ live h2 e /\ foobar h1 y h2)) =
+  let h1 = ST.get () in
+  // push_frame ();
+  e.(0ul) <- { !*e with flink=null; blink = null }; // isn't this inefficient?
   let y = { lhead = e; ltail = e; nodes = erased_single_node e } in
-  // let h2 = ST.get () in
+  assert (Seq.length (Ghost.reveal y.nodes) == 1);
+  let h2 = ST.get () in
+  // pop_frame ();
+  assert (foobar h1 y h2);
+  // assert (equal_stack_domains h1 h2);
   // assert (dlisthead_is_valid h2 y);
   // admit ();
   y
 
 (*
-let createSingletonList' (#t:eqtype) (e:pointer (dlist t)): ST (dlisthead t)
-    (requires (fun h0 -> live h0 e))
-    (ensures (fun h1 y h2 -> modifies_1 e h1 h2 /\ live h2 e /\ dlisthead_is_valid h2 y)) =
-  let h1 = ST.get () in
-  e <& { !*e with flink=null; blink = null }; // isn't this inefficient?
-  let y = { lhead = e; ltail = e; nodes = erased_single_node e } in
-  let h2 = ST.get () in
-  assert (is_null (h2@! e).flink /\
-          is_null (h2@! e).blink);
-  assert (y.lhead == e /\ y.ltail == e);
-  assert (Seq.length (Ghost.reveal y.nodes) == 1);
-  assert (live h2 e);
-  assert (live h2 y.lhead /\ live h2 y.ltail);
-  assert (h2@! y.lhead == (Ghost.reveal y.nodes).[0]);
-  assert (h2@! y.ltail == (Ghost.reveal y.nodes).[0]);
-  assert ((forall i. {:pattern ((Ghost.reveal y.nodes).[i]).blink}
-             ((1 <= i /\ i < 1) ==>
-              not_null ((Ghost.reveal y.nodes).[i]).blink /\
-              h2@! ((Ghost.reveal y.nodes).[i]).blink == (Ghost.reveal y.nodes).[i-1])) );
-  assert ((forall i. {:pattern ((Ghost.reveal y.nodes).[i]).flink}
-             ((0 <= i /\ i < 0) ==>
-              not_null ((Ghost.reveal y.nodes).[i]).flink /\
-              h2@! ((Ghost.reveal y.nodes).[i]).flink == (Ghost.reveal y.nodes).[i+1])));
-  assert (dlisthead_is_valid h2 y);
-  assert (live h2 e);
-  assert (modifies_1 e h1 h2);
-  assert (modifies_1 e h1 h2 /\ live h2 e /\ dlisthead_is_valid h2 y);
-  y
-
-
 (** Insert an element e as the first element in a doubly linked list *)
 let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisthead t)
    (requires (fun h0 -> dlisthead_is_valid h0 h /\ live h0 e /\ ~(dlist_is_member_of h0 e h)))
