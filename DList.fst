@@ -63,29 +63,59 @@ unfold let not_null (#t:Type) (a:pointer_or_null t) = Buffer.length a <> 0
 let _ = assert_norm (forall (t:Type) (p:pointer_or_null t). is_null p \/ not_null p)
 
 unfold
-let dlisthead_is_valid (#t:Type) (h0:mem) (h:dlisthead t) =
+let dlist_is_valid (#t:Type) (d:dlist t) =
+  disjoint_1 d.flink d.blink
+
+let _ = assert_norm (forall t p. dlist_is_valid (empty_entry #t p))
+
+unfold
+let dlisthead_nullness (#t:Type) (h0:mem) (h:dlisthead t) =
+  let nodes = Ghost.reveal h.nodes in
+  let l : nat = Seq.length nodes in
+  (l > 0 ==> (not_null h.ltail /\ not_null h.lhead /\
+              is_null (h0@! h.lhead).blink /\
+              is_null (h0@! h.ltail).flink)) /\
+  (l = 0 ==> (is_null h.ltail /\ is_null h.lhead))
+
+unfold
+let dlisthead_liveness (#t:Type) (h0:mem) (h:dlisthead t) =
   let nodes = Ghost.reveal h.nodes in
   let l = Seq.length nodes in
-  let empty = l = 0 in
-  (empty <==> is_null h.ltail) /\
-  (empty <==> is_null h.lhead) /\
-  (~empty ==> (is_null (h0@! h.lhead).blink) /\
-              (is_null (h0@! h.ltail).flink) /\
-              (live h0 h.lhead /\ live h0 h.ltail) /\
-              (h0@! h.ltail == nodes.[l-1]) /\
-              (h0@! h.lhead == nodes.[0]) /\
-              (forall i. {:pattern (nodes.[i]).blink}
-                 ((1 <= i /\ i < l) ==>
-                  not_null (nodes.[i]).blink /\
-                  live h0 (nodes.[i]).blink /\
-                  h0@! (nodes.[i]).blink == nodes.[i-1])) /\
-              (forall i. {:pattern (nodes.[i]).flink}
-                 ((0 <= i /\ i < l - 1) ==>
-                  not_null (nodes.[i]).flink /\
-                  live h0 (nodes.[i]).flink /\
-                  h0@! (nodes.[i]).flink == nodes.[i+1])))
+    live h0 h.lhead /\ live h0 h.ltail
+    // (forall i. {:pattern (nodes.[i]).blink}
+    //    0 <= i /\ i < l ==> live h0 (nodes.[i]).blink) /\
+    // (forall i. {:pattern (nodes.[i]).flink}
+    //    0 <= i /\ i < l ==> live h0 (nodes.[i]).flink)
 
-let _ = assert_norm (forall t. forall h0. dlisthead_is_valid #t h0 empty_list)
+unfold
+let non_empty_dlisthead_connect_to_nodes (#t:Type) (h0:mem) (h:dlisthead t) =
+  let nodes = Ghost.reveal h.nodes in
+  let l : nat = Seq.length nodes in
+  dlisthead_nullness h0 h /\
+  (l > 0 ==> (h0@! h.ltail == nodes.[l-1] /\
+              h0@! h.lhead == nodes.[0]))
+
+unfold
+let non_empty_dlisthead_is_valid (#t:Type) (h0:mem) (h:dlisthead t) =
+  let nodes = Ghost.reveal h.nodes in
+  let l = Seq.length nodes in
+  let nonempty = l > 0 in
+  non_empty_dlisthead_connect_to_nodes h0 h /\
+  (nonempty ==> (forall i. {:pattern (nodes.[i]).blink}
+                   ((1 <= i /\ i < l) ==>
+                    not_null (nodes.[i]).blink /\
+                    h0@! (nodes.[i]).blink == nodes.[i-1])) /\
+                (forall i. {:pattern (nodes.[i]).flink}
+                   ((0 <= i /\ i < l - 1) ==>
+                    not_null (nodes.[i]).flink /\
+                    h0@! (nodes.[i]).flink == nodes.[i+1])))
+
+unfold
+let dlisthead_is_valid (#t:Type) (h0:mem) (h:dlisthead t) =
+  dlisthead_liveness h0 h /\
+  non_empty_dlisthead_is_valid h0 h
+
+let _ = assert_norm (forall t. forall h0. dlisthead_nullness #t h0 empty_list)
 
 unfold
 let dlist_is_member_of (#t:eqtype) (h0:mem) (e:pointer (dlist t)) (h:dlisthead t) =
@@ -95,14 +125,27 @@ unfold inline_for_extraction
 let (<&) (#t:Type) (p:pointer t) (x:t) =
   p.(0ul) <- x
 
+unfold
 let erased_single_node (#t:eqtype) (e:pointer (dlist t)) =
   hide (Seq.create 1 !*e)
 
-#set-options "--z3rlimit 1" // Forces it to quickly hit resource bounds and then --detail_errors seems to get it through ¯\_(ツ)_/¯
+// #set-options "--z3rlimit 1" // Forces it to quickly hit resource bounds and then --detail_errors seems to get it through ¯\_(ツ)_/¯
 
-// #set-options "--max_fuel 64 --max_ifuel 64 --z3rlimit 10"
+// #set-options "--z3rlimit 40"
 
 let createSingletonList (#t:eqtype) (e:pointer (dlist t)): ST (dlisthead t)
+    (requires (fun h0 -> live h0 e))
+    (ensures (fun h1 y h2 -> modifies_1 e h1 h2 /\ live h2 e /\ dlisthead_is_valid h2 y)) =
+  // let h1 = ST.get () in
+  e <& { !*e with flink=null; blink = null }; // isn't this inefficient?
+  let y = { lhead = e; ltail = e; nodes = erased_single_node e } in
+  // let h2 = ST.get () in
+  // assert (dlisthead_is_valid h2 y);
+  // admit ();
+  y
+
+(*
+let createSingletonList' (#t:eqtype) (e:pointer (dlist t)): ST (dlisthead t)
     (requires (fun h0 -> live h0 e))
     (ensures (fun h1 y h2 -> modifies_1 e h1 h2 /\ live h2 e /\ dlisthead_is_valid h2 y)) =
   let h1 = ST.get () in
@@ -150,3 +193,4 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisth
     admit ();
     y
   )
+*)
