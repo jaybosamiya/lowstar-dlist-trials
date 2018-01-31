@@ -17,8 +17,6 @@ module Seq = FStar.Seq
 module Ghost = FStar.Ghost
 module ST = FStar.HyperStack.ST
 
-open PointerEquality
-
 (** Type of a network buffer *)
 type buffer_t = Buffer.buffer(UInt8.t)
 
@@ -60,13 +58,13 @@ unfold let op_At_Bang (#t:Type) (h0:mem) (p:pointer t) = Buffer.get h0 p 0
 unfold let op_String_Access = Seq.index
 unfold let not_null (#t:Type) (a:pointer_or_null t) = Buffer.length a <> 0
 
-let _ = assert_norm (forall (t:Type) (p:pointer_or_null t). is_null p \/ not_null p)
+let test_1 () = assert (forall (t:Type) (p:pointer_or_null t). is_null p \/ not_null p)
 
 unfold
 let dlist_is_valid (#t:Type) (d:dlist t) =
   disjoint_1 d.flink d.blink
 
-let _ = assert_norm (forall t p. dlist_is_valid (empty_entry #t p))
+let test_2 () = assert (forall t p. dlist_is_valid (empty_entry #t p))
 
 let dlisthead_nullness (#t:Type) (h0:mem) (h:dlisthead t) =
   let nodes = Ghost.reveal h.nodes in
@@ -93,21 +91,25 @@ let non_empty_dlisthead_is_valid (#t:Type) (h0:mem) (h:dlisthead t) =
   let l = Seq.length nodes in
   let nonempty = l > 0 in
   non_empty_dlisthead_connect_to_nodes h0 h /\
-  // (nonempty ==> (forall i. {:pattern (nodes.[i]).blink}
-  //                  ((1 <= i /\ i < l) ==>
-  //                   not_null (nodes.[i]).blink /\
-  //                   h0@! (nodes.[i]).blink == nodes.[i-1])) /\
-  //               (forall i. {:pattern (nodes.[i]).flink}
-  //                  ((0 <= i /\ i < l - 1) ==>
-  //                   not_null (nodes.[i]).flink /\
-  //                   h0@! (nodes.[i]).flink == nodes.[i+1])))
-  True
+  (nonempty ==> (forall i. {:pattern (nodes.[i]).blink}
+                   ((1 <= i /\ i < l) ==>
+                    not_null (nodes.[i]).blink /\
+                    h0@! (nodes.[i]).blink == nodes.[i-1])) /\
+                (forall i. {:pattern (nodes.[i]).flink}
+                   ((0 <= i /\ i < l - 1) ==>
+                    not_null (nodes.[i]).flink /\
+                    h0@! (nodes.[i]).flink == nodes.[i+1])))
+
+let dlisthead_has_valid_dlists (#t:Type) (h0:mem) (h:dlisthead t) =
+  let nodes = Ghost.reveal h.nodes in
+  (forall i. {:pattern dlist_is_valid nodes.[i]} dlist_is_valid nodes.[i])
 
 let dlisthead_is_valid (#t:Type) (h0:mem) (h:dlisthead t) =
   dlisthead_liveness h0 h /\
+  dlisthead_has_valid_dlists h0 h /\
   non_empty_dlisthead_is_valid h0 h
 
-let _ = assert_norm (forall t. forall h0. dlisthead_nullness #t h0 empty_list)
+let test_3 () = assert (forall t. forall h0. dlisthead_nullness #t h0 empty_list)
 
 unfold
 let dlist_is_member_of (#t:eqtype) (h0:mem) (e:pointer (dlist t)) (h:dlisthead t) =
@@ -125,28 +127,37 @@ let erased_single_node (#t:eqtype) (e:pointer (dlist t)) =
 
 // #set-options "--z3rlimit 40"
 
-let foobar (#t:eqtype) (h0:mem) (y:dlisthead t) (h1:mem) =
-  dlisthead_liveness h0 y /\ dlisthead_is_valid h1 y
-
 let createSingletonList (#t:eqtype) (e:pointer (dlist t)): StackInline (dlisthead t)
     (requires (fun h0 -> live h0 e))
-    (ensures (fun h1 y h2 -> modifies_1 e h1 h2 /\ live h2 e /\ foobar h1 y h2)) =
-  let h1 = ST.get () in
-  // push_frame ();
-  e.(0ul) <- { !*e with flink=null; blink = null }; // isn't this inefficient?
-  let y = { lhead = e; ltail = e; nodes = erased_single_node e } in
-  assert (Seq.length (Ghost.reveal y.nodes) == 1);
-  let h2 = ST.get () in
-  // pop_frame ();
-  assert (foobar h1 y h2);
-  // assert (equal_stack_domains h1 h2);
-  // assert (dlisthead_is_valid h2 y);
-  // admit ();
-  y
+    (ensures (fun h1 y h2 -> modifies_1 e h1 h2 /\ live h2 e /\ dlisthead_is_valid h2 y)) =
+  e <& { !*e with flink=null; blink = null }; // isn't this inefficient?
+  { lhead = e; ltail = e; nodes = erased_single_node e }
 
-(*
+#set-options "--detail_errors --z3rlimit 1"
+
+let rec replace_in_seq (#t:eqtype) (s:seq t) (x:t) (x_new:t) :
+  Pure (seq t)
+    (requires (Seq.mem x s))
+    (ensures (fun y -> Seq.mem x_new y))
+    (decreases (Seq.length s)) =
+  let open Seq in
+  if s.[0] = x
+  then cons x_new (tail s)
+  else
+    let h = head s in
+    let t = replace_in_seq (tail s) x x_new in
+    mem_cons h t; cons h t
+
+let replace_in_ghost_seq (#t:eqtype) (s:erased (seq t)) (x:t) (x_new:t) :
+  Ghost (erased (seq t))
+    (requires (Seq.mem x (Ghost.reveal s)))
+    (ensures (fun y -> Seq.mem x_new (Ghost.reveal y)))
+    (decreases (Seq.length (Ghost.reveal s))) =
+  let s = Ghost.reveal s in
+  hide (replace_in_seq s x x_new)
+
 (** Insert an element e as the first element in a doubly linked list *)
-let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisthead t)
+let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): StackInline (dlisthead t)
    (requires (fun h0 -> dlisthead_is_valid h0 h /\ live h0 e /\ ~(dlist_is_member_of h0 e h)))
    (ensures (fun _ y h2 -> live h2 e /\ dlisthead_is_valid h2 y))
 =
@@ -154,13 +165,23 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisth
     createSingletonList e
   ) else (
     let next = h.lhead in
-    admit ();
     next <& { !*next with blink = e; };
+    let h' = ST.get () in
+    assert ( (Ghost.reveal h.nodes).[0] == h'@! next );
+    admit ();
     e <& { !*e with flink = next; blink = null };
     let ghoste = hide !*e in
     let y = { lhead = e; ltail = h.ltail; nodes = elift2 Seq.cons ghoste h.nodes } in
-    let h2 = ST.get () in assert ( dlisthead_is_valid h2 y );
+    let h2 = ST.get () in
+    // assert ( dlisthead_liveness h2 y ); // works but slow and requires --detail_errors
+    let valid_dlist () =
+      // assert ( dlisthead_has_valid_dlists h2 h );
+      assert ( dlist_is_valid (Ghost.reveal ghoste) );
+      admit ();
+      assert ( dlisthead_has_valid_dlists h2 y ) in
+    valid_dlist ();
+    admit ();
+    assert ( dlisthead_is_valid h2 y );
     admit ();
     y
   )
-*)
