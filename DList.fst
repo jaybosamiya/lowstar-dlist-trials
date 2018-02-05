@@ -126,7 +126,7 @@ let erased_single_node (#t:eqtype) (e:pointer (dlist t)) =
 
 // #set-options "--z3rlimit 40"
 
-let createSingletonList (#t:eqtype) (e:pointer (dlist t)): ST (dlisthead t)
+let createSingletonList (#t:eqtype) (e:pointer (dlist t)): Stack (dlisthead t)
     (requires (fun h0 -> live h0 e))
     (ensures (fun h1 y h2 -> modifies_1 e h1 h2 /\ live h2 e /\ dlisthead_is_valid h2 y)) =
   e <& { !*e with flink=null; blink = null }; // isn't this inefficient?
@@ -135,14 +135,16 @@ let createSingletonList (#t:eqtype) (e:pointer (dlist t)): ST (dlisthead t)
 let rec replace_in_seq (#t:eqtype) (s:seq t) (x:t) (x_new:t) :
   Pure (seq t)
     (requires True)
-    (ensures (fun y -> Seq.mem x s ==> Seq.mem x_new y))
+    (ensures (fun y ->
+         (Seq.mem x s ==> Seq.mem x_new y) /\
+         (forall v. {:pattern Seq.mem v y} (Seq.mem v s /\ v <> x) ==> Seq.mem v y)))
     (decreases (Seq.length s)) =
   let open Seq in
   match Seq.length s with
   | 0 -> s
   | _ ->
     if s.[0] = x
-    then cons x_new (tail s)
+    then (Seq.Properties.mem_cons x_new (tail s); cons x_new (tail s))
     else
       let h = head s in
       let t = replace_in_seq (tail s) x x_new in
@@ -162,15 +164,17 @@ let update_node (#t:eqtype) (h:dlisthead t) (e: pointer (dlist t)) (e': dlist t)
   (ensures (fun h1 y h2 ->
        modifies_1 e h1 h2 /\
        Seq.mem e' (Ghost.reveal y.nodes) /\
-       h2@!e = e'))
+       (forall x. {:pattern (Seq.mem x (Ghost.reveal y.nodes))}
+          (Seq.mem x (Ghost.reveal h.nodes) /\ x <> h1@! e) ==> Seq.mem x (Ghost.reveal y.nodes)) /\
+       h2@!e = e' /\
+       (h.lhead =!= e ==> y.lhead == h.lhead) /\
+       (h.ltail =!= e ==> y.ltail == h.ltail)))
   =
-  push_frame ();
   let e0 = !*e in
   let upd_nodes (n:seq (dlist t)) : GTot (seq (dlist t)) =
     replace_in_seq n e0 e' in
   let a = elift1 upd_nodes h.nodes in
   e <& e';
-  pop_frame ();
   { h with nodes = a }
 
 unfold let (.()<-) = update_node
@@ -185,23 +189,29 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisth
   if is_null h.lhead then ( // the list is empty
     createSingletonList e
   ) else (
-    let h1 = ST.get () in
     let next = h.lhead in
     let h = h.(next) <- ({ !*next with blink = e; }) in
     e <& { !*e with flink = next; blink = null };
-    admit ();
     let ghoste = hide !*e in
     let y = { lhead = e; ltail = h.ltail; nodes = elift2 Seq.cons ghoste h.nodes } in
+    // admit ();
     let h2 = ST.get () in
-    // assert ( dlisthead_liveness h2 y ); // works but slow and requires --detail_errors
-    let valid_dlist () =
-      // assert ( dlisthead_has_valid_dlists h2 h );
-      assert ( dlist_is_valid (Ghost.reveal ghoste) );
-      admit ();
-      assert ( dlisthead_has_valid_dlists h2 y ) in
-    valid_dlist ();
+    assert (Seq.length (Ghost.reveal y.nodes) > 0);
+    assert (not_null y.ltail);
+    assert (not_null y.lhead);
+    // assert ( dlisthead_liveness h2 y );
+    // assert (dlisthead_has_valid_dlists h2 y);
+    // assert (dlisthead_nullness h2 y);
+    // assert (non_empty_dlisthead_connect_to_nodes h2 y);
+    // assert (non_empty_dlisthead_is_valid h2 y);
+    // let valid_dlist () =
+    //   // assert ( dlisthead_has_valid_dlists h2 h );
+    //   assert ( dlist_is_valid (Ghost.reveal ghoste) );
+    //   admit ();
+    //   assert ( dlisthead_has_valid_dlists h2 y ) in
+    // valid_dlist ();
     admit ();
-    assert ( dlisthead_is_valid h2 y );
-    admit ();
+    // assert ( dlisthead_is_valid h2 y );
+    // admit ();
     y
   )
