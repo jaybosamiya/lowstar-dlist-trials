@@ -181,8 +181,12 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisth
   if is_null h.lhead then ( // the list is empty
     createSingletonList e
   ) else (
+    assert (e =!= h.ltail);
+    // admit ();
     let next = h.lhead in
-    let h = h.(next) <- ({ !*next with blink = e; }) in
+    let h' = h.(next) <- ({ !*next with blink = e; }) in
+    assert (h.ltail == h'.ltail);
+    let h = h' in
     e <& { !*e with flink = next; blink = null };
     let ghoste = hide !*e in
     let y = { lhead = e; ltail = h.ltail; nodes = elift2 Seq.cons ghoste h.nodes } in
