@@ -157,18 +157,21 @@ let replace_in_ghost_seq (#t:eqtype) (s:erased (seq t)) (x:t) (x_new:t) :
   hide (replace_in_seq s x x_new)
 
 let update_node (#t:eqtype) (h:dlisthead t) (e: pointer (dlist t)) (e': dlist t) :
-  ST (dlisthead t)
+  Stack (dlisthead t)
   (requires (fun h0 -> live h0 e /\ Seq.mem (h0@! e) (Ghost.reveal h.nodes)))
   (ensures (fun h1 y h2 ->
        modifies_1 e h1 h2 /\
        Seq.mem e' (Ghost.reveal y.nodes) /\
        h2@!e = e'))
   =
+  push_frame ();
   let e0 = !*e in
   let upd_nodes (n:seq (dlist t)) : GTot (seq (dlist t)) =
     replace_in_seq n e0 e' in
   let a = elift1 upd_nodes h.nodes in
-  e <& e'; { h with nodes = a }
+  e <& e';
+  pop_frame ();
+  { h with nodes = a }
 
 unfold let (.()<-) = update_node
 
@@ -185,10 +188,6 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisth
     let h1 = ST.get () in
     let next = h.lhead in
     let h = h.(next) <- ({ !*next with blink = e; }) in
-    let h' = ST.get () in
-    admit ();
-    assert (live h' e);
-    admit ();
     e <& { !*e with flink = next; blink = null };
     admit ();
     let ghoste = hide !*e in
