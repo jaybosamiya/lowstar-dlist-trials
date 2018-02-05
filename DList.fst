@@ -162,7 +162,7 @@ let update_node (#t:eqtype) (h:dlisthead t) (e: pointer (dlist t)) (e': dlist t)
   (ensures (fun h1 y h2 ->
        modifies_1 e h1 h2 /\
        Seq.mem e' (Ghost.reveal y.nodes) /\
-       h2@!e = e' /\ (forall x. {:pattern live h2 x} live h1 x ==> live h2 x)))
+       h2@!e = e'))
   =
   let e0 = !*e in
   let upd_nodes (n:seq (dlist t)) : GTot (seq (dlist t)) =
@@ -170,9 +170,7 @@ let update_node (#t:eqtype) (h:dlisthead t) (e: pointer (dlist t)) (e': dlist t)
   let a = elift1 upd_nodes h.nodes in
   e <& e'; { h with nodes = a }
 
-unfold
-let (.()<-) (#t:eqtype) (h:dlisthead t) (e: pointer (dlist t)) (e': dlist t) =
-  update_node h e e'
+unfold let (.()<-) = update_node
 
 #set-options "--detail_errors --z3rlimit 1"
 
@@ -187,6 +185,7 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): StackInlin
     let h1 = ST.get () in
     let next = h.lhead in
     let h = h.(next) <- ({ !*next with blink = e; }) in
+    admit ();
     let h' = ST.get () in
     assert (live h' e);
     admit ();
