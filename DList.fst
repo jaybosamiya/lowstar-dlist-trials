@@ -60,7 +60,6 @@ unfold let not_null (#t:Type) (a:pointer_or_null t) = Buffer.length a <> 0
 
 let test_1 () = assert (forall (t:Type) (p:pointer_or_null t). is_null p \/ not_null p)
 
-unfold
 let dlist_is_valid (#t:Type) (d:dlist t) =
   disjoint_1 d.flink d.blink
 
@@ -162,7 +161,11 @@ let update_node (#t:eqtype) (h:dlisthead t) (e: pointer (dlist t)) (e': dlist t)
     replace_in_seq n e0 e'
   in
   let a = elift1 upd_nodes h.nodes in
-  { h with nodes = a }
+  e <& e'; { h with nodes = a }
+
+unfold
+let (.()<-) (#t:eqtype) (h:dlisthead t) (e: pointer (dlist t)) (e': dlist t) =
+  update_node h e e'
 
 (** Insert an element e as the first element in a doubly linked list *)
 let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): StackInline (dlisthead t)
@@ -175,7 +178,8 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): StackInlin
     let h1 = ST.get () in
     let next = h.lhead in
     assert (Seq.mem (h1@! next) (Ghost.reveal h.nodes));
-    let h = update_node h next ({ !*next with blink = e; }) in
+    admit ();
+    let h = h.(next) <- ({ !*next with blink = e; }) in
     admit ();
     next <& { !*next with blink = e; };
     let h' = ST.get () in
