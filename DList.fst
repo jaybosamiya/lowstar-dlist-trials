@@ -172,8 +172,11 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): StackInlin
   if is_null h.lhead then ( // the list is empty
     createSingletonList e
   ) else (
+    let h1 = ST.get () in
     let next = h.lhead in
+    assert (Seq.mem (h1@! next) (Ghost.reveal h.nodes));
     let h = update_node h next ({ !*next with blink = e; }) in
+    admit ();
     next <& { !*next with blink = e; };
     let h' = ST.get () in
     assert ( (Ghost.reveal h.nodes).[0] == h'@! next );
