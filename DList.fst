@@ -150,14 +150,6 @@ let rec replace_in_seq (#t:eqtype) (s:seq t) (x:t) (x_new:t) :
       let t = replace_in_seq (tail s) x x_new in
       mem_cons h t; cons h t
 
-let replace_in_ghost_seq (#t:eqtype) (s:erased (seq t)) (x:t) (x_new:t) :
-  Pure (erased (seq t))
-    (requires (Seq.mem x (Ghost.reveal s)))
-    (ensures (fun y -> Seq.mem x_new (Ghost.reveal y)))
-    (decreases (Seq.length (Ghost.reveal s))) =
-  let s = Ghost.reveal s in
-  hide (replace_in_seq s x x_new)
-
 let update_node (#t:eqtype) (h:dlisthead t) (e: pointer (dlist t)) (e': dlist t) :
   Stack (dlisthead t)
   (requires (fun h0 -> live h0 e /\ Seq.mem (h0@! e) (Ghost.reveal h.nodes)))
