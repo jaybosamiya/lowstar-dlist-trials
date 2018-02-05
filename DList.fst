@@ -126,7 +126,7 @@ let erased_single_node (#t:eqtype) (e:pointer (dlist t)) =
 
 // #set-options "--z3rlimit 40"
 
-let createSingletonList (#t:eqtype) (e:pointer (dlist t)): StackInline (dlisthead t)
+let createSingletonList (#t:eqtype) (e:pointer (dlist t)): ST (dlisthead t)
     (requires (fun h0 -> live h0 e))
     (ensures (fun h1 y h2 -> modifies_1 e h1 h2 /\ live h2 e /\ dlisthead_is_valid h2 y)) =
   e <& { !*e with flink=null; blink = null }; // isn't this inefficient?
@@ -175,7 +175,7 @@ unfold let (.()<-) = update_node
 #set-options "--detail_errors --z3rlimit 1"
 
 (** Insert an element e as the first element in a doubly linked list *)
-let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): StackInline (dlisthead t)
+let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisthead t)
    (requires (fun h0 -> dlisthead_is_valid h0 h /\ live h0 e /\ ~(dlist_is_member_of h0 e h)))
    (ensures (fun _ y h2 -> live h2 e /\ dlisthead_is_valid h2 y))
 =
@@ -185,8 +185,8 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): StackInlin
     let h1 = ST.get () in
     let next = h.lhead in
     let h = h.(next) <- ({ !*next with blink = e; }) in
-    admit ();
     let h' = ST.get () in
+    admit ();
     assert (live h' e);
     admit ();
     e <& { !*e with flink = next; blink = null };
