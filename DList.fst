@@ -132,20 +132,21 @@ let createSingletonList (#t:eqtype) (e:pointer (dlist t)): StackInline (dlisthea
   e <& { !*e with flink=null; blink = null }; // isn't this inefficient?
   { lhead = e; ltail = e; nodes = erased_single_node e }
 
-#set-options "--detail_errors --z3rlimit 1"
-
 let rec replace_in_seq (#t:eqtype) (s:seq t) (x:t) (x_new:t) :
   Pure (seq t)
-    (requires (Seq.mem x s))
-    (ensures (fun y -> Seq.mem x_new y))
+    (requires True)
+    (ensures (fun y -> Seq.mem x s ==> Seq.mem x_new y))
     (decreases (Seq.length s)) =
   let open Seq in
-  if s.[0] = x
-  then cons x_new (tail s)
-  else
-    let h = head s in
-    let t = replace_in_seq (tail s) x x_new in
-    mem_cons h t; cons h t
+  match Seq.length s with
+  | 0 -> s
+  | _ ->
+    if s.[0] = x
+    then cons x_new (tail s)
+    else
+      let h = head s in
+      let t = replace_in_seq (tail s) x x_new in
+      mem_cons h t; cons h t
 
 let replace_in_ghost_seq (#t:eqtype) (s:erased (seq t)) (x:t) (x_new:t) :
   Pure (erased (seq t))
@@ -155,17 +156,25 @@ let replace_in_ghost_seq (#t:eqtype) (s:erased (seq t)) (x:t) (x_new:t) :
   let s = Ghost.reveal s in
   hide (replace_in_seq s x x_new)
 
-let update_node (#t:eqtype) (h:dlisthead t) (e: pointer (dlist t)) (e': dlist t) =
+let update_node (#t:eqtype) (h:dlisthead t) (e: pointer (dlist t)) (e': dlist t) :
+  ST (dlisthead t)
+  (requires (fun h0 -> live h0 e /\ Seq.mem (h0@! e) (Ghost.reveal h.nodes)))
+  (ensures (fun h1 y h2 ->
+       modifies_1 e h1 h2 /\
+       Seq.mem e' (Ghost.reveal y.nodes) /\
+       h2@!e = e' /\ (forall x. {:pattern live h2 x} live h1 x ==> live h2 x)))
+  =
   let e0 = !*e in
   let upd_nodes (n:seq (dlist t)) : GTot (seq (dlist t)) =
-    replace_in_seq n e0 e'
-  in
+    replace_in_seq n e0 e' in
   let a = elift1 upd_nodes h.nodes in
   e <& e'; { h with nodes = a }
 
 unfold
 let (.()<-) (#t:eqtype) (h:dlisthead t) (e: pointer (dlist t)) (e': dlist t) =
   update_node h e e'
+
+#set-options "--detail_errors --z3rlimit 1"
 
 (** Insert an element e as the first element in a doubly linked list *)
 let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): StackInline (dlisthead t)
@@ -177,15 +186,12 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): StackInlin
   ) else (
     let h1 = ST.get () in
     let next = h.lhead in
-    assert (Seq.mem (h1@! next) (Ghost.reveal h.nodes));
-    admit ();
     let h = h.(next) <- ({ !*next with blink = e; }) in
-    admit ();
-    next <& { !*next with blink = e; };
     let h' = ST.get () in
-    assert ( (Ghost.reveal h.nodes).[0] == h'@! next );
+    assert (live h' e);
     admit ();
     e <& { !*e with flink = next; blink = null };
+    admit ();
     let ghoste = hide !*e in
     let y = { lhead = e; ltail = h.ltail; nodes = elift2 Seq.cons ghoste h.nodes } in
     let h2 = ST.get () in
