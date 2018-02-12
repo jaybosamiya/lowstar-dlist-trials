@@ -150,23 +150,23 @@ let rec replace_in_seq (#t:eqtype) (s:seq t) (x:t) (x_new:t) :
       let t = replace_in_seq (tail s) x x_new in
       mem_cons h t; cons h t
 
-let update_node (#t:eqtype) (h:dlisthead t) (e: pointer (dlist t)) (e': dlist t) :
+let update_node (#t:eqtype) (h:dlisthead t) (n: pointer (dlist t)) (n': dlist t) :
   Stack (dlisthead t)
-  (requires (fun h0 -> live h0 e /\ Seq.mem (h0@! e) (Ghost.reveal h.nodes)))
+  (requires (fun h0 -> live h0 n /\ Seq.mem (h0@! n) (Ghost.reveal h.nodes)))
   (ensures (fun h1 y h2 ->
-       modifies_1 e h1 h2 /\
-       Seq.mem e' (Ghost.reveal y.nodes) /\
+       modifies_1 n h1 h2 /\
+       Seq.mem n' (Ghost.reveal y.nodes) /\
        (forall x. {:pattern (Seq.mem x (Ghost.reveal y.nodes))}
-          (Seq.mem x (Ghost.reveal h.nodes) /\ x <> h1@! e) ==> Seq.mem x (Ghost.reveal y.nodes)) /\
-       h2@!e = e' /\
-       (h.lhead =!= e ==> y.lhead == h.lhead) /\
-       (h.ltail =!= e ==> y.ltail == h.ltail)))
+          (Seq.mem x (Ghost.reveal h.nodes) /\ x <> h1@! n) ==> Seq.mem x (Ghost.reveal y.nodes)) /\
+       h2@!n = n' /\
+       (h.lhead =!= n ==> y.lhead == h.lhead) /\
+       (h.ltail =!= n ==> y.ltail == h.ltail)))
   =
-  let e0 = !*e in
-  let upd_nodes (n:seq (dlist t)) : GTot (seq (dlist t)) =
-    replace_in_seq n e0 e' in
+  let n0 = !*n in
+  let upd_nodes (s:seq (dlist t)) : GTot (seq (dlist t)) =
+    replace_in_seq s n0 n' in
   let a = elift1 upd_nodes h.nodes in
-  e <& e';
+  n <& n';
   { h with nodes = a }
 
 unfold let (.()<-) = update_node
@@ -181,11 +181,17 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisth
   if is_null h.lhead then ( // the list is empty
     createSingletonList e
   ) else (
+    // assume (h.ltail =!= h.lhead);
     assert (e =!= h.ltail);
     // admit ();
     let next = h.lhead in
+    let foo = h.ltail in
+    assert (next =!= h.ltail);
     let h' = h.(next) <- ({ !*next with blink = e; }) in
-    assert (h.ltail == h'.ltail);
+    assert (foo == h.ltail);
+    assert (h.ltail =!= e);
+    assert (foo == h'.ltail);
+    admit ();
     let h = h' in
     e <& { !*e with flink = next; blink = null };
     let ghoste = hide !*e in
