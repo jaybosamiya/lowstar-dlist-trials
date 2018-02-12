@@ -173,6 +173,38 @@ unfold let (.()<-) = update_node
 
 #set-options "--detail_errors --z3rlimit 1"
 
+let insertHeadSingletonList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisthead t)
+    (requires (fun h0 -> dlisthead_is_valid h0 h /\ live h0 e /\ ~(dlist_is_member_of h0 e h) /\ Seq.length (Ghost.reveal h.nodes) = 1))
+    (ensures (fun _ y h2 -> live h2 e /\ dlisthead_is_valid h2 y)) =
+  let h1 = ST.get () in
+  let n = h.lhead in
+  assert ( is_null (h1@!n).blink /\ is_null (h1@!n).flink );
+  let n' = { !*n with blink = e } in
+  assert ( is_null n'.flink );
+  // admit ();
+  n <& n';
+  let h_now = ST.get () in
+  assert ( is_null (h_now@!n).flink );
+  // admit ();
+  e <& { !*e with flink = n; blink = null };
+  assert ( is_null (h_now@!n).flink );
+  admit ();
+  let n', e' = !*n, !*e in
+  let y = { lhead = e ; ltail = n ; nodes = Ghost.hide (Seq.of_list [n'; e']) } in
+  let h2 = ST.get () in
+  assert ( dlisthead_liveness h2 y );
+  assert ( is_null n'.flink );
+  assert ( is_null e'.blink );
+  admit ();
+  assert ( dlist_is_valid n' );
+  assert ( dlist_is_valid e' );
+  assert ( (Seq.length (Ghost.reveal y.nodes) == 2) /\
+           ((Ghost.reveal y.nodes).[0] == n') /\
+           ((Ghost.reveal y.nodes).[1] == e') );
+  assert ( dlisthead_has_valid_dlists h2 y );
+  admit ();
+  y
+
 (** Insert an element e as the first element in a doubly linked list *)
 let insertHeadList (#t:eqtype) (h:dlisthead t) (e:pointer (dlist t)): ST (dlisthead t)
    (requires (fun h0 -> dlisthead_is_valid h0 h /\ live h0 e /\ ~(dlist_is_member_of h0 e h)))
