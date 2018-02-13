@@ -63,15 +63,17 @@ let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) =
 
 let test1 () = assert (forall h0 t. dlisthead_is_valid h0 (empty_list #t))
 
-let singletonlist (#t:eqtype) (e:ref (dlist t)): ST (dlisthead t)
-   (requires (fun h0 -> True))
-   (ensures (fun _ y h2 -> True)) =
+let singletonlist (#t:eqtype) (e:ref (dlist t)) =
+  e := { !e with blink = None; flink = None };
+  { lhead = Some e ; ltail = Some e ; nodes = hide (Seq.create 1 (!e)) }
 
-(*
 let insertHeadList (#t:eqtype) (h:dlisthead t) (e:ref (dlist t)): ST (dlisthead t)
-   (requires (fun h0 -> True))
-   (ensures (fun _ y h2 -> True)) =
-  if h == empty_list 
-  then
-    singletonList 
-*)
+   (requires (fun h0 -> dlisthead_is_valid h0 h))
+   (ensures (fun _ y h2 -> dlisthead_is_valid h2 y)) =
+  if isNone h.lhead
+  then (
+    singletonlist e
+  ) else (
+    empty_list // TODO: Remove. temporary kludge
+  )
+
