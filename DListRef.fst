@@ -67,13 +67,49 @@ let singletonlist (#t:eqtype) (e:ref (dlist t)) =
   e := { !e with blink = None; flink = None };
   { lhead = Some e ; ltail = Some e ; nodes = hide (Seq.create 1 (!e)) }
 
+#set-options "--z3rlimit 1 --detail_errors"
+
+let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) =
+  Seq.mem (e@h0) (reveal h.nodes)
+
 let insertHeadList (#t:eqtype) (h:dlisthead t) (e:ref (dlist t)): ST (dlisthead t)
-   (requires (fun h0 -> dlisthead_is_valid h0 h))
+   (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(member_of h0 h e)))
    (ensures (fun _ y h2 -> dlisthead_is_valid h2 y)) =
   if isNone h.lhead
   then (
     singletonlist e
   ) else (
-    empty_list // TODO: Remove. temporary kludge
+    let n = getSome h.lhead in
+    n := { !n with blink = Some e };
+    e := { !e with blink = None ; flink = Some n };
+    let ghoste = hide !e in
+    let nodes = elift2 cons ghoste h.nodes in
+    let y = { lhead = Some e ; ltail = h.ltail ; nodes = nodes } in
+    let h2 = ST.get () in
+    assert (isSome y.lhead /\ isSome y.ltail);
+    assert (isNone (y.lhead^@h2).blink);
+    assert (isNone (y.ltail^@h2).flink);
+    assert (y.lhead^@h2 == (reveal y.nodes).[0]);
+    assert (
+      let nodes = reveal y.nodes in
+      let len = length nodes in
+      let empty = (len = 0) in
+      ((isSome y.lhead /\ isSome y.ltail) /\
+       isNone (y.lhead^@h2).blink /\
+       isNone (y.ltail^@h2).flink /\
+        // (y.lhead^@h2 == nodes.[0]) /\
+        // (y.ltail^@h2 == nodes.[len-1]) /\
+        // (forall i. {:pattern (nodes.[i]).blink}
+        //    ((1 <= i /\ i < len) ==>
+        //     isSome (nodes.[i]).blink /\
+        //     (nodes.[i]).blink^@h2 == nodes.[i-1])) /\
+        // (forall i. {:pattern (nodes.[i]).flink}
+        //    ((0 <= i /\ i < len - 1) ==>
+        //     isSome (nodes.[i]).flink /\
+        //     (nodes.[i]).flink^@h2 == nodes.[i+1])) /\
+        True)
+     );
+     admit ();
+     y
   )
 
