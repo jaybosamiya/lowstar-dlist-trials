@@ -86,10 +86,10 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:ref (dlist t)): ST (dlisthead 
     let nodes = elift2 cons ghoste h.nodes in
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = nodes } in
     let h2 = ST.get () in
-    assert (isSome y.lhead /\ isSome y.ltail);
-    assert (isNone (y.lhead^@h2).blink);
-    assert (isNone (y.ltail^@h2).flink);
-    assert (y.lhead^@h2 == (reveal y.nodes).[0]);
+    // assert (isSome y.lhead /\ isSome y.ltail);
+    // assert (isNone (y.lhead^@h2).blink);
+    assert (isNone (y.ltail^@h2).flink); // OBSERVE
+    // assert (y.lhead^@h2 == (reveal y.nodes).[0]);
     assert (
       let nodes = reveal y.nodes in
       let len = length nodes in
