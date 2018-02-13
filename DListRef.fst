@@ -79,8 +79,10 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:ref (dlist t)): ST (dlisthead 
   then (
     singletonlist e
   ) else (
+    let h1 = ST.get () in
     let n = getSome h.lhead in
     n := { !n with blink = Some e };
+    let h1' = ST.get () in
     e := { !e with blink = None ; flink = Some n };
     let ghoste = hide !e in
     let nodes = elift2 cons ghoste h.nodes in
@@ -90,6 +92,9 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:ref (dlist t)): ST (dlisthead 
     // assert (isNone (y.lhead^@h2).blink);
     assert (isNone (y.ltail^@h2).flink); // OBSERVE
     // assert (y.lhead^@h2 == (reveal y.nodes).[0]);
+    assert (h.ltail^@h1 == (reveal h.nodes).[length (reveal h.nodes) - 1]);
+    assert (h.ltail^@h1' == (reveal h.nodes).[length (reveal h.nodes) - 1]); // this fails. reason: what if the dlisthead is a singleton when we begin?
+    admit ();
     assert (
       let nodes = reveal y.nodes in
       let len = length nodes in
@@ -97,8 +102,8 @@ let insertHeadList (#t:eqtype) (h:dlisthead t) (e:ref (dlist t)): ST (dlisthead 
       ((isSome y.lhead /\ isSome y.ltail) /\
        isNone (y.lhead^@h2).blink /\
        isNone (y.ltail^@h2).flink /\
-        // (y.lhead^@h2 == nodes.[0]) /\
-        // (y.ltail^@h2 == nodes.[len-1]) /\
+        (y.lhead^@h2 == nodes.[0]) /\
+        (y.ltail^@h2 == nodes.[len-1]) /\
         // (forall i. {:pattern (nodes.[i]).blink}
         //    ((1 <= i /\ i < len) ==>
         //     isSome (nodes.[i]).blink /\
