@@ -89,19 +89,19 @@ let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) =
 
 type nonempty_dlisthead t = (h:dlisthead t{isSome h.lhead /\ isSome h.ltail})
 
+let (~+) (#t:Type) (a:t) : Tot (erased (seq t)) = hide (Seq.create 1 a)
+let (++) (#t:Type) (a:t) (b:erased (seq t)) : Tot (erased (seq t)) = elift2 Seq.cons (hide a) b
+let (+~) (#t:Type) (a:t) (b:t) : Tot (erased (seq t)) = a ++ (~+ b)
+
 let dlisthead_make_valid_singleton (#t:eqtype) (h:nonempty_dlisthead t)
   : ST (dlisthead t)
     (requires (fun h0 ->
          isNone (h.lhead^@h0).flink /\ isNone (h.lhead^@h0).blink))
     (ensures (fun h1 y h2 -> modifies_none h1 h2 /\ dlisthead_is_valid h2 y)) =
   let Some e = h.lhead in
-  { h with ltail = h.lhead ; nodes = hide (Seq.create 1 (!e)) }
+  { h with ltail = h.lhead ; nodes = ~+ !e }
 
 #set-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 10"
-
-let (+..) (#t:Type) (a:t) (b:seq t) = Seq.cons a b
-let (~..) (#t:Type) (a:t) = Seq.create 1 a
-let (+.^) (#t:Type) (a:t) (b:erased (seq t)) = elift2 (+..) (hide a) b
 
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   : ST (dlisthead t)
@@ -113,11 +113,11 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   n := { !n with blink = Some e };
   if previously_singleton
   then (
-    { lhead = Some e ; ltail = Some n ; nodes = hide (!e +.. ~.. !n) }
+    { lhead = Some e ; ltail = Some n ; nodes = !e +~ !n }
   ) else (
-    let vale = !e in
-    let y = { lhead = Some e ; ltail = h.ltail ; nodes = vale +.^ h.nodes } in
+    let y = { lhead = Some e ; ltail = h.ltail ; nodes = !e ++ h.nodes } in
     let h2 = ST.get () in
+    admit ();
     assert (dlisthead_ghostly_connections h2 y);
     assert (flink_valid h2 y);
     assert (blink_valid h2 y);
