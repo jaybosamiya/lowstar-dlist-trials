@@ -72,6 +72,25 @@ let singletonlist (#t:eqtype) (e:ref (dlist t)) =
 let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) =
   Seq.mem (e@h0) (reveal h.nodes)
 
+type nonempty_dlisthead t = (h:dlisthead t{isSome h.lhead /\ isSome h.ltail})
+
+let dlisthead_make_valid_singleton (#t:eqtype) (h:nonempty_dlisthead t)
+  : ST (dlisthead t)
+    (requires (fun h0 ->
+         isNone (h.lhead^@h0).flink /\ isNone (h.lhead^@h0).blink))
+    (ensures (fun h1 y h2 -> modifies_none h1 h2 /\ dlisthead_is_valid h2 y)) =
+  let Some e = h.lhead in
+  { h with ltail = h.lhead ; nodes = hide (Seq.create 1 (!e)) }
+
+let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
+  : ST (dlisthead t)
+      (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(member_of h0 h e)))
+      (ensures (fun h1 y h2 -> modifies (only e) h1 h2 /\ dlisthead_is_valid h2 y)) =
+  let Some n = h.lhead in
+  e := { !e with blink = None; flink = Some n };
+  admit ();
+  h
+
 let insertHeadList (#t:eqtype) (h:dlisthead t) (e:ref (dlist t)): ST (dlisthead t)
    (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(member_of h0 h e)))
    (ensures (fun _ y h2 -> dlisthead_is_valid h2 y)) =
