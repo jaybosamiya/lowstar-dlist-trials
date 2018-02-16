@@ -58,16 +58,23 @@ let blink_valid (#t:Type) (h0:heap) (h:dlisthead t) =
       isSome (nodes.[i]).blink /\
       (nodes.[i]).blink^@h0 == nodes.[i-1]))
 
+let dlisthead_ghostly_connections (#t:Type) (h0:heap) (h:dlisthead t) =
+  let nodes = reveal h.nodes in
+  let len = length nodes in
+  let empty = (len = 0) in
+  ~empty ==> (
+    isSome h.lhead /\ isSome h.ltail /\
+    isNone (h.lhead^@h0).blink /\
+    isNone (h.ltail^@h0).flink /\
+    h.lhead^@h0 == nodes.[0] /\
+    h.ltail^@h0 == nodes.[len-1])
+
 let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) =
   let nodes = reveal h.nodes in
   let len = length nodes in
   let empty = (len = 0) in
   (empty ==> isNone h.lhead /\ isNone h.ltail) /\
-  (~empty ==> (isSome h.lhead /\ isSome h.ltail) /\
-              isNone (h.lhead^@h0).blink /\
-              isNone (h.ltail^@h0).flink /\
-              h.lhead^@h0 == nodes.[0] /\
-              h.ltail^@h0 == nodes.[len-1] /\
+  (~empty ==> dlisthead_ghostly_connections h0 h /\
               flink_valid h0 h /\
               blink_valid h0 h)
 
@@ -91,6 +98,12 @@ let dlisthead_make_valid_singleton (#t:eqtype) (h:nonempty_dlisthead t)
   { h with ltail = h.lhead ; nodes = hide (Seq.create 1 (!e)) }
 
 #set-options "--z3rlimit 10"
+
+let dlist_unmodified (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t)) (h0:heap) (h1:heap) :
+  Lemma
+    (requires (dlisthead_is_valid h0 h /\ ~(member_of h0 h e) /\ modifies (only e) h0 h1))
+    (ensures (dlisthead_is_valid h1 h)) =
+  ()
 
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   : ST (dlisthead t)
