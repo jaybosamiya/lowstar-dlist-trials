@@ -131,6 +131,9 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   ) else (
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = !e ^+ !n ^+ (ghost_tail h.nodes) } in
     let h2 = ST.get () in
+    assert (let nodes = reveal y.nodes in
+            let len = length nodes in
+            y.ltail^@h2 == nodes.[len-1]); // Unable to prove this for some reason
     admit ();
     assert (dlisthead_ghostly_connections h2 y);
     assert (flink_valid h2 y);
