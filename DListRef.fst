@@ -103,6 +103,18 @@ let dlisthead_make_valid_singleton (#t:eqtype) (h:nonempty_dlisthead t)
 let ghost_tail (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
   hide (Seq.tail (reveal s))
 
+val ghost_tail_properties :
+  #t:Type ->
+  s:erased (seq t){Seq.length (reveal s) > 0} ->
+  Lemma (
+    let l = Seq.length (reveal s) in
+    let t = ghost_tail s in
+    let s0 = reveal s in
+    let t0 = reveal t in
+    Seq.length t0 = Seq.length s0 - 1 /\
+    (forall x. {:pattern (t0.[x])} 0 <= x /\ x < Seq.length t0 ==> t0.[x] == s0.[x+1]))
+let ghost_tail_properties #t s = ()
+
 #set-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 10"
 
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
