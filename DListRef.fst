@@ -77,8 +77,6 @@ let singletonlist (#t:eqtype) (e:ref (dlist t)) =
   e := { !e with blink = None; flink = None };
   { lhead = Some e ; ltail = Some e ; nodes = hide (Seq.create 1 (!e)) }
 
-#set-options "--z3rlimit 1 --detail_errors"
-
 let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) =
   Seq.mem (e@h0) (reveal h.nodes)
 
@@ -92,14 +90,18 @@ let dlisthead_make_valid_singleton (#t:eqtype) (h:nonempty_dlisthead t)
   let Some e = h.lhead in
   { h with ltail = h.lhead ; nodes = hide (Seq.create 1 (!e)) }
 
+#set-options "--z3rlimit 10"
+
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   : ST (dlisthead t)
       (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(member_of h0 h e)))
       (ensures (fun h1 y h2 -> modifies (only e) h1 h2 /\ dlisthead_is_valid h2 y)) =
   let Some n = h.lhead in
   e := { !e with blink = None; flink = Some n };
-  admit ();
+  // admit ();
   h
+
+#set-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 5"
 
 let insertHeadList (#t:eqtype) (h:dlisthead t) (e:ref (dlist t)): ST (dlisthead t)
    (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(member_of h0 h e)))
