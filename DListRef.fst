@@ -91,7 +91,6 @@ type nonempty_dlisthead t = (h:dlisthead t{isSome h.lhead /\ isSome h.ltail})
 
 let (~+) (#t:Type) (a:t) : Tot (erased (seq t)) = hide (Seq.create 1 a)
 let (++) (#t:Type) (a:t) (b:erased (seq t)) : Tot (erased (seq t)) = elift2 Seq.cons (hide a) b
-let (+~) (#t:Type) (a:t) (b:t) : Tot (erased (seq t)) = a ++ (~+ b)
 
 let dlisthead_make_valid_singleton (#t:eqtype) (h:nonempty_dlisthead t)
   : ST (dlisthead t)
@@ -113,7 +112,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   n := { !n with blink = Some e };
   if previously_singleton
   then (
-    { lhead = Some e ; ltail = Some n ; nodes = !e +~ !n }
+    { lhead = Some e ; ltail = Some n ; nodes = !e ++ ~+ !n }
   ) else (
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = !e ++ h.nodes } in
     let h2 = ST.get () in
