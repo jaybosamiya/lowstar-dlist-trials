@@ -100,6 +100,9 @@ let dlisthead_make_valid_singleton (#t:eqtype) (h:nonempty_dlisthead t)
   let Some e = h.lhead in
   { h with ltail = h.lhead ; nodes = ~. !e }
 
+let ghost_tail (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
+  hide (Seq.tail (reveal s))
+
 #set-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 10"
 
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
@@ -114,10 +117,10 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   then (
     { lhead = Some e ; ltail = Some n ; nodes = !e ^+ ~. !n }
   ) else (
-    let y = { lhead = Some e ; ltail = h.ltail ; nodes = !e ^+ !n ^+ h.nodes } in
+    let y = { lhead = Some e ; ltail = h.ltail ; nodes = !e ^+ !n ^+ (ghost_tail h.nodes) } in
     let h2 = ST.get () in
-    assert (dlisthead_ghostly_connections h2 y);
     admit ();
+    assert (dlisthead_ghostly_connections h2 y);
     assert (flink_valid h2 y);
     assert (blink_valid h2 y);
     admit ();
