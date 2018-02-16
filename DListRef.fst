@@ -42,6 +42,22 @@ let (^@) (a:option (ref 't){isSome a}) (h0:heap) = (getSome a) @ h0
 
 let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
 
+let flink_valid (#t:Type) (h0:heap) (h:dlisthead t) =
+  let nodes = reveal h.nodes in
+  let len = length nodes in
+  (forall i. {:pattern (nodes.[i]).flink}
+     ((0 <= i /\ i < len - 1) ==>
+      isSome (nodes.[i]).flink /\
+      (nodes.[i]).flink^@h0 == nodes.[i+1]))
+
+let blink_valid (#t:Type) (h0:heap) (h:dlisthead t) =
+  let nodes = reveal h.nodes in
+  let len = length nodes in
+  (forall i. {:pattern (nodes.[i]).blink}
+     ((1 <= i /\ i < len) ==>
+      isSome (nodes.[i]).blink /\
+      (nodes.[i]).blink^@h0 == nodes.[i-1]))
+
 let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) =
   let nodes = reveal h.nodes in
   let len = length nodes in
@@ -52,14 +68,8 @@ let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) =
               isNone (h.ltail^@h0).flink /\
               h.lhead^@h0 == nodes.[0] /\
               h.ltail^@h0 == nodes.[len-1] /\
-              (forall i. {:pattern (nodes.[i]).blink}
-                 ((1 <= i /\ i < len) ==>
-                  isSome (nodes.[i]).blink /\
-                  (nodes.[i]).blink^@h0 == nodes.[i-1])) /\
-              (forall i. {:pattern (nodes.[i]).flink}
-                 ((0 <= i /\ i < len - 1) ==>
-                  isSome (nodes.[i]).flink /\
-                  (nodes.[i]).flink^@h0 == nodes.[i+1])))
+              flink_valid h0 h /\
+              blink_valid h0 h)
 
 let test1 () = assert (forall h0 t. dlisthead_is_valid h0 (empty_list #t))
 
