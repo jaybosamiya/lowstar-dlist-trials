@@ -99,14 +99,31 @@ let dlisthead_make_valid_singleton (#t:eqtype) (h:nonempty_dlisthead t)
 
 #set-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 10"
 
+let (+..) (#t:Type) (a:t) (b:seq t) = Seq.cons a b
+let (~..) (#t:Type) (a:t) = Seq.create 1 a
+let (+.^) (#t:Type) (a:t) (b:erased (seq t)) = elift2 (+..) (hide a) b
+
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   : ST (dlisthead t)
       (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(member_of h0 h e)))
-      (ensures (fun h1 y h2 -> modifies (only e) h1 h2 /\ dlisthead_is_valid h2 y)) =
+      (ensures (fun h1 y h2 -> modifies (e ^+^ (getSome h.lhead)) h1 h2 /\ dlisthead_is_valid h2 y)) =
   let Some n = h.lhead in
   e := { !e with blink = None; flink = Some n };
-  // admit ();
-  h
+  let previously_singleton = compare_addrs n (getSome h.ltail) in
+  n := { !n with blink = Some e };
+  if previously_singleton
+  then (
+    { lhead = Some e ; ltail = Some n ; nodes = hide (!e +.. ~.. !n) }
+  ) else (
+    let vale = !e in
+    let y = { lhead = Some e ; ltail = h.ltail ; nodes = vale +.^ h.nodes } in
+    let h2 = ST.get () in
+    assert (dlisthead_ghostly_connections h2 y);
+    assert (flink_valid h2 y);
+    assert (blink_valid h2 y);
+    admit ();
+    y
+  )
 
 let insertHeadList (#t:eqtype) (h:dlisthead t) (e:ref (dlist t)): ST (dlisthead t)
    (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(member_of h0 h e)))
