@@ -97,13 +97,7 @@ let dlisthead_make_valid_singleton (#t:eqtype) (h:nonempty_dlisthead t)
   let Some e = h.lhead in
   { h with ltail = h.lhead ; nodes = hide (Seq.create 1 (!e)) }
 
-#set-options "--z3rlimit 10"
-
-let dlist_unmodified (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t)) (h0:heap) (h1:heap) :
-  Lemma
-    (requires (dlisthead_is_valid h0 h /\ ~(member_of h0 h e) /\ modifies (only e) h0 h1))
-    (ensures (dlisthead_is_valid h1 h)) =
-  ()
+#set-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 10"
 
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   : ST (dlisthead t)
@@ -113,8 +107,6 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   e := { !e with blink = None; flink = Some n };
   // admit ();
   h
-
-#set-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 5"
 
 let insertHeadList (#t:eqtype) (h:dlisthead t) (e:ref (dlist t)): ST (dlisthead t)
    (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(member_of h0 h e)))
