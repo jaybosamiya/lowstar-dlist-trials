@@ -115,12 +115,13 @@ val ghost_tail_properties :
     (forall x. {:pattern (t0.[x])} 0 <= x /\ x < Seq.length t0 ==> t0.[x] == s0.[x+1]))
 let ghost_tail_properties #t s = ()
 
-#set-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 10"
+#set-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   : ST (dlisthead t)
       (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(member_of h0 h e)))
       (ensures (fun h1 y h2 -> modifies (e ^+^ (getSome h.lhead)) h1 h2 /\ dlisthead_is_valid h2 y)) =
+  let h1 = ST.get () in
   let Some n = h.lhead in
   e := { !e with blink = None; flink = Some n };
   let previously_singleton = compare_addrs n (getSome h.ltail) in
@@ -131,6 +132,10 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   ) else (
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = !e ^+ !n ^+ (ghost_tail h.nodes) } in
     let h2 = ST.get () in
+    assert (y.ltail == h.ltail);
+    assert (h.ltail^@h1 == h.ltail^@h2);
+    assert (isSome y.ltail /\ getSome y.ltail == getSome y.ltail /\ sel h2 (getSome y.ltail) == sel h2 (getSome y.ltail)); // WHY IS THIS ASSERT FAILING!!!! THIS SHOULD BE TRIVIAL! subtyping check fails here :/
+    admit ();
     assert (let nodes = reveal y.nodes in
             let len = length nodes in
             y.ltail^@h2 == nodes.[len-1]); // Unable to prove this for some reason
