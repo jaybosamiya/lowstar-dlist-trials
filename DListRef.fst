@@ -34,8 +34,7 @@ let empty_list (#t:Type) : dlisthead t =
   { lhead = None ; ltail = None ; nodes = hide createEmpty }
 
 let getSome (a : option 't{isSome a}) =
-  match a with
-  | Some x -> x
+  Some?.v a
 
 let (@) (a:ref 't) (h0:heap) = sel h0 a
 let (^@) (a:option (ref 't){isSome a}) (h0:heap) = (getSome a) @ h0
