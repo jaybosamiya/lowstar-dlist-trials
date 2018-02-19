@@ -124,7 +124,6 @@ val ghost_tail_properties :
     Seq.length t0 = Seq.length s0 - 1 /\
     (forall i j. {:pattern (t0.[i] == s0.[j])}
        j = i + 1 /\ 0 <= i /\ i < Seq.length t0 ==> t0.[i] == s0.[j]))
-    [SMTPat (ghost_tail s)]
 let ghost_tail_properties #t s = ()
 
 #set-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
@@ -133,7 +132,6 @@ val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
   Lemma (let r = a ^+ b in
          forall i j. {:pattern ((reveal b).[i] == (reveal r).[j])}
            j = i + 1 /\ 0 <= i /\ i < length (reveal b) ==> (reveal b).[i] == (reveal r).[j])
-    [SMTPat (a ^+ b)]
 let ghost_append_properties #t a b = ()
 
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t) ->
@@ -161,7 +159,8 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
     assert (let (a : _ {isSome a}) = y.ltail in sel h1 (getSome a) == sel h2 (getSome a));
     assert (let (a : _ {isSome a}) = y.ltail in a^@h2 == h.ltail^@h1);
     assert (let hnodes, ynodes = reveal h.nodes, reveal y.nodes in
-      forall x. x > 1 /\ x + 1 < length ynodes ==> hnodes.[x] == ynodes.[x + 1]);
+      forall i j. {:pattern (hnodes.[i] == ynodes.[j])}
+        j = i + 1 /\ i > 1 /\ j < length ynodes ==> hnodes.[i] == ynodes.[j]);
     admit ();
     assert (Seq.last (reveal h.nodes) == Seq.last (reveal y.nodes)); // this fails for some reason
     admit ();
