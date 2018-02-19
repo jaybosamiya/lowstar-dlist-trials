@@ -39,4 +39,22 @@ let bar (a:ref (ref int)) : St unit =
   let a_deref_1 = !a in
   assert (addr_of a0 == addr_of a1); // passes as expected
   // assert (addr_of a_deref_0 == addr_of a_deref_1); // fails; shouldn't this be true?
+  () // TODO: Look into this
+
+// BTW, what about stuff where the type checker fails? : See below
+
+open FStar.Ref
+
+let foo_fail (r:option (ref int)) (h:heap) :St unit =
+  /// this fails instantly on not being able to subtype on r
+  // assert (Some? r ==> (Some?.v r == Some?.v r /\ sel h (Some?.v r) == sel h (Some?.v r)));
+  ()
+
+// Simply using the two phase type checker helps :)
+
+#set-options "--use_two_phase_tc true"
+
+let foo_pass (r:option (ref int)) (h:heap) :St unit =
+  // this passes :)
+  assert (Some? r ==> (Some?.v r == Some?.v r /\ sel h (Some?.v r) == sel h (Some?.v r)));
   ()
