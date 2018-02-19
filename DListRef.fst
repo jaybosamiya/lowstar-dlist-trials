@@ -145,12 +145,15 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
     let h2 = ST.get () in
     assert (y.ltail == h.ltail);
     assert (h.ltail^@h1 == h.ltail^@h2);
-    assert (isSome y.ltail /\ getSome y.ltail == getSome y.ltail /\ sel h2 (getSome y.ltail) == sel h2 (getSome y.ltail)); // WHY IS THIS ASSERT FAILING!!!! THIS SHOULD BE TRIVIAL! subtyping check fails here :/
-    admit ();
+    // assert (isSome y.ltail);
+    // assert (getSome y.ltail == getSome y.ltail);
+    // assert (let (a : _ {isSome a}) = y.ltail in sel h2 (getSome a) == sel h2 (getSome a));
+    // The (a: _ {...}) is a workaround for the two phase type checker error
+    assert (let (a : _ {isSome a}) = y.ltail in sel h1 (getSome a) == sel h2 (getSome a));
     assert (let nodes = reveal y.nodes in
             let len = length nodes in
             y.ltail^@h2 == nodes.[len-1]); // Unable to prove this for some reason
-    admit ();
+    // admit ();
     assert (dlisthead_ghostly_connections h2 y);
     assert (flink_valid h2 y);
     assert (blink_valid h2 y);
