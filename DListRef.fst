@@ -150,6 +150,9 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
     // assert (let (a : _ {isSome a}) = y.ltail in sel h2 (getSome a) == sel h2 (getSome a));
     // The (a: _ {...}) is a workaround for the two phase type checker error
     assert (let (a : _ {isSome a}) = y.ltail in sel h1 (getSome a) == sel h2 (getSome a));
+    assert (let (a : _ {isSome a}) = y.ltail in a^@h2 == h.ltail^@h1);
+    assert (Seq.last (reveal h.nodes) == Seq.last (reveal y.nodes)); // this fails for some reason
+    admit ();
     assert (let nodes = reveal y.nodes in
             let len = length nodes in
             y.ltail^@h2 == nodes.[len-1]); // Unable to prove this for some reason
