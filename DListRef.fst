@@ -161,7 +161,8 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
     assert (let hnodes, ynodes = reveal h.nodes, reveal y.nodes in
       forall i j. {:pattern (hnodes.[i] == ynodes.[j])}
         j = i + 1 /\ i > 1 /\ j < length ynodes ==> hnodes.[i] == ynodes.[j]);
-    admit ();
+    assert (Seq.length (reveal h.nodes) + 1 = Seq.length (reveal y.nodes));
+    // admit ();
     assert (Seq.last (reveal h.nodes) == Seq.last (reveal y.nodes)); // this fails for some reason
     admit ();
     assert (let nodes = reveal y.nodes in
