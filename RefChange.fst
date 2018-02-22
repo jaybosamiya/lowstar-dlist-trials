@@ -20,9 +20,12 @@ let whut (a:ref int) =
 // Anyways, for what I really wanted to test:
 
 let foo (a:ref (ref int)) : St unit =
+  let a_0 = a in
   let b = !a in
   !a := 5;
+  let a_1 = a in
   let c = !a in
+  assert (a_0 == a_1);
   assert (b == c \/ b =!= c); // this passes
   // assert (b == c); // this fails; shouldn't this be true?
   // assert (b =!= c); // this fails
@@ -58,3 +61,5 @@ let foo_pass (r:option (ref int)) (h:heap) :St unit =
   // this passes :)
   assert (Some? r ==> (Some?.v r == Some?.v r /\ sel h (Some?.v r) == sel h (Some?.v r)));
   ()
+// An alternative way to do it is via a "let (r: _{phi r}) = r in ..."
+// to force the type to reflect the property we need
