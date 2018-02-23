@@ -129,6 +129,17 @@ let singletonlist #t e =
 let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot bool =
   Seq.mem (e@h0) (reveal h.nodes)
 
+let has_nothing_in (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot Type0 =
+  (~(member_of h0 h e)) /\
+  (let nodes = reveal h.nodes in
+   (forall i. {:pattern (nodes.[i]).flink}
+      isSome (nodes.[i]).flink ==> (
+      addr_of (getSome (nodes.[i]).flink) <> addr_of e)) /\
+   (forall i. {:pattern (nodes.[i]).blink}
+      isSome (nodes.[i]).blink ==> (
+      addr_of (getSome (nodes.[i]).blink) <> addr_of e)))
+// TODO: Say that e.flink and e.blink also have different addresses
+
 type nonempty_dlisthead t = (h:dlisthead t{isSome h.lhead /\ isSome h.ltail})
 
 unfold let (~.) (#t:Type) (a:t) : Tot (erased (seq t)) = hide (Seq.create 1 a)
