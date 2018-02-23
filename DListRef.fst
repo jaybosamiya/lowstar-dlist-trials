@@ -90,25 +90,20 @@ let dlisthead_ghostly_connections #t h0 h =
 val elements_dont_alias1: #t:Type -> h:dlisthead t -> Type0
 let elements_dont_alias1 #t h =
   let nodes = reveal h.nodes in
-  (forall i j. {:pattern (nodes.[i], nodes.[j])}
-     i <> j ==> (
-     (isSome (nodes.[i]).flink /\ isSome (nodes.[j]).flink) ==> (
-       addr_of (getSome (nodes.[i]).flink) <> addr_of (getSome (nodes.[j]).flink))))
+  (forall i j. {:pattern ((nodes.[i]).flink, (nodes.[j]).flink)}
+     i <> j ==> not_aliased (nodes.[i]).flink (nodes.[j]).flink)
 
 val elements_dont_alias2: #t:Type -> h:dlisthead t -> Type0
 let elements_dont_alias2 #t h =
   let nodes = reveal h.nodes in
-  (forall i j. {:pattern (nodes.[i], nodes.[j])}
-     i <> j ==> (
-     (isSome (nodes.[i]).blink /\ isSome (nodes.[j]).blink) ==> (
-       addr_of (getSome (nodes.[i]).blink) <> addr_of (getSome (nodes.[j]).blink))))
+  (forall i j. {:pattern ((nodes.[i]).blink, (nodes.[j]).blink)}
+     i <> j ==> not_aliased (nodes.[i]).blink (nodes.[j]).blink)
 
 val elements_dont_alias3: #t:Type -> h:dlisthead t -> Type0
 let elements_dont_alias3 #t h =
   let nodes = reveal h.nodes in
-  (forall i j. {:pattern (nodes.[i], nodes.[j])}
-     (isSome (nodes.[i]).flink /\ isSome (nodes.[j]).blink) ==> (
-       addr_of (getSome (nodes.[i]).flink) <> addr_of (getSome (nodes.[j]).blink)))
+  (forall i j. {:pattern ((nodes.[i]).flink, (nodes.[j]).blink)}
+     not_aliased (nodes.[i]).flink (nodes.[j]).blink)
 
 val elements_dont_alias: #t:Type -> h:dlisthead t -> Type0
 let elements_dont_alias #t h =
@@ -145,11 +140,9 @@ let has_nothing_in (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTo
   (~(member_of h0 h e)) /\
   (let nodes = reveal h.nodes in
    (forall i. {:pattern (nodes.[i]).flink}
-      isSome (nodes.[i]).flink ==> (
-      addr_of (getSome (nodes.[i]).flink) <> addr_of e)) /\
+      not_aliased0 e (nodes.[i]).flink) /\
    (forall i. {:pattern (nodes.[i]).blink}
-      isSome (nodes.[i]).blink ==> (
-      addr_of (getSome (nodes.[i]).blink) <> addr_of e)))
+      not_aliased0 e (nodes.[i]).blink))
 // TODO: Say that e.flink and e.blink also have different addresses
 
 type nonempty_dlisthead t = (h:dlisthead t{isSome h.lhead /\ isSome h.ltail})
