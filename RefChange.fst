@@ -25,6 +25,8 @@ let foo (a:ref (ref int)) : St unit =
   !a := 5;
   let a_1 = a in
   let c = !a in
+  let mmm = !(!a) in
+  assert (mmm = 5);
   assert (a_0 == a_1);
   assert (b == c \/ b =!= c); // this passes
   // assert (b == c); // this fails; shouldn't this be true?

@@ -22,7 +22,7 @@ unopteq
 type dlisthead (t:Type0) ={
   lhead: option (ref (dlist t));
   ltail: option (ref (dlist t));
-  nodes: erased (seq (dlist t));
+  nodes: erased (seq (ref (dlist t)));
 }
 
 (** Initialize an element of a doubly linked list *)
@@ -47,19 +47,17 @@ val flink_valid: #t:Type -> h0:heap -> h:dlisthead t -> Type0
 let flink_valid #t h0 h =
   let nodes = reveal h.nodes in
   let len = length nodes in
-  (forall i. {:pattern (nodes.[i]).flink}
+  (forall i. {:pattern (nodes.[i]@h0).flink}
      ((0 <= i /\ i < len - 1) ==>
-      isSome (nodes.[i]).flink /\
-      (nodes.[i]).flink^@h0 == nodes.[i+1]))
+      (nodes.[i]@h0).flink == Some nodes.[i+1]))
 
 val blink_valid: #t:Type -> h0:heap -> h:dlisthead t -> Type0
 let blink_valid #t h0 h =
   let nodes = reveal h.nodes in
   let len = length nodes in
-  (forall i. {:pattern (nodes.[i]).blink}
+  (forall i. {:pattern (nodes.[i]@h0).blink}
      ((1 <= i /\ i < len) ==>
-      isSome (nodes.[i]).blink /\
-      (nodes.[i]).blink^@h0 == nodes.[i-1]))
+      (nodes.[i]@h0).blink == Some nodes.[i-1]))
 
 val dlisthead_ghostly_connections: #t:Type -> h0:heap -> h:dlisthead t -> Type0
 let dlisthead_ghostly_connections #t h0 h =
@@ -70,8 +68,8 @@ let dlisthead_ghostly_connections #t h0 h =
     isSome h.lhead /\ isSome h.ltail /\
     isNone (h.lhead^@h0).blink /\
     isNone (h.ltail^@h0).flink /\
-    h.lhead^@h0 == nodes.[0] /\
-    h.ltail^@h0 == nodes.[len-1])
+    h.lhead == Some nodes.[0] /\
+    h.ltail == Some nodes.[len-1])
 
 val dlisthead_is_valid: #t:Type -> h0:heap -> h:dlisthead t -> Type0
 let dlisthead_is_valid #t h0 h =
@@ -91,10 +89,10 @@ val singletonlist: #t:eqtype -> e:ref (dlist t) ->
   (ensures (fun h0 y h1 -> modifies (only e) h0 h1 /\ dlisthead_is_valid h1 y))
 let singletonlist #t e =
   e := { !e with blink = None; flink = None };
-  { lhead = Some e ; ltail = Some e ; nodes = hide (Seq.create 1 (!e)) }
+  { lhead = Some e ; ltail = Some e ; nodes = hide (Seq.create 1 e) }
 
-let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot bool =
-  Seq.mem (e@h0) (reveal h.nodes)
+let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot Type0 =
+  Seq.contains (reveal h.nodes) e
 
 type nonempty_dlisthead t = (h:dlisthead t{isSome h.lhead /\ isSome h.ltail})
 
@@ -108,7 +106,7 @@ val dlisthead_make_valid_singleton: #t:eqtype -> h:nonempty_dlisthead t ->
     (ensures (fun h1 y h2 -> modifies_none h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_make_valid_singleton #t h =
   let Some e = h.lhead in
-  { h with ltail = h.lhead ; nodes = ~. !e }
+  { h with ltail = h.lhead ; nodes = ~. e }
 
 unfold let ghost_tail (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
   hide (Seq.tail (reveal s))
@@ -146,12 +144,12 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   n := { !n with blink = Some e };
   if previously_singleton
   then (
-    { lhead = Some e ; ltail = Some n ; nodes = !e ^+ ~. !n }
+    { lhead = Some e ; ltail = Some n ; nodes = e ^+ ~. n }
   ) else (
-    let y = { lhead = Some e ; ltail = h.ltail ; nodes = !e ^+ !n ^+ (ghost_tail h.nodes) } in
+    let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ n ^+ (ghost_tail h.nodes) } in
     let h2 = ST.get () in
     assert (y.ltail == h.ltail);
-    assert (h.ltail^@h1 == h.ltail^@h2);
+    assert (h.ltail^@h1 == h.ltail^@h2); // and now this fails :/
     // assert (isSome y.ltail);
     // assert (getSome y.ltail == getSome y.ltail);
     // assert (let (a : _ {isSome a}) = y.ltail in sel h2 (getSome a) == sel h2 (getSome a));
@@ -167,7 +165,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
     admit ();
     assert (let nodes = reveal y.nodes in
             let len = length nodes in
-            y.ltail^@h2 == nodes.[len-1]); // Unable to prove this for some reason
+            y.ltail == Some nodes.[len-1]); // Unable to prove this for some reason
     // admit ();
     assert (dlisthead_ghostly_connections h2 y);
     assert (flink_valid h2 y);
