@@ -45,6 +45,18 @@ unfold let (^@) (a:option (ref 't){isSome a}) (h0:heap) = (getSome a) @ h0
 
 unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
 
+val not_aliased: #t:Type -> (a:option (ref t)) -> (b:option (ref t)) -> Type0
+let not_aliased #t a b =
+  let _ = () in // UGLY workaround. See https://github.com/FStarLang/FStar/issues/638
+  isNone a \/ isNone b \/
+  addr_of (getSome a) <> addr_of (getSome b)
+
+val not_aliased0: #t:Type -> (a:ref t) -> (b:option (ref t)) -> Type0
+let not_aliased0 #t a b =
+  let _ = () in // UGLY workaround. See https://github.com/FStarLang/FStar/issues/638
+  isNone b \/
+  addr_of a <> addr_of (getSome b)
+
 val flink_valid: #t:Type -> h0:heap -> h:dlisthead t -> Type0
 let flink_valid #t h0 h =
   let nodes = reveal h.nodes in
