@@ -157,7 +157,7 @@ let has_nothing_in (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTo
    (forall i. {:pattern (nodes.[i]).blink}
       (not_aliased0 e (nodes.[i]).blink) /\
       not_aliased (e@h0).flink (nodes.[i]).blink /\
-      not_aliased (e@h0).blink (nodes.[i]).flink))
+      not_aliased (e@h0).blink (nodes.[i]).blink))
 
 type nonempty_dlisthead t = (h:dlisthead t{isSome h.lhead /\ isSome h.ltail})
 
