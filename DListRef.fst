@@ -6,6 +6,8 @@ open FStar.Option
 open FStar.Seq
 open FStar.Ref
 
+#set-options "--use_two_phase_tc true"
+
 unopteq
 (** Node of a doubly linked list *)
 type dlist (t:Type0) = {
@@ -73,6 +75,36 @@ let dlisthead_ghostly_connections #t h0 h =
     h.lhead^@h0 == nodes.[0] /\
     h.ltail^@h0 == nodes.[len-1])
 
+val elements_dont_alias1: #t:Type -> h:dlisthead t -> Type0
+let elements_dont_alias1 #t h =
+  let nodes = reveal h.nodes in
+  (forall i j. {:pattern (nodes.[i], nodes.[j])}
+     i <> j ==> (
+     (isSome (nodes.[i]).flink /\ isSome (nodes.[j]).flink) ==> (
+       addr_of (getSome (nodes.[i]).flink) <> addr_of (getSome (nodes.[j]).flink))))
+
+val elements_dont_alias2: #t:Type -> h:dlisthead t -> Type0
+let elements_dont_alias2 #t h =
+  let nodes = reveal h.nodes in
+  (forall i j. {:pattern (nodes.[i], nodes.[j])}
+     i <> j ==> (
+     (isSome (nodes.[i]).blink /\ isSome (nodes.[j]).blink) ==> (
+       addr_of (getSome (nodes.[i]).blink) <> addr_of (getSome (nodes.[j]).blink))))
+
+val elements_dont_alias3: #t:Type -> h:dlisthead t -> Type0
+let elements_dont_alias3 #t h =
+  let nodes = reveal h.nodes in
+  (forall i j. {:pattern (nodes.[i], nodes.[j])}
+     (isSome (nodes.[i]).flink /\ isSome (nodes.[j]).blink) ==> (
+       addr_of (getSome (nodes.[i]).flink) <> addr_of (getSome (nodes.[j]).blink)))
+
+val elements_dont_alias: #t:Type -> h:dlisthead t -> Type0
+let elements_dont_alias #t h =
+  let _ = () in // UGLY workaround. See https://github.com/FStarLang/FStar/issues/638
+  elements_dont_alias1 h /\
+  elements_dont_alias2 h /\
+  elements_dont_alias3 h
+
 val dlisthead_is_valid: #t:Type -> h0:heap -> h:dlisthead t -> Type0
 let dlisthead_is_valid #t h0 h =
   let nodes = reveal h.nodes in
@@ -81,7 +113,8 @@ let dlisthead_is_valid #t h0 h =
   (empty ==> isNone h.lhead /\ isNone h.ltail) /\
   (~empty ==> dlisthead_ghostly_connections h0 h /\
               flink_valid h0 h /\
-              blink_valid h0 h)
+              blink_valid h0 h) /\
+  elements_dont_alias h
 
 let test1 () : Tot unit = assert (forall h0 t. dlisthead_is_valid h0 (empty_list #t))
 
