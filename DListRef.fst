@@ -140,10 +140,13 @@ let has_nothing_in (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTo
   (~(member_of h0 h e)) /\
   (let nodes = reveal h.nodes in
    (forall i. {:pattern (nodes.[i]).flink}
-      not_aliased0 e (nodes.[i]).flink) /\
+      (not_aliased0 e (nodes.[i]).flink /\
+       not_aliased (e@h0).flink (nodes.[i]).flink /\
+       not_aliased (e@h0).blink (nodes.[i]).flink)) /\
    (forall i. {:pattern (nodes.[i]).blink}
-      not_aliased0 e (nodes.[i]).blink))
-// TODO: Say that e.flink and e.blink also have different addresses
+      (not_aliased0 e (nodes.[i]).blink) /\
+      not_aliased (e@h0).flink (nodes.[i]).blink /\
+      not_aliased (e@h0).blink (nodes.[i]).flink))
 
 type nonempty_dlisthead t = (h:dlisthead t{isSome h.lhead /\ isSome h.ltail})
 
