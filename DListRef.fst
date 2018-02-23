@@ -57,6 +57,10 @@ let not_aliased0 #t a b =
   isNone b \/
   addr_of a <> addr_of (getSome b)
 
+val dlist_is_valid: #t:Type -> n:dlist t -> Type0
+let dlist_is_valid #t n =
+  not_aliased n.flink n.blink
+
 val flink_valid: #t:Type -> h0:heap -> h:dlisthead t -> Type0
 let flink_valid #t h0 h =
   let nodes = reveal h.nodes in
@@ -112,6 +116,12 @@ let elements_dont_alias #t h =
   elements_dont_alias2 h /\
   elements_dont_alias3 h
 
+val elements_are_valid: #t:Type -> h:dlisthead t -> Type0
+let elements_are_valid #t h =
+  let nodes = reveal h.nodes in
+  (forall i. {:pattern (dlist_is_valid nodes.[i])}
+     dlist_is_valid nodes.[i])
+
 val dlisthead_is_valid: #t:Type -> h0:heap -> h:dlisthead t -> Type0
 let dlisthead_is_valid #t h0 h =
   let nodes = reveal h.nodes in
@@ -121,6 +131,7 @@ let dlisthead_is_valid #t h0 h =
   (~empty ==> dlisthead_ghostly_connections h0 h /\
               flink_valid h0 h /\
               blink_valid h0 h) /\
+  elements_are_valid h /\
   elements_dont_alias h
 
 let test1 () : Tot unit = assert (forall h0 t. dlisthead_is_valid h0 (empty_list #t))
