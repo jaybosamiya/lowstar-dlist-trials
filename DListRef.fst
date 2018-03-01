@@ -209,32 +209,56 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   n := { !n with blink = Some e };
   if previously_singleton
   then (
-    { lhead = Some e ; ltail = Some n ; nodes = !e ^+ ~. !n }
+    let y = { lhead = Some e ; ltail = Some n ; nodes = !e ^+ ~. !n } in
+    let h2 = ST.get () in
+    assert(let h = y in let h0 = h2 in
+           // let nodes = reveal h.nodes in
+           // let len = length nodes in
+           // let empty = (len = 0) in
+           // dlisthead_ghostly_connections h0 h /\
+           // flink_valid h0 h /\
+           // blink_valid h0 h /\
+           // elements_are_valid h /\
+           // elements_dont_alias1 h /\
+           // elements_dont_alias2 h /\
+/// -------------------------------------------------------------------------------------------
+           elements_dont_alias3 h /\ // this is what fails
+/// -------------------------------------------------------------------------------------------
+           True);
+           // (empty ==> isNone h.lhead /\ isNone h.ltail) /\
+           // (~empty ==> dlisthead_ghostly_connections h0 h /\
+           //             flink_valid h0 h /\
+           //             blink_valid h0 h)); // /\
+           // elements_are_valid h /\
+           // elements_dont_alias h);
+    admit ();
+    y
   ) else (
+    admit ();
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = !e ^+ !n ^+ (ghost_tail h.nodes) } in
     let h2 = ST.get () in
-    assert (y.ltail == h.ltail);
-    assert (h.ltail^@h1 == h.ltail^@h2);
+    // assert (y.ltail == h.ltail);
+    // assert (h.ltail^@h1 == h.ltail^@h2);
     // assert (isSome y.ltail);
     // assert (getSome y.ltail == getSome y.ltail);
     // assert (let (a : _ {isSome a}) = y.ltail in sel h2 (getSome a) == sel h2 (getSome a));
     // The (a: _ {...}) is a workaround for the two phase type checker error
-    assert (let (a : _ {isSome a}) = y.ltail in sel h1 (getSome a) == sel h2 (getSome a));
-    assert (let (a : _ {isSome a}) = y.ltail in a^@h2 == h.ltail^@h1);
-    assert (let hnodes, ynodes = reveal h.nodes, reveal y.nodes in
-      forall i j. {:pattern (hnodes.[i] == ynodes.[j])}
-        j = i + 1 /\ i > 1 /\ j < length ynodes ==> hnodes.[i] == ynodes.[j]);
-    assert (Seq.length (reveal h.nodes) + 1 = Seq.length (reveal y.nodes));
-    admit ();
-    assert (Seq.last (reveal h.nodes) == Seq.last (reveal y.nodes)); // this fails for some reason
-    admit ();
-    assert (let nodes = reveal y.nodes in
-            let len = length nodes in
-            y.ltail^@h2 == nodes.[len-1]); // Unable to prove this for some reason
+    // assert (let (a : _ {isSome a}) = y.ltail in sel h1 (getSome a) == sel h2 (getSome a));
+    // assert (let (a : _ {isSome a}) = y.ltail in a^@h2 == h.ltail^@h1);
+    // assert (let hnodes, ynodes = reveal h.nodes, reveal y.nodes in
+    //   forall i j. {:pattern (hnodes.[i] == ynodes.[j])}
+    //     j = i + 1 /\ i > 1 /\ j < length ynodes ==> hnodes.[i] == ynodes.[j]);
+    // assert (Seq.length (reveal h.nodes) + 1 = Seq.length (reveal y.nodes));
     // admit ();
-    assert (dlisthead_ghostly_connections h2 y);
-    assert (flink_valid h2 y);
-    assert (blink_valid h2 y);
+    // assert (Seq.last (reveal h.nodes) == Seq.last (reveal y.nodes)); // this fails for some reason
+    // admit ();
+    // assert (let nodes = reveal y.nodes in
+    //         let len = length nodes in
+    //         y.ltail^@h2 == nodes.[len-1]); // Unable to prove this for some reason
+    // // admit ();
+    // assert (dlisthead_ghostly_connections h2 y);
+    // assert (flink_valid h2 y);
+    // assert (blink_valid h2 y);
     admit ();
     y
   )
