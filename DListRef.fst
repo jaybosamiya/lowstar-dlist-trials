@@ -183,6 +183,9 @@ val ghost_tail_properties :
        j = i + 1 /\ 0 <= i /\ i < Seq.length t0 ==> t0.[i] == s0.[j]))
 let ghost_tail_properties #t s = ()
 
+let foo (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 1}) : Lemma
+  (Seq.last (reveal (ghost_tail s)) == Seq.last (reveal s)) = ()
+
 #set-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
 val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
@@ -205,84 +208,9 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   then (
     { lhead = Some e ; ltail = Some n ; nodes = !e ^+ ~. !n }
   ) else (
-    admit ();
+    // assume (Seq.length (reveal h.nodes) > 1); // for some reason, it can't deduce this
+    // admit ();
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = !e ^+ !n ^+ (ghost_tail h.nodes) } in
     let h2 = ST.get () in
-    // assert (y.ltail == h.ltail);
-    // assert (h.ltail^@h1 == h.ltail^@h2);
-    // assert (isSome y.ltail);
-    // assert (getSome y.ltail == getSome y.ltail);
-    // assert (let (a : _ {isSome a}) = y.ltail in sel h2 (getSome a) == sel h2 (getSome a));
-    // The (a: _ {...}) is a workaround for the two phase type checker error
-    // assert (let (a : _ {isSome a}) = y.ltail in sel h1 (getSome a) == sel h2 (getSome a));
-    // assert (let (a : _ {isSome a}) = y.ltail in a^@h2 == h.ltail^@h1);
-    // assert (let hnodes, ynodes = reveal h.nodes, reveal y.nodes in
-    //   forall i j. {:pattern (hnodes.[i] == ynodes.[j])}
-    //     j = i + 1 /\ i > 1 /\ j < length ynodes ==> hnodes.[i] == ynodes.[j]);
-    // assert (Seq.length (reveal h.nodes) + 1 = Seq.length (reveal y.nodes));
-    // admit ();
-    // assert (Seq.last (reveal h.nodes) == Seq.last (reveal y.nodes)); // this fails for some reason
-    // admit ();
-    // assert (let nodes = reveal y.nodes in
-    //         let len = length nodes in
-    //         y.ltail^@h2 == nodes.[len-1]); // Unable to prove this for some reason
-    // // admit ();
-    // assert (dlisthead_ghostly_connections h2 y);
-    // assert (flink_valid h2 y);
-    // assert (blink_valid h2 y);
-    admit ();
     y
   )
-
-let test () = ()
-
-(*
-val insertHeadList: #t:eqtype -> h:dlisthead t -> e:ref (dlist t) ->
-  ST (dlisthead t)
-    (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(member_of h0 h e)))
-    (ensures (fun _ y h2 -> dlisthead_is_valid h2 y))
-let insertHeadList #t h e =
-  if isNone h.lhead
-  then (
-    singletonlist e
-  ) else (
-    let h1 = ST.get () in
-    let n = getSome h.lhead in
-    n := { !n with blink = Some e };
-    let h1' = ST.get () in
-    e := { !e with blink = None ; flink = Some n };
-    let ghoste = hide !e in
-    let nodes = elift2 cons ghoste h.nodes in
-    let y = { lhead = Some e ; ltail = h.ltail ; nodes = nodes } in
-    let h2 = ST.get () in
-    // assert (isSome y.lhead /\ isSome y.ltail);
-    // assert (isNone (y.lhead^@h2).blink);
-    assert (isNone (y.ltail^@h2).flink); // OBSERVE
-    // assert (y.lhead^@h2 == (reveal y.nodes).[0]);
-    assert (h.ltail^@h1 == (reveal h.nodes).[length (reveal h.nodes) - 1]);
-    assert (h.ltail^@h1' == (reveal h.nodes).[length (reveal h.nodes) - 1]); // this fails. reason: what if the dlisthead is a singleton when we begin?
-    admit ();
-    assert (
-      let nodes = reveal y.nodes in
-      let len = length nodes in
-      let empty = (len = 0) in
-      ((isSome y.lhead /\ isSome y.ltail) /\
-       isNone (y.lhead^@h2).blink /\
-       isNone (y.ltail^@h2).flink /\
-        (y.lhead^@h2 == nodes.[0]) /\
-        (y.ltail^@h2 == nodes.[len-1]) /\
-        // (forall i. {:pattern (nodes.[i]).blink}
-        //    ((1 <= i /\ i < len) ==>
-        //     isSome (nodes.[i]).blink /\
-        //     (nodes.[i]).blink^@h2 == nodes.[i-1])) /\
-        // (forall i. {:pattern (nodes.[i]).flink}
-        //    ((0 <= i /\ i < len - 1) ==>
-        //     isSome (nodes.[i]).flink /\
-        //     (nodes.[i]).flink^@h2 == nodes.[i+1])) /\
-        True)
-     );
-     admit ();
-     y
-  )
-
-*)
