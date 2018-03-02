@@ -45,24 +45,24 @@ unfold let (^@) (a:option (ref 't){isSome a}) (h0:heap) = (getSome a) @ h0
 
 unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
 
-val not_aliased: #t:Type -> (a:option (ref t)) -> (b:option (ref t)) -> Type0
-let not_aliased #t a b =
+logic
+let not_aliased (#t:Type) (a:option (ref t)) (b:option (ref t)) : GTot Type0 =
   let _ = () in // UGLY workaround. See https://github.com/FStarLang/FStar/issues/638
   isNone a \/ isNone b \/
   addr_of (getSome a) <> addr_of (getSome b)
 
-val not_aliased0: #t:Type -> (a:ref t) -> (b:option (ref t)) -> Type0
-let not_aliased0 #t a b =
+logic
+let not_aliased0 (#t:Type) (a:ref t) (b:option (ref t)) : GTot Type0 =
   let _ = () in // UGLY workaround. See https://github.com/FStarLang/FStar/issues/638
   isNone b \/
   addr_of a <> addr_of (getSome b)
 
-val dlist_is_valid: #t:Type -> n:dlist t -> Type0
-let dlist_is_valid #t n =
+logic
+let dlist_is_valid (#t:Type) (n:dlist t) : GTot Type0 =
   not_aliased n.flink n.blink
 
-val flink_valid: #t:Type -> h0:heap -> h:dlisthead t -> Type0
-let flink_valid #t h0 h =
+logic
+let flink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
   (forall i. {:pattern (nodes.[i]).flink}
@@ -70,8 +70,8 @@ let flink_valid #t h0 h =
       isSome (nodes.[i]).flink /\
       (nodes.[i]).flink^@h0 == nodes.[i+1]))
 
-val blink_valid: #t:Type -> h0:heap -> h:dlisthead t -> Type0
-let blink_valid #t h0 h =
+logic
+let blink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
   (forall i. {:pattern (nodes.[i]).blink}
@@ -79,8 +79,8 @@ let blink_valid #t h0 h =
       isSome (nodes.[i]).blink /\
       (nodes.[i]).blink^@h0 == nodes.[i-1]))
 
-val dlisthead_ghostly_connections: #t:Type -> h0:heap -> h:dlisthead t -> Type0
-let dlisthead_ghostly_connections #t h0 h =
+logic
+let dlisthead_ghostly_connections (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
   let empty = (len = 0) in
@@ -91,32 +91,32 @@ let dlisthead_ghostly_connections #t h0 h =
     h.lhead^@h0 == nodes.[0] /\
     h.ltail^@h0 == nodes.[len-1])
 
-val elements_dont_alias1: #t:Type -> h:dlisthead t -> Type0
-let elements_dont_alias1 #t h =
+logic
+let elements_dont_alias1 (#t:Type) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   (forall i j. {:pattern (not_aliased (nodes.[i]).flink (nodes.[j]).flink)}
      i <> j ==> not_aliased (nodes.[i]).flink (nodes.[j]).flink)
 
-val elements_dont_alias2: #t:Type -> h:dlisthead t -> Type0
-let elements_dont_alias2 #t h =
+logic
+let elements_dont_alias2 (#t:Type) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   (forall i j. {:pattern (not_aliased (nodes.[i]).blink (nodes.[j]).blink)}
      i <> j ==> not_aliased (nodes.[i]).blink (nodes.[j]).blink)
 
-val elements_dont_alias: #t:Type -> h:dlisthead t -> Type0
-let elements_dont_alias #t h =
+logic
+let elements_dont_alias (#t:Type) (h:dlisthead t) : GTot Type0 =
   let _ = () in // UGLY workaround. See https://github.com/FStarLang/FStar/issues/638
   elements_dont_alias1 h /\
   elements_dont_alias2 h
 
-val elements_are_valid: #t:Type -> h:dlisthead t -> Type0
-let elements_are_valid #t h =
+logic
+let elements_are_valid (#t:Type) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   (forall i. {:pattern (dlist_is_valid nodes.[i])}
      dlist_is_valid nodes.[i])
 
-val dlisthead_is_valid: #t:Type -> h0:heap -> h:dlisthead t -> Type0
-let dlisthead_is_valid #t h0 h =
+logic
+let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
   let empty = (len = 0) in
@@ -137,10 +137,13 @@ let singletonlist #t e =
   e := { !e with blink = None; flink = None };
   { lhead = Some e ; ltail = Some e ; nodes = hide (Seq.create 1 (!e)) }
 
+logic
 let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot bool =
   Seq.mem (e@h0) (reveal h.nodes)
 
+logic
 let has_nothing_in (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot Type0 =
+  let _ = () in // UGLY workaround. See https://github.com/FStarLang/FStar/issues/638
   (~(member_of h0 h e)) /\
   (let nodes = reveal h.nodes in
    (forall i. {:pattern (nodes.[i]).flink}
@@ -204,26 +207,19 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   then (
     let y = { lhead = Some e ; ltail = Some n ; nodes = !e ^+ ~. !n } in
     let h2 = ST.get () in
-    assert(let h = y in let h0 = h2 in
-           // let nodes = reveal h.nodes in
-           // let len = length nodes in
-           // let empty = (len = 0) in
-           // dlisthead_ghostly_connections h0 h /\
-           // flink_valid h0 h /\
-           // blink_valid h0 h /\
-           // elements_are_valid h /\
-           // elements_dont_alias1 h /\
-           // elements_dont_alias2 h /\
-/// -------------------------------------------------------------------------------------------
-/// -------------------------------------------------------------------------------------------
-           True);
-           // (empty ==> isNone h.lhead /\ isNone h.ltail) /\
-           // (~empty ==> dlisthead_ghostly_connections h0 h /\
-           //             flink_valid h0 h /\
-           //             blink_valid h0 h)); // /\
-           // elements_are_valid h /\
-           // elements_dont_alias h);
-    // admit ();
+    assert (
+      let h0 = h2 in let h = y in
+      let nodes = reveal h.nodes in
+      let len = length nodes in
+      let empty = (len = 0) in
+      (~empty ==>
+       // dlisthead_ghostly_connections h0 h /\ // It is UNABLE to prove this??!???!??!
+       True) /\
+      // elements_are_valid h /\ // It is UNABLE to prove this?!
+      // elements_dont_alias h /\ // It is UNABLE to prove this?!
+      True
+    );
+    admit ();
     y
   ) else (
     admit ();
