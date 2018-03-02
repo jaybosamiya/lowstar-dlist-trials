@@ -24,7 +24,7 @@ unopteq
 type dlisthead (t:Type0) ={
   lhead: option (ref (dlist t));
   ltail: option (ref (dlist t));
-  nodes: erased (seq (dlist t));
+  nodes: erased (seq (ref (dlist t)));
 }
 
 (** Initialize an element of a doubly linked list *)
@@ -65,19 +65,17 @@ val flink_valid: #t:Type -> h0:heap -> h:dlisthead t -> Type0
 let flink_valid #t h0 h =
   let nodes = reveal h.nodes in
   let len = length nodes in
-  (forall i. {:pattern (nodes.[i]).flink}
+  (forall i. {:pattern (nodes.[i]@h0).flink}
      ((0 <= i /\ i < len - 1) ==>
-      isSome (nodes.[i]).flink /\
-      (nodes.[i]).flink^@h0 == nodes.[i+1]))
+      (nodes.[i]@h0).flink == Some nodes.[i+1]))
 
 val blink_valid: #t:Type -> h0:heap -> h:dlisthead t -> Type0
 let blink_valid #t h0 h =
   let nodes = reveal h.nodes in
   let len = length nodes in
-  (forall i. {:pattern (nodes.[i]).blink}
+  (forall i. {:pattern (nodes.[i]@h0).blink}
      ((1 <= i /\ i < len) ==>
-      isSome (nodes.[i]).blink /\
-      (nodes.[i]).blink^@h0 == nodes.[i-1]))
+      (nodes.[i]@h0).blink == Some nodes.[i-1]))
 
 val dlisthead_ghostly_connections: #t:Type -> h0:heap -> h:dlisthead t -> Type0
 let dlisthead_ghostly_connections #t h0 h =
@@ -88,39 +86,32 @@ let dlisthead_ghostly_connections #t h0 h =
     isSome h.lhead /\ isSome h.ltail /\
     isNone (h.lhead^@h0).blink /\
     isNone (h.ltail^@h0).flink /\
-    h.lhead^@h0 == nodes.[0] /\
-    h.ltail^@h0 == nodes.[len-1])
+    h.lhead == Some nodes.[0] /\
+    h.ltail == Some nodes.[len-1])
 
-val elements_dont_alias1: #t:Type -> h:dlisthead t -> Type0
-let elements_dont_alias1 #t h =
+val elements_dont_alias1: #t:Type -> h0:heap -> h:dlisthead t -> Type0
+let elements_dont_alias1 #t h0 h =
   let nodes = reveal h.nodes in
-  (forall i j. {:pattern (not_aliased (nodes.[i]).flink (nodes.[j]).flink)}
-     i <> j ==> not_aliased (nodes.[i]).flink (nodes.[j]).flink)
+  (forall i j. {:pattern (not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)}
+     i <> j ==> not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)
 
-val elements_dont_alias2: #t:Type -> h:dlisthead t -> Type0
-let elements_dont_alias2 #t h =
+val elements_dont_alias2: #t:Type -> h0:heap -> h:dlisthead t -> Type0
+let elements_dont_alias2 #t h0 h =
   let nodes = reveal h.nodes in
-  (forall i j. {:pattern (not_aliased (nodes.[i]).blink (nodes.[j]).blink)}
-     i <> j ==> not_aliased (nodes.[i]).blink (nodes.[j]).blink)
+  (forall i j. {:pattern (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)}
+     i <> j ==> not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)
 
-val elements_dont_alias3: #t:Type -> h:dlisthead t -> Type0
-let elements_dont_alias3 #t h =
-  let nodes = reveal h.nodes in
-  (forall i j. {:pattern (not_aliased (nodes.[i]).flink (nodes.[j]).blink)}
-     not_aliased (nodes.[i]).flink (nodes.[j]).blink)
-
-val elements_dont_alias: #t:Type -> h:dlisthead t -> Type0
-let elements_dont_alias #t h =
+val elements_dont_alias: #t:Type -> h0:heap -> h:dlisthead t -> Type0
+let elements_dont_alias #t h0 h =
   let _ = () in // UGLY workaround. See https://github.com/FStarLang/FStar/issues/638
-  elements_dont_alias1 h /\
-  elements_dont_alias2 h /\
-  elements_dont_alias3 h
+  elements_dont_alias1 h0 h /\
+  elements_dont_alias2 h0 h
 
-val elements_are_valid: #t:Type -> h:dlisthead t -> Type0
-let elements_are_valid #t h =
+val elements_are_valid: #t:Type -> h0:heap -> h:dlisthead t -> Type0
+let elements_are_valid #t h0 h =
   let nodes = reveal h.nodes in
-  (forall i. {:pattern (dlist_is_valid nodes.[i])}
-     dlist_is_valid nodes.[i])
+  (forall i. {:pattern (dlist_is_valid (nodes.[i]@h0))}
+     dlist_is_valid (nodes.[i]@h0))
 
 val dlisthead_is_valid: #t:Type -> h0:heap -> h:dlisthead t -> Type0
 let dlisthead_is_valid #t h0 h =
@@ -131,8 +122,8 @@ let dlisthead_is_valid #t h0 h =
   (~empty ==> dlisthead_ghostly_connections h0 h /\
               flink_valid h0 h /\
               blink_valid h0 h) /\
-  elements_are_valid h /\
-  elements_dont_alias h
+  elements_are_valid h0 h /\
+  elements_dont_alias h0 h
 
 let test1 () : Tot unit = assert (forall h0 t. dlisthead_is_valid h0 (empty_list #t))
 
@@ -142,22 +133,25 @@ val singletonlist: #t:eqtype -> e:ref (dlist t) ->
   (ensures (fun h0 y h1 -> modifies (only e) h0 h1 /\ dlisthead_is_valid h1 y))
 let singletonlist #t e =
   e := { !e with blink = None; flink = None };
-  { lhead = Some e ; ltail = Some e ; nodes = hide (Seq.create 1 (!e)) }
+  { lhead = Some e ; ltail = Some e ; nodes = hide (Seq.create 1 e) }
 
-let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot bool =
-  Seq.mem (e@h0) (reveal h.nodes)
+let member_of (#t:eqtype) (h:dlisthead t) (e:ref (dlist t)) : GTot Type0 =
+  (exists x. {:pattern (addr_of e = addr_of x)}
+     Seq.contains (reveal h.nodes) x /\ addr_of e = addr_of x)
 
+// logic
 let has_nothing_in (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot Type0 =
-  (~(member_of h0 h e)) /\
   (let nodes = reveal h.nodes in
-   (forall i. {:pattern (nodes.[i]).flink}
-      (not_aliased0 e (nodes.[i]).flink /\
-       not_aliased (e@h0).flink (nodes.[i]).flink /\
-       not_aliased (e@h0).blink (nodes.[i]).flink)) /\
-   (forall i. {:pattern (nodes.[i]).blink}
-      (not_aliased0 e (nodes.[i]).blink) /\
-      not_aliased (e@h0).flink (nodes.[i]).blink /\
-      not_aliased (e@h0).blink (nodes.[i]).blink))
+   (forall i. {:pattern (addr_of nodes.[i])}
+      addr_of e <> addr_of nodes.[i]) /\
+   (forall i. {:pattern (nodes.[i]@h0).flink}
+      (not_aliased0 e (nodes.[i]@h0).flink /\
+       not_aliased (e@h0).flink (nodes.[i]@h0).flink /\
+       not_aliased (e@h0).blink (nodes.[i]@h0).flink)) /\
+   (forall i. {:pattern (nodes.[i]@h0).blink}
+      (not_aliased0 e (nodes.[i]@h0).blink) /\
+      not_aliased (e@h0).flink (nodes.[i]@h0).blink /\
+      not_aliased (e@h0).blink (nodes.[i]@h0).blink))
 
 type nonempty_dlisthead t = (h:dlisthead t{isSome h.lhead /\ isSome h.ltail})
 
@@ -171,7 +165,7 @@ val dlisthead_make_valid_singleton: #t:eqtype -> h:nonempty_dlisthead t ->
     (ensures (fun h1 y h2 -> modifies_none h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_make_valid_singleton #t h =
   let Some e = h.lhead in
-  { h with ltail = h.lhead ; nodes = ~. !e }
+  { h with ltail = h.lhead ; nodes = ~. e }
 
 unfold let ghost_tail (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
   hide (Seq.tail (reveal s))
@@ -203,115 +197,25 @@ val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t
     (ensures (fun h1 y h2 -> modifies (e ^+^ (getSome h.lhead)) h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t)) =
   let h1 = ST.get () in
+  assert (has_nothing_in h1 h e);
+  // admit ();
+  assert (
+    let nodes = reveal h.nodes in
+    forall i. addr_of e <> addr_of nodes.[i]);
+  assert (
+    let nodes = reveal h.nodes in
+    addr_of e <> addr_of nodes.[0]);
+  admit ();
   let Some n = h.lhead in
   e := { !e with blink = None; flink = Some n };
   let previously_singleton = compare_addrs n (getSome h.ltail) in
   n := { !n with blink = Some e };
   if previously_singleton
   then (
-    let y = { lhead = Some e ; ltail = Some n ; nodes = !e ^+ ~. !n } in
-    let h2 = ST.get () in
-    assert(let h = y in let h0 = h2 in
-           // let nodes = reveal h.nodes in
-           // let len = length nodes in
-           // let empty = (len = 0) in
-           // dlisthead_ghostly_connections h0 h /\
-           // flink_valid h0 h /\
-           // blink_valid h0 h /\
-           // elements_are_valid h /\
-           // elements_dont_alias1 h /\
-           // elements_dont_alias2 h /\
-/// -------------------------------------------------------------------------------------------
-           elements_dont_alias3 h /\ // this is what fails
-/// -------------------------------------------------------------------------------------------
-           True);
-           // (empty ==> isNone h.lhead /\ isNone h.ltail) /\
-           // (~empty ==> dlisthead_ghostly_connections h0 h /\
-           //             flink_valid h0 h /\
-           //             blink_valid h0 h)); // /\
-           // elements_are_valid h /\
-           // elements_dont_alias h);
-    admit ();
+    let y = { lhead = Some e ; ltail = Some n ; nodes = e ^+ ~. n } in
     y
   ) else (
     admit ();
-    let y = { lhead = Some e ; ltail = h.ltail ; nodes = !e ^+ !n ^+ (ghost_tail h.nodes) } in
-    let h2 = ST.get () in
-    // assert (y.ltail == h.ltail);
-    // assert (h.ltail^@h1 == h.ltail^@h2);
-    // assert (isSome y.ltail);
-    // assert (getSome y.ltail == getSome y.ltail);
-    // assert (let (a : _ {isSome a}) = y.ltail in sel h2 (getSome a) == sel h2 (getSome a));
-    // The (a: _ {...}) is a workaround for the two phase type checker error
-    // assert (let (a : _ {isSome a}) = y.ltail in sel h1 (getSome a) == sel h2 (getSome a));
-    // assert (let (a : _ {isSome a}) = y.ltail in a^@h2 == h.ltail^@h1);
-    // assert (let hnodes, ynodes = reveal h.nodes, reveal y.nodes in
-    //   forall i j. {:pattern (hnodes.[i] == ynodes.[j])}
-    //     j = i + 1 /\ i > 1 /\ j < length ynodes ==> hnodes.[i] == ynodes.[j]);
-    // assert (Seq.length (reveal h.nodes) + 1 = Seq.length (reveal y.nodes));
-    // admit ();
-    // assert (Seq.last (reveal h.nodes) == Seq.last (reveal y.nodes)); // this fails for some reason
-    // admit ();
-    // assert (let nodes = reveal y.nodes in
-    //         let len = length nodes in
-    //         y.ltail^@h2 == nodes.[len-1]); // Unable to prove this for some reason
-    // // admit ();
-    // assert (dlisthead_ghostly_connections h2 y);
-    // assert (flink_valid h2 y);
-    // assert (blink_valid h2 y);
-    admit ();
+    let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ n ^+ (ghost_tail h.nodes) } in
     y
   )
-
-let test () = ()
-
-(*
-val insertHeadList: #t:eqtype -> h:dlisthead t -> e:ref (dlist t) ->
-  ST (dlisthead t)
-    (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(member_of h0 h e)))
-    (ensures (fun _ y h2 -> dlisthead_is_valid h2 y))
-let insertHeadList #t h e =
-  if isNone h.lhead
-  then (
-    singletonlist e
-  ) else (
-    let h1 = ST.get () in
-    let n = getSome h.lhead in
-    n := { !n with blink = Some e };
-    let h1' = ST.get () in
-    e := { !e with blink = None ; flink = Some n };
-    let ghoste = hide !e in
-    let nodes = elift2 cons ghoste h.nodes in
-    let y = { lhead = Some e ; ltail = h.ltail ; nodes = nodes } in
-    let h2 = ST.get () in
-    // assert (isSome y.lhead /\ isSome y.ltail);
-    // assert (isNone (y.lhead^@h2).blink);
-    assert (isNone (y.ltail^@h2).flink); // OBSERVE
-    // assert (y.lhead^@h2 == (reveal y.nodes).[0]);
-    assert (h.ltail^@h1 == (reveal h.nodes).[length (reveal h.nodes) - 1]);
-    assert (h.ltail^@h1' == (reveal h.nodes).[length (reveal h.nodes) - 1]); // this fails. reason: what if the dlisthead is a singleton when we begin?
-    admit ();
-    assert (
-      let nodes = reveal y.nodes in
-      let len = length nodes in
-      let empty = (len = 0) in
-      ((isSome y.lhead /\ isSome y.ltail) /\
-       isNone (y.lhead^@h2).blink /\
-       isNone (y.ltail^@h2).flink /\
-        (y.lhead^@h2 == nodes.[0]) /\
-        (y.ltail^@h2 == nodes.[len-1]) /\
-        // (forall i. {:pattern (nodes.[i]).blink}
-        //    ((1 <= i /\ i < len) ==>
-        //     isSome (nodes.[i]).blink /\
-        //     (nodes.[i]).blink^@h2 == nodes.[i-1])) /\
-        // (forall i. {:pattern (nodes.[i]).flink}
-        //    ((0 <= i /\ i < len - 1) ==>
-        //     isSome (nodes.[i]).flink /\
-        //     (nodes.[i]).flink^@h2 == nodes.[i+1])) /\
-        True)
-     );
-     admit ();
-     y
-  )
-
-*)
