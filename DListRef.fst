@@ -208,9 +208,10 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   then (
     { lhead = Some e ; ltail = Some n ; nodes = !e ^+ ~. !n }
   ) else (
-    // assume (Seq.length (reveal h.nodes) > 1); // for some reason, it can't deduce this
-    // admit ();
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = !e ^+ !n ^+ (ghost_tail h.nodes) } in
     let h2 = ST.get () in
+    assume (Seq.length (reveal h.nodes) > 1); // for some reason, it can't deduce this
+    // assert (dlisthead_ghostly_connections h2 y); // works with the above assume
+    assume (blink_valid h2 y); // Unable to deduce this for some reason
     y
   )
