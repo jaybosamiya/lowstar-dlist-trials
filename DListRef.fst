@@ -45,15 +45,13 @@ unfold let (^@) (a:option (ref 't){isSome a}) (h0:heap) = (getSome a) @ h0
 
 unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
 
-logic
+// logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let not_aliased (#t:Type) (a:option (ref t)) (b:option (ref t)) : GTot Type0 =
-  let _ = () in // UGLY workaround. See https://github.com/FStarLang/FStar/issues/638
   isNone a \/ isNone b \/
   addr_of (getSome a) <> addr_of (getSome b)
 
-logic
+// logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let not_aliased0 (#t:Type) (a:ref t) (b:option (ref t)) : GTot Type0 =
-  let _ = () in // UGLY workaround. See https://github.com/FStarLang/FStar/issues/638
   isNone b \/
   addr_of a <> addr_of (getSome b)
 
@@ -103,9 +101,8 @@ let elements_dont_alias2 (#t:Type) (h:dlisthead t) : GTot Type0 =
   (forall i j. {:pattern (not_aliased (nodes.[i]).blink (nodes.[j]).blink)}
      i <> j ==> not_aliased (nodes.[i]).blink (nodes.[j]).blink)
 
-logic
+// logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let elements_dont_alias (#t:Type) (h:dlisthead t) : GTot Type0 =
-  let _ = () in // UGLY workaround. See https://github.com/FStarLang/FStar/issues/638
   elements_dont_alias1 h /\
   elements_dont_alias2 h
 
@@ -141,9 +138,8 @@ logic
 let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot bool =
   Seq.mem (e@h0) (reveal h.nodes)
 
-logic
+// logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let has_nothing_in (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot Type0 =
-  let _ = () in // UGLY workaround. See https://github.com/FStarLang/FStar/issues/638
   (~(member_of h0 h e)) /\
   (let nodes = reveal h.nodes in
    (forall i. {:pattern (nodes.[i]).flink}
