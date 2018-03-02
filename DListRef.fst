@@ -203,22 +203,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   n := { !n with blink = Some e };
   if previously_singleton
   then (
-    let y = { lhead = Some e ; ltail = Some n ; nodes = !e ^+ ~. !n } in
-    let h2 = ST.get () in
-    assert (
-      let h0 = h2 in let h = y in
-      let nodes = reveal h.nodes in
-      let len = length nodes in
-      let empty = (len = 0) in
-      (~empty ==>
-       // dlisthead_ghostly_connections h0 h /\ // It is UNABLE to prove this??!???!??!
-       True) /\
-      // elements_are_valid h /\ // It is UNABLE to prove this?!
-      // elements_dont_alias h /\ // It is UNABLE to prove this?!
-      True
-    );
-    admit ();
-    y
+    { lhead = Some e ; ltail = Some n ; nodes = !e ^+ ~. !n }
   ) else (
     admit ();
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = !e ^+ !n ^+ (ghost_tail h.nodes) } in
