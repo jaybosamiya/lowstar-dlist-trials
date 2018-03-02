@@ -113,6 +113,13 @@ let elements_are_valid (#t:Type) (h:dlisthead t) : GTot Type0 =
      dlist_is_valid nodes.[i])
 
 logic
+let all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
+    let nodes = reveal h.nodes in
+    (forall i j. {:pattern (nodes.[i] =!= nodes.[j])}
+       (0 <= i /\ i < j /\ j < Seq.length nodes) ==>
+     nodes.[i] =!= nodes.[j])
+
+logic
 let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
@@ -122,7 +129,8 @@ let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
               flink_valid h0 h /\
               blink_valid h0 h) /\
   elements_are_valid h /\
-  elements_dont_alias h
+  elements_dont_alias h /\
+  all_elements_distinct h0 h
 
 let test1 () : Tot unit = assert (forall h0 t. dlisthead_is_valid h0 (empty_list #t))
 
@@ -208,6 +216,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   then (
     { lhead = Some e ; ltail = Some n ; nodes = !e ^+ ~. !n }
   ) else (
+    admit ();
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = !e ^+ !n ^+ (ghost_tail h.nodes) } in
     let h2 = ST.get () in
     assume (Seq.length (reveal h.nodes) > 1); // for some reason, it can't deduce this
