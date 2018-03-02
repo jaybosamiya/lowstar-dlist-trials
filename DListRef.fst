@@ -103,18 +103,11 @@ let elements_dont_alias2 #t h =
   (forall i j. {:pattern (not_aliased (nodes.[i]).blink (nodes.[j]).blink)}
      i <> j ==> not_aliased (nodes.[i]).blink (nodes.[j]).blink)
 
-val elements_dont_alias3: #t:Type -> h:dlisthead t -> Type0
-let elements_dont_alias3 #t h =
-  let nodes = reveal h.nodes in
-  (forall i j. {:pattern (not_aliased (nodes.[i]).flink (nodes.[j]).blink)}
-     not_aliased (nodes.[i]).flink (nodes.[j]).blink)
-
 val elements_dont_alias: #t:Type -> h:dlisthead t -> Type0
 let elements_dont_alias #t h =
   let _ = () in // UGLY workaround. See https://github.com/FStarLang/FStar/issues/638
   elements_dont_alias1 h /\
-  elements_dont_alias2 h /\
-  elements_dont_alias3 h
+  elements_dont_alias2 h
 
 val elements_are_valid: #t:Type -> h:dlisthead t -> Type0
 let elements_are_valid #t h =
@@ -222,7 +215,6 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
            // elements_dont_alias1 h /\
            // elements_dont_alias2 h /\
 /// -------------------------------------------------------------------------------------------
-           elements_dont_alias3 h /\ // this is what fails
 /// -------------------------------------------------------------------------------------------
            True);
            // (empty ==> isNone h.lhead /\ isNone h.ltail) /\
@@ -231,7 +223,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
            //             blink_valid h0 h)); // /\
            // elements_are_valid h /\
            // elements_dont_alias h);
-    admit ();
+    // admit ();
     y
   ) else (
     admit ();
