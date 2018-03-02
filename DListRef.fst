@@ -141,6 +141,8 @@ let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot boo
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let has_nothing_in (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot Type0 =
   (~(member_of h0 h e)) /\
+  (not_aliased0 e h.lhead) /\
+  (not_aliased0 e h.ltail) /\
   (let nodes = reveal h.nodes in
    (forall i. {:pattern (nodes.[i]).flink}
       (not_aliased0 e (nodes.[i]).flink /\
