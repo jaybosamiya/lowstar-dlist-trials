@@ -59,24 +59,25 @@ logic
 let dlist_is_valid (#t:Type) (n:dlist t) : GTot Type0 =
   not_aliased n.flink n.blink
 
-unfold let (==$) (#t:Type) (a:option (ref t){isSome a}) (b:ref t) = addr_of (getSome a) = addr_of b
+unfold
+let (==$) (#t:Type) (a:option (ref t)) (b:ref t) =
+  isSome a /\
+  addr_of (getSome a) = addr_of b
 
 logic
 let flink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
-  (forall i. {:pattern (nodes.[i]@h0).flink}
+  (forall i. {:pattern ((nodes.[i]@h0).flink ==$ nodes.[i+1])}
      ((0 <= i /\ i < len - 1) ==>
-      isSome (nodes.[i]@h0).flink /\
       (nodes.[i]@h0).flink ==$ nodes.[i+1]))
 
 logic
 let blink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
-  (forall i. {:pattern (nodes.[i]@h0).blink}
+  (forall i. {:pattern ((nodes.[i]@h0).blink ==$ nodes.[i-1])}
      ((1 <= i /\ i < len) ==>
-      isSome (nodes.[i]@h0).blink /\
       (nodes.[i]@h0).blink ==$ nodes.[i-1]))
 
 logic
@@ -85,23 +86,24 @@ let dlisthead_ghostly_connections (#t:Type) (h0:heap) (h:dlisthead t) : GTot Typ
   let len = length nodes in
   let empty = (len = 0) in
   ~empty ==> (
-    isSome h.lhead /\ isSome h.ltail /\
-    isNone (h.lhead^@h0).blink /\
-    isNone (h.ltail^@h0).flink /\
     h.lhead ==$ nodes.[0] /\
-    h.ltail ==$ nodes.[len-1])
+    h.ltail ==$ nodes.[len-1] /\
+    isNone (h.lhead^@h0).blink /\
+    isNone (h.ltail^@h0).flink)
 
 logic
 let elements_dont_alias1 (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)}
-     i <> j ==> not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)
+     0 < i /\ i < j /\ j < length nodes ==>
+   not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)
 
 logic
 let elements_dont_alias2 (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)}
-     i <> j ==> not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)
+     0 < i /\ i < j /\ j < length nodes ==>
+   not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let elements_dont_alias (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -119,7 +121,7 @@ let all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
     let nodes = reveal h.nodes in
     (forall i j. {:pattern (nodes.[i]@h0 =!= nodes.[j]@h0)}
        (0 <= i /\ i < j /\ j < Seq.length nodes) ==>
-     nodes.[i]@h0 =!= nodes.[j]@h0)
+     addr_of nodes.[i] <> addr_of nodes.[j])
 
 logic
 let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -229,27 +231,27 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   ) else (
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ n ^+ (ghost_tail h.nodes) } in
     let h2 = ST.get () in
-    assert (isSome ((reveal h.nodes).[0]@h1).flink); // OBSERVE
-    assert (forall i. {:pattern isSome ((reveal h.nodes).[i]@h1).flink}
-              0 <= i /\ i < length (reveal h.nodes) - 1 ==>
-            isSome ((reveal h.nodes).[i]@h1).flink); // OBSERVE
-    assert (forall i. {:pattern isSome ((reveal y.nodes).[i]@h2).flink}
-              2 <= i /\ i < length (reveal y.nodes) - 1 ==>
-            isSome ((reveal y.nodes).[i]@h2).flink); // OBSERVE
-    assert (
-      let h0, h = h2, y in
-      let nodes = reveal h.nodes in
-      let len = length nodes in
-      (forall i. {:pattern (nodes.[i]@h0).flink}
-         ((0 <= i /\ i < len - 1) ==>
-          isSome (nodes.[i]@h0).flink /\
-          (nodes.[i]@h0).flink ==$ nodes.[i+1]))); // OBSERVE -- Though why? Shouldn't calling flink_valid automatically do this?!
-    assert (flink_valid h2 y);
+    // assert (isSome ((reveal h.nodes).[0]@h1).flink); // OBSERVE
+    // assert (forall i. {:pattern isSome ((reveal h.nodes).[i]@h1).flink}
+    //           0 <= i /\ i < length (reveal h.nodes) - 1 ==>
+    //         isSome ((reveal h.nodes).[i]@h1).flink); // OBSERVE
+    // assert (forall i. {:pattern isSome ((reveal y.nodes).[i]@h2).flink}
+    //           2 <= i /\ i < length (reveal y.nodes) - 1 ==>
+    //         isSome ((reveal y.nodes).[i]@h2).flink); // OBSERVE
+    // assert (
+    //   let h0, h = h2, y in
+    //   let nodes = reveal h.nodes in
+    //   let len = length nodes in
+    //   (forall i. {:pattern (nodes.[i]@h0).flink}
+    //      ((0 <= i /\ i < len - 1) ==>
+    //       isSome (nodes.[i]@h0).flink /\
+    //       (nodes.[i]@h0).flink ==$ nodes.[i+1]))); // OBSERVE -- Though why? Shouldn't calling flink_valid automatically do this?!
+    // assert (flink_valid h2 y);
 
     admit ();
-    assume (blink_valid h2 y); // TODO: Figure out why it is unable to prove
-    assume (elements_are_valid h2 y); // TODO: Figure out why it is unable to prove
-    assume (elements_dont_alias h2 y); // TODO: Figure out why it is unable to prove
-    assume (all_elements_distinct h2 y); // TODO: Figure out why it is unable to prove
+    // assume (blink_valid h2 y); // TODO: Figure out why it is unable to prove
+    // assume (elements_are_valid h2 y); // TODO: Figure out why it is unable to prove
+    // assume (elements_dont_alias h2 y); // TODO: Figure out why it is unable to prove
+    // assume (all_elements_distinct h2 y); // TODO: Figure out why it is unable to prove
     y
   )
