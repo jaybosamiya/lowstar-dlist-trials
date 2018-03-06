@@ -229,7 +229,34 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   ) else (
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ n ^+ (ghost_tail h.nodes) } in
     let h2 = ST.get () in
-    assume (flink_valid h2 y); // TODO: Figure out why it is unable to prove
+    assert (isSome ((reveal h.nodes).[0]@h1).flink); // OBSERVE
+    // assert (isSome (e@h2).flink);
+    // assert (isSome (n@h2).flink);
+    // assert (forall i. {:pattern isSome ((reveal y.nodes).[i]@h2).flink}
+    //           0 <= i /\ i < 2 ==>
+    //         isSome ((reveal y.nodes).[i]@h2).flink);
+    // assert (forall i. {:pattern (reveal y.nodes).[i]}
+    //           2 <= i /\ i < length (reveal y.nodes) ==>
+    //         (reveal y.nodes).[i] == (reveal h.nodes).[i-1]);
+    assert (forall i. {:pattern isSome ((reveal h.nodes).[i]@h1).flink}
+              0 <= i /\ i < length (reveal h.nodes) - 1 ==>
+            isSome ((reveal h.nodes).[i]@h1).flink);
+    assert (forall i. {:pattern isSome ((reveal y.nodes).[i]@h2).flink}
+              2 <= i /\ i < length (reveal y.nodes) - 1 ==>
+            isSome ((reveal y.nodes).[i]@h2).flink);
+    // admit ();
+    assert (
+      let h0, h = h2, y in
+      let nodes = reveal h.nodes in
+      let len = length nodes in
+      (forall i. {:pattern (nodes.[i]@h0).flink}
+         ((0 <= i /\ i < len - 1) ==>
+          isSome (nodes.[i]@h0).flink /\
+          (nodes.[i]@h0).flink ==$ nodes.[i+1])));
+
+    assert (flink_valid h2 y);
+
+    admit ();
     assume (blink_valid h2 y); // TODO: Figure out why it is unable to prove
     assume (elements_are_valid h2 y); // TODO: Figure out why it is unable to prove
     assume (elements_dont_alias h2 y); // TODO: Figure out why it is unable to prove
