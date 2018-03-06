@@ -236,7 +236,6 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
     assert (forall i. {:pattern isSome ((reveal y.nodes).[i]@h2).flink}
               2 <= i /\ i < length (reveal y.nodes) - 1 ==>
             isSome ((reveal y.nodes).[i]@h2).flink); // OBSERVE
-    // admit ();
     assert (
       let h0, h = h2, y in
       let nodes = reveal h.nodes in
@@ -244,8 +243,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
       (forall i. {:pattern (nodes.[i]@h0).flink}
          ((0 <= i /\ i < len - 1) ==>
           isSome (nodes.[i]@h0).flink /\
-          (nodes.[i]@h0).flink ==$ nodes.[i+1])));
-
+          (nodes.[i]@h0).flink ==$ nodes.[i+1]))); // OBSERVE -- Though why? Shouldn't calling flink_valid automatically do this?!
     assert (flink_valid h2 y);
 
     admit ();
