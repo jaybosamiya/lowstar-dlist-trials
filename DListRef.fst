@@ -196,6 +196,26 @@ let foo (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 1}) : Lemma
 
 #set-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
+val nonempty_nonsingleton_properties :
+  #t:Type ->
+  h:nonempty_dlisthead t ->
+  ST unit
+    (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(compare_addrs (getSome h.lhead) (getSome h.ltail))))
+    (ensures (fun h0 _ h1 -> h0 == h1 /\ Seq.length (reveal h.nodes) > 1))
+
+let nonempty_nonsingleton_properties #t h =
+  let h0 = ST.get () in
+  let len = length (reveal h.nodes) in
+  let a, z = getSome h.lhead, getSome h.ltail in
+  // assert (a =!= z);
+  // assert (a@h0 == (reveal h.nodes).[0]);
+  // assert (z@h0 == (reveal h.nodes).[len-1]);
+  assert (addr_of a <> addr_of z);
+  assert (~(a@h0 === z@h0));
+  // assert (0 <> len - 1);
+  admit
+  ()
+
 val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
   Lemma (let r = a ^+ b in
          forall i j. {:pattern ((reveal b).[i] == (reveal r).[j])}
