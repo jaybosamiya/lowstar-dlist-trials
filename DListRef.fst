@@ -24,7 +24,7 @@ unopteq
 type dlisthead (t:Type0) ={
   lhead: option (ref (dlist t));
   ltail: option (ref (dlist t));
-  nodes: erased (seq (dlist t));
+  nodes: erased (seq (ref (dlist t)));
 }
 
 (** Initialize an element of a doubly linked list *)
@@ -59,23 +59,25 @@ logic
 let dlist_is_valid (#t:Type) (n:dlist t) : GTot Type0 =
   not_aliased n.flink n.blink
 
+unfold let (==$) (#t:Type) (a:option (ref t){isSome a}) (b:ref t) = addr_of (getSome a) = addr_of b
+
 logic
 let flink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
-  (forall i. {:pattern (nodes.[i]).flink}
+  (forall i. {:pattern (nodes.[i]@h0).flink}
      ((0 <= i /\ i < len - 1) ==>
-      isSome (nodes.[i]).flink /\
-      (nodes.[i]).flink^@h0 == nodes.[i+1]))
+      isSome (nodes.[i]@h0).flink /\
+      (nodes.[i]@h0).flink ==$ nodes.[i+1]))
 
 logic
 let blink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
-  (forall i. {:pattern (nodes.[i]).blink}
+  (forall i. {:pattern (nodes.[i]@h0).blink}
      ((1 <= i /\ i < len) ==>
-      isSome (nodes.[i]).blink /\
-      (nodes.[i]).blink^@h0 == nodes.[i-1]))
+      isSome (nodes.[i]@h0).blink /\
+      (nodes.[i]@h0).blink ==$ nodes.[i-1]))
 
 logic
 let dlisthead_ghostly_connections (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -86,38 +88,38 @@ let dlisthead_ghostly_connections (#t:Type) (h0:heap) (h:dlisthead t) : GTot Typ
     isSome h.lhead /\ isSome h.ltail /\
     isNone (h.lhead^@h0).blink /\
     isNone (h.ltail^@h0).flink /\
-    h.lhead^@h0 == nodes.[0] /\
-    h.ltail^@h0 == nodes.[len-1])
+    h.lhead ==$ nodes.[0] /\
+    h.ltail ==$ nodes.[len-1])
 
 logic
-let elements_dont_alias1 (#t:Type) (h:dlisthead t) : GTot Type0 =
+let elements_dont_alias1 (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
-  (forall i j. {:pattern (not_aliased (nodes.[i]).flink (nodes.[j]).flink)}
-     i <> j ==> not_aliased (nodes.[i]).flink (nodes.[j]).flink)
+  (forall i j. {:pattern (not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)}
+     i <> j ==> not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)
 
 logic
-let elements_dont_alias2 (#t:Type) (h:dlisthead t) : GTot Type0 =
+let elements_dont_alias2 (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
-  (forall i j. {:pattern (not_aliased (nodes.[i]).blink (nodes.[j]).blink)}
-     i <> j ==> not_aliased (nodes.[i]).blink (nodes.[j]).blink)
+  (forall i j. {:pattern (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)}
+     i <> j ==> not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
-let elements_dont_alias (#t:Type) (h:dlisthead t) : GTot Type0 =
-  elements_dont_alias1 h /\
-  elements_dont_alias2 h
+let elements_dont_alias (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
+  elements_dont_alias1 h0 h /\
+  elements_dont_alias2 h0 h
 
 logic
-let elements_are_valid (#t:Type) (h:dlisthead t) : GTot Type0 =
+let elements_are_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
-  (forall i. {:pattern (dlist_is_valid nodes.[i])}
-     dlist_is_valid nodes.[i])
+  (forall i. {:pattern (dlist_is_valid (nodes.[i]@h0))}
+     dlist_is_valid (nodes.[i]@h0))
 
 logic
 let all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
     let nodes = reveal h.nodes in
-    (forall i j. {:pattern (nodes.[i] =!= nodes.[j])}
+    (forall i j. {:pattern (nodes.[i]@h0 =!= nodes.[j]@h0)}
        (0 <= i /\ i < j /\ j < Seq.length nodes) ==>
-     nodes.[i] =!= nodes.[j])
+     nodes.[i]@h0 =!= nodes.[j]@h0)
 
 logic
 let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -128,8 +130,8 @@ let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   (~empty ==> dlisthead_ghostly_connections h0 h /\
               flink_valid h0 h /\
               blink_valid h0 h) /\
-  elements_are_valid h /\
-  elements_dont_alias h /\
+  elements_are_valid h0 h /\
+  elements_dont_alias h0 h /\
   all_elements_distinct h0 h
 
 let test1 () : Tot unit = assert (forall h0 t. dlisthead_is_valid h0 (empty_list #t))
@@ -140,11 +142,13 @@ val singletonlist: #t:eqtype -> e:ref (dlist t) ->
   (ensures (fun h0 y h1 -> modifies (only e) h0 h1 /\ dlisthead_is_valid h1 y))
 let singletonlist #t e =
   e := { !e with blink = None; flink = None };
-  { lhead = Some e ; ltail = Some e ; nodes = hide (Seq.create 1 (!e)) }
+  { lhead = Some e ; ltail = Some e ; nodes = hide (Seq.create 1 e) }
 
 logic
 let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot bool =
-  Seq.mem (e@h0) (reveal h.nodes)
+  let cmp x : GTot bool = addr_of x = addr_of e in
+  let r = Seq.ghost_find_l cmp (reveal h.nodes) in
+  isSome r
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let has_nothing_in (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot Type0 =
@@ -152,14 +156,14 @@ let has_nothing_in (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTo
   (not_aliased0 e h.lhead) /\
   (not_aliased0 e h.ltail) /\
   (let nodes = reveal h.nodes in
-   (forall i. {:pattern (nodes.[i]).flink}
-      (not_aliased0 e (nodes.[i]).flink /\
-       not_aliased (e@h0).flink (nodes.[i]).flink /\
-       not_aliased (e@h0).blink (nodes.[i]).flink)) /\
-   (forall i. {:pattern (nodes.[i]).blink}
-      (not_aliased0 e (nodes.[i]).blink) /\
-      not_aliased (e@h0).flink (nodes.[i]).blink /\
-      not_aliased (e@h0).blink (nodes.[i]).blink))
+   (forall i. {:pattern (nodes.[i]@h0).flink}
+      (not_aliased0 e (nodes.[i]@h0).flink /\
+       not_aliased (e@h0).flink (nodes.[i]@h0).flink /\
+       not_aliased (e@h0).blink (nodes.[i]@h0).flink)) /\
+   (forall i. {:pattern (nodes.[i]@h0).blink}
+      (not_aliased0 e (nodes.[i]@h0).blink) /\
+      not_aliased (e@h0).flink (nodes.[i]@h0).blink /\
+      not_aliased (e@h0).blink (nodes.[i]@h0).blink))
 
 type nonempty_dlisthead t = (h:dlisthead t{isSome h.lhead /\ isSome h.ltail})
 
@@ -173,7 +177,7 @@ val dlisthead_make_valid_singleton: #t:eqtype -> h:nonempty_dlisthead t ->
     (ensures (fun h1 y h2 -> modifies_none h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_make_valid_singleton #t h =
   let Some e = h.lhead in
-  { h with ltail = h.lhead ; nodes = ~. !e }
+  { h with ltail = h.lhead ; nodes = ~. e }
 
 unfold let ghost_tail (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
   hide (Seq.tail (reveal s))
@@ -203,19 +207,6 @@ val nonempty_nonsingleton_properties :
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(compare_addrs (getSome h.lhead) (getSome h.ltail))))
     (ensures (fun h0 _ h1 -> h0 == h1 /\ Seq.length (reveal h.nodes) > 1))
 
-let nonempty_nonsingleton_properties #t h =
-  let h0 = ST.get () in
-  let len = length (reveal h.nodes) in
-  let a, z = getSome h.lhead, getSome h.ltail in
-  // assert (a =!= z);
-  // assert (a@h0 == (reveal h.nodes).[0]);
-  // assert (z@h0 == (reveal h.nodes).[len-1]);
-  assert (addr_of a <> addr_of z);
-  assert (~(a@h0 === z@h0));
-  // assert (0 <> len - 1);
-  admit
-  ()
-
 val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
   Lemma (let r = a ^+ b in
          forall i j. {:pattern ((reveal b).[i] == (reveal r).[j])}
@@ -234,13 +225,14 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   n := { !n with blink = Some e };
   if previously_singleton
   then (
-    { lhead = Some e ; ltail = Some n ; nodes = !e ^+ ~. !n }
+    { lhead = Some e ; ltail = Some n ; nodes = e ^+ ~. n }
   ) else (
-    let y = { lhead = Some e ; ltail = h.ltail ; nodes = !e ^+ !n ^+ (ghost_tail h.nodes) } in
+    let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ n ^+ (ghost_tail h.nodes) } in
     let h2 = ST.get () in
-    assume (Seq.length (reveal h.nodes) > 1); // for some reason, it can't deduce this
-    assert (dlisthead_ghostly_connections h2 y); // works with the above assume
-    assume (blink_valid h2 y); // Unable to deduce this for some reason
-    assume (all_elements_distinct h2 y); // Unable to deduce this for some reason
+    assume (flink_valid h2 y); // TODO: Figure out why it is unable to prove
+    assume (blink_valid h2 y); // TODO: Figure out why it is unable to prove
+    assume (elements_are_valid h2 y); // TODO: Figure out why it is unable to prove
+    assume (elements_dont_alias h2 y); // TODO: Figure out why it is unable to prove
+    assume (all_elements_distinct h2 y); // TODO: Figure out why it is unable to prove
     y
   )
