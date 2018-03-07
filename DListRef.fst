@@ -208,7 +208,7 @@ val singletonlist: #t:eqtype -> e:ref (dlist t) ->
   (requires (fun _ -> True))
   (ensures (fun h0 y h1 -> modifies (only e) h0 h1 /\ dlisthead_is_valid h1 y))
 let singletonlist #t e =
-  e := { !e with blink = None; flink = None };
+  !<|= e; !=|> e;
   { lhead = Some e ; ltail = Some e ; nodes = ~. e }
 
 logic
