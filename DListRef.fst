@@ -64,6 +64,36 @@ let (==$) (#t:Type) (a:option (ref t)) (b:ref t) =
   isSome a /\
   addr_of (getSome a) = addr_of b
 
+unfold logic
+let ( |> ) (#t:Type) (a:dlist t) (b:ref (dlist t)) : GTot Type0 =
+  a.flink ==$ b
+
+unfold logic
+let ( <| ) (#t:Type) (a:ref (dlist t)) (b: dlist t) : GTot Type0 =
+  b.blink ==$ a
+
+let ( =|> ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
+    (requires (fun h0 ->
+         dlist_is_valid (a@h0) /\ dlist_is_valid (b@h0) /\
+         not_aliased0 b (a@h0).blink))
+    (ensures (fun h1 _ h2 ->
+         modifies (only a) h1 h2 /\
+         dlist_is_valid (a@h2) /\
+         dlist_is_valid (b@h2) /\
+         (a@h2) |> b)) =
+  a := { !a with flink = Some b }
+
+let ( <|= ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
+    (requires (fun h0 ->
+         dlist_is_valid (a@h0) /\ dlist_is_valid (b@h0) /\
+         not_aliased0 a (b@h0).flink))
+    (ensures (fun h1 _ h2 ->
+         modifies (only b) h1 h2 /\
+         dlist_is_valid (a@h2) /\
+         dlist_is_valid (b@h2) /\
+         a <| (b@h2))) =
+  b := { !b with blink = Some a }
+
 logic
 let flink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
