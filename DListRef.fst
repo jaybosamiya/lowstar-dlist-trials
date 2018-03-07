@@ -229,29 +229,48 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   then (
     { lhead = Some e ; ltail = Some n ; nodes = e ^+ ~. n }
   ) else (
-    let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ n ^+ (ghost_tail h.nodes) } in
+    let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
     let h2 = ST.get () in
-    // assert (isSome ((reveal h.nodes).[0]@h1).flink); // OBSERVE
-    // assert (forall i. {:pattern isSome ((reveal h.nodes).[i]@h1).flink}
-    //           0 <= i /\ i < length (reveal h.nodes) - 1 ==>
-    //         isSome ((reveal h.nodes).[i]@h1).flink); // OBSERVE
-    // assert (forall i. {:pattern isSome ((reveal y.nodes).[i]@h2).flink}
-    //           2 <= i /\ i < length (reveal y.nodes) - 1 ==>
-    //         isSome ((reveal y.nodes).[i]@h2).flink); // OBSERVE
-    // assert (
-    //   let h0, h = h2, y in
-    //   let nodes = reveal h.nodes in
-    //   let len = length nodes in
-    //   (forall i. {:pattern (nodes.[i]@h0).flink}
-    //      ((0 <= i /\ i < len - 1) ==>
-    //       isSome (nodes.[i]@h0).flink /\
-    //       (nodes.[i]@h0).flink ==$ nodes.[i+1]))); // OBSERVE -- Though why? Shouldn't calling flink_valid automatically do this?!
-    // assert (flink_valid h2 y);
+
+    assert (length (reveal y.nodes) > 2);
+
+    assert (flink_valid h1 h);
+
+    assert (
+      let nodes = reveal h.nodes in
+      let len = length nodes in
+      let i = 0 in
+         ((0 <= i /\ i < len - 1) ==>
+          (nodes.[i]@h1).flink ==$ nodes.[i+1])
+    );
 
     admit ();
-    // assume (blink_valid h2 y); // TODO: Figure out why it is unable to prove
-    // assume (elements_are_valid h2 y); // TODO: Figure out why it is unable to prove
-    // assume (elements_dont_alias h2 y); // TODO: Figure out why it is unable to prove
-    // assume (all_elements_distinct h2 y); // TODO: Figure out why it is unable to prove
+
+    assert (((reveal h.nodes).[0]@h1).flink ==$ (reveal h.nodes).[0+1]);
+    admit ();
+
+    let flink_proof () : Lemma (flink_valid h2 y) =
+      assert ((e@h2).flink ==$ (reveal y.nodes).[1]);
+      assert (((reveal h.nodes).[0]@h1).flink ==$ (reveal h.nodes).[1]);
+      admit ()
+    in
+
+    admit ();
+    assert (
+      let h0, h = h2, y in
+      let nodes = reveal h.nodes in
+      let len = length nodes in
+      let empty = (len = 0) in
+      (empty ==> isNone h.lhead /\ isNone h.ltail) /\
+      (~empty ==>
+       dlisthead_ghostly_connections h0 h /\
+       flink_valid h0 h /\
+      //  blink_valid h0 h /\
+       True) /\
+      // elements_are_valid h0 h /\
+      // elements_dont_alias h0 h /\
+      // all_elements_distinct h0 h /\
+      True);
+    admit ();
     y
   )
