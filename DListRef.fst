@@ -98,17 +98,17 @@ logic
 let flink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
-  (forall i. {:pattern ((nodes.[i]@h0).flink ==$ nodes.[i+1])}
+  (forall i. {:pattern (nodes.[i]@h0 |> nodes.[i+1])}
      ((0 <= i /\ i < len - 1) ==>
-      (nodes.[i]@h0).flink ==$ nodes.[i+1]))
+      nodes.[i]@h0 |> nodes.[i+1]))
 
 logic
 let blink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
-  (forall i. {:pattern ((nodes.[i]@h0).blink ==$ nodes.[i-1])}
+  (forall i. {:pattern (nodes.[i-1] <| nodes.[i]@h0)}
      ((1 <= i /\ i < len) ==>
-      (nodes.[i]@h0).blink ==$ nodes.[i-1]))
+      nodes.[i-1] <| nodes.[i]@h0))
 
 logic
 let dlisthead_ghostly_connections (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
