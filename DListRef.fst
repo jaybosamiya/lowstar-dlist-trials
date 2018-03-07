@@ -106,6 +106,9 @@ let ( <|= ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
          a <| (b@h2))) =
   b := { !b with blink = Some a }
 
+unfold let (~.) (#t:Type) (a:t) : Tot (erased (seq t)) = hide (Seq.create 1 a)
+unfold let (^+) (#t:Type) (a:t) (b:erased (seq t)) : Tot (erased (seq t)) = elift2 Seq.cons (hide a) b
+
 logic
 let flink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
@@ -186,7 +189,7 @@ val singletonlist: #t:eqtype -> e:ref (dlist t) ->
   (ensures (fun h0 y h1 -> modifies (only e) h0 h1 /\ dlisthead_is_valid h1 y))
 let singletonlist #t e =
   e := { !e with blink = None; flink = None };
-  { lhead = Some e ; ltail = Some e ; nodes = hide (Seq.create 1 e) }
+  { lhead = Some e ; ltail = Some e ; nodes = ~. e }
 
 logic
 let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot bool =
@@ -210,9 +213,6 @@ let has_nothing_in (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTo
       not_aliased (e@h0).blink (nodes.[i]@h0).blink))
 
 type nonempty_dlisthead t = (h:dlisthead t{isSome h.lhead /\ isSome h.ltail})
-
-unfold let (~.) (#t:Type) (a:t) : Tot (erased (seq t)) = hide (Seq.create 1 a)
-unfold let (^+) (#t:Type) (a:t) (b:erased (seq t)) : Tot (erased (seq t)) = elift2 Seq.cons (hide a) b
 
 val dlisthead_make_valid_singleton: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
