@@ -78,13 +78,11 @@ let ( <| ) (#t:Type) (a:ref (dlist t)) (b: dlist t) : GTot Type0 =
 
 let ( =|> ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
     (requires (fun h0 ->
-         dlist_is_valid (a@h0) /\ dlist_is_valid (b@h0) /\
          not_aliased00 a b /\
          not_aliased0 b (a@h0).blink))
     (ensures (fun h1 _ h2 ->
          modifies (only a) h1 h2 /\
          dlist_is_valid (a@h2) /\
-         dlist_is_valid (b@h2) /\
          (a@h1).p == (a@h2).p /\
          (a@h1).blink == (a@h2).blink /\
          b@h1 == b@h2 /\
@@ -93,12 +91,10 @@ let ( =|> ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
 
 let ( <|= ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
     (requires (fun h0 ->
-         dlist_is_valid (a@h0) /\ dlist_is_valid (b@h0) /\
          not_aliased00 a b /\
          not_aliased0 a (b@h0).flink))
     (ensures (fun h1 _ h2 ->
          modifies (only b) h1 h2 /\
-         dlist_is_valid (a@h2) /\
          dlist_is_valid (b@h2) /\
          a@h1 == a@h2 /\
          (b@h1).p == (b@h2).p /\
