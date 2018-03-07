@@ -107,8 +107,7 @@ let ( <|= ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
   b := { !b with blink = Some a }
 
 let ( !=|> ) (#t:Type) (a:ref (dlist t)) : ST unit
-    (requires (fun h0 ->
-         dlist_is_valid (a@h0)))
+    (requires (fun _ -> True))
     (ensures (fun h1 _ h2 ->
          modifies (only a) h1 h2 /\
          dlist_is_valid (a@h2) /\
@@ -118,8 +117,7 @@ let ( !=|> ) (#t:Type) (a:ref (dlist t)) : ST unit
   a := { !a with flink = None }
 
 let ( !<|= ) (#t:Type) (a:ref (dlist t)) : ST unit
-    (requires (fun h0 ->
-         dlist_is_valid (a@h0)))
+    (requires (fun _ -> True))
     (ensures (fun h1 _ h2 ->
          modifies (only a) h1 h2 /\
          dlist_is_valid (a@h2) /\
