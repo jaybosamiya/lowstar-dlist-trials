@@ -106,6 +106,28 @@ let ( <|= ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
          a <| (b@h2))) =
   b := { !b with blink = Some a }
 
+let ( !=|> ) (#t:Type) (a:ref (dlist t)) : ST unit
+    (requires (fun h0 ->
+         dlist_is_valid (a@h0)))
+    (ensures (fun h1 _ h2 ->
+         modifies (only a) h1 h2 /\
+         dlist_is_valid (a@h2) /\
+         (a@h1).p == (a@h2).p /\
+         (a@h1).blink == (a@h2).blink /\
+         (a@h2).flink == None)) =
+  a := { !a with flink = None }
+
+let ( !<|= ) (#t:Type) (a:ref (dlist t)) : ST unit
+    (requires (fun h0 ->
+         dlist_is_valid (a@h0)))
+    (ensures (fun h1 _ h2 ->
+         modifies (only a) h1 h2 /\
+         dlist_is_valid (a@h2) /\
+         (a@h1).p == (a@h2).p /\
+         (a@h2).flink == (a@h2).flink /\
+         (a@h2).blink == None)) =
+  a := { !a with blink = None }
+
 unfold let (~.) (#t:Type) (a:t) : Tot (erased (seq t)) = hide (Seq.create 1 a)
 unfold let (^+) (#t:Type) (a:t) (b:erased (seq t)) : Tot (erased (seq t)) = elift2 Seq.cons (hide a) b
 
