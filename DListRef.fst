@@ -327,9 +327,13 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   then (
     { lhead = Some e ; ltail = Some n ; nodes = e ^+ h.nodes }
   ) else (
-    admit ();
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
     let h2 = ST.get () in
-    admit ();
+    // Unable to prove the properties below
+    assume (elements_are_valid h2 y);
+    assume (flink_valid h2 y);
+    assume (blink_valid h2 y);
+    assume (elements_dont_alias h2 y);
+    assume (all_elements_distinct h2 y);
     y
   )
