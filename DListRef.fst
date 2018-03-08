@@ -60,8 +60,12 @@ let not_aliased00 (#t:Type) (a:ref t) (b:ref t) : GTot Type0 =
   addr_of a <> addr_of b
 
 logic
-let dlist_is_valid (#t:Type) (n:dlist t) : GTot Type0 =
+let dlist_is_valid' (#t:Type) (h0:heap) (n:dlist t) : GTot Type0 =
   not_aliased n.flink n.blink
+
+logic
+let dlist_is_valid (#t:Type) (h0:heap) (n:ref (dlist t)) : GTot Type0 =
+  dlist_is_valid' h0 (n@h0)
 
 unfold
 let (==$) (#t:Type) (a:option (ref t)) (b:ref t) =
@@ -82,7 +86,7 @@ let ( =|> ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
          not_aliased0 b (a@h0).blink))
     (ensures (fun h1 _ h2 ->
          modifies (only a) h1 h2 /\
-         dlist_is_valid (a@h2) /\
+         dlist_is_valid h2 a /\
          (forall (f:dlist t -> Type0) x. {:pattern f (x@h2)}
             f (x@h1) /\ not_aliased00 x a ==> f (x@h2)) /\
          (a@h1).p == (a@h2).p /\
@@ -97,7 +101,7 @@ let ( <|= ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
          not_aliased0 a (b@h0).flink))
     (ensures (fun h1 _ h2 ->
          modifies (only b) h1 h2 /\
-         dlist_is_valid (b@h2) /\
+         dlist_is_valid h2 b /\
          (forall (f:dlist t -> Type0) x. {:pattern f (x@h2)}
             f (x@h1) /\ not_aliased00 x b ==> f (x@h2)) /\
          a@h1 == a@h2 /\
@@ -110,7 +114,7 @@ let ( !=|> ) (#t:Type) (a:ref (dlist t)) : ST unit
     (requires (fun _ -> True))
     (ensures (fun h1 _ h2 ->
          modifies (only a) h1 h2 /\
-         dlist_is_valid (a@h2) /\
+         dlist_is_valid h2 a /\
          (forall (f:dlist t -> Type0) x. {:pattern f (x@h2)}
             f (x@h1) /\ not_aliased00 x a ==> f (x@h2)) /\
          (a@h1).p == (a@h2).p /\
@@ -122,7 +126,7 @@ let ( !<|= ) (#t:Type) (a:ref (dlist t)) : ST unit
     (requires (fun _ -> True))
     (ensures (fun h1 _ h2 ->
          modifies (only a) h1 h2 /\
-         dlist_is_valid (a@h2) /\
+         dlist_is_valid h2 a /\
          (forall (f:dlist t -> Type0) x. {:pattern f (x@h2)}
             f (x@h1) /\ not_aliased00 x a ==> f (x@h2)) /\
          (a@h1).p == (a@h2).p /\
@@ -182,8 +186,8 @@ let elements_dont_alias (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
 logic
 let elements_are_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
-  (forall i. {:pattern (dlist_is_valid (nodes.[i]@h0))}
-     dlist_is_valid (nodes.[i]@h0))
+  (forall i. {:pattern (dlist_is_valid h0 nodes.[i])}
+     dlist_is_valid h0 nodes.[i])
 
 logic
 let all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -283,7 +287,7 @@ let ghost_append_properties #t a b = ()
 
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t) ->
   ST (dlisthead t)
-    (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid (e@h0) /\ has_nothing_in h0 h e))
+    (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 -> modifies (e ^+^ (getSome h.lhead)) h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t)) =
   let h1 = ST.get () in
