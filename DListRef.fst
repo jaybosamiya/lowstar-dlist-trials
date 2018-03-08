@@ -201,7 +201,8 @@ let elements_are_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
 logic
 let all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
     let nodes = reveal h.nodes in
-    (forall i j. {:pattern (addr_of nodes.[i] <> addr_of nodes.[j])}
+    (forall i j. // {:pattern (addr_of nodes.[i] <> addr_of nodes.[j])}
+       // Why no trigger? See https://github.com/FStarLang/FStar/issues/1396
        (0 <= i /\ i < j /\ j < Seq.length nodes) ==>
      addr_of nodes.[i] <> addr_of nodes.[j])
 
