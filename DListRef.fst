@@ -320,26 +320,17 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   !<|= e;
   e =|> n;
   let previously_singleton = compare_addrs n (getSome h.ltail) in
-  // n := { !n with blink = Some e };
   let h' = ST.get () in
   assert (addr_of n == addr_of (reveal h.nodes).[0]);
   assert ((n@h1) == (((reveal h.nodes).[0])@h1));
   assert (not_aliased0 e (((reveal h.nodes).[0])@h1).flink);
-  // assert (not_aliased0 e (((reveal h.nodes).[0])@h').flink);
-  admit ();
+  assert (not_aliased0 e (((reveal h.nodes).[0])@h').flink);
   assert (not_aliased0 e (n@h1).flink);
-  admit ();
   assert (not_aliased0 e (n@h').flink);
-  admit ();
   e <|= n;
   if previously_singleton
   then (
-    let y = { lhead = Some e ; ltail = Some n ; nodes = e ^+ ~. n } in
-    let h2 = ST.get () in
-    assume (dlisthead_ghostly_connections h2 y);
-    assume (elements_are_valid h2 y);
-    // admit ();
-    y
+    { lhead = Some e ; ltail = Some n ; nodes = e ^+ ~. n }
   ) else (
     admit ();
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
