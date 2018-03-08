@@ -286,12 +286,24 @@ let foo (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 1}) : Lemma
 
 #set-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
+let is_singleton (#t:Type) (h:nonempty_dlisthead t) : Tot bool =
+  compare_addrs (getSome h.lhead) (getSome h.ltail)
+
+val nonempty_singleton_properties :
+  #t:Type ->
+  h:nonempty_dlisthead t ->
+  ST unit
+    (requires (fun h0 -> dlisthead_is_valid h0 h /\ is_singleton h))
+    (ensures (fun h0 _ h1 -> h0 == h1 /\ Seq.length (reveal h.nodes) == 1))
+let nonempty_singleton_properties #t h = ()
+
 val nonempty_nonsingleton_properties :
   #t:Type ->
   h:nonempty_dlisthead t ->
   ST unit
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(compare_addrs (getSome h.lhead) (getSome h.ltail))))
     (ensures (fun h0 _ h1 -> h0 == h1 /\ Seq.length (reveal h.nodes) > 1))
+let nonempty_nonsingleton_properties #t h = ()
 
 val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
   Lemma (let r = a ^+ b in
