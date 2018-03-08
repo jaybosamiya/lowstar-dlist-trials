@@ -321,12 +321,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   e =|> n;
   let previously_singleton = compare_addrs n (getSome h.ltail) in
   let h' = ST.get () in
-  assert (addr_of n == addr_of (reveal h.nodes).[0]);
-  assert ((n@h1) == (((reveal h.nodes).[0])@h1));
-  assert (not_aliased0 e (((reveal h.nodes).[0])@h1).flink);
-  assert (not_aliased0 e (((reveal h.nodes).[0])@h').flink);
-  assert (not_aliased0 e (n@h1).flink);
-  assert (not_aliased0 e (n@h').flink);
+  assert (not_aliased0 e (((reveal h.nodes).[0])@h1).flink); // OBSERVE
   e <|= n;
   if previously_singleton
   then (
