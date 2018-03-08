@@ -325,10 +325,6 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   let previously_singleton = compare_addrs n (getSome h.ltail) in
   if previously_singleton
   then (
-    assert (compare_addrs (reveal h.nodes).[0] n);
-    let h' = ST.get () in
-    assert ((reveal h.nodes).[0]@h' == n@h');
-    assume (Seq.length (reveal h.nodes) == 1); // this allows the bottom part to go through
     { lhead = Some e ; ltail = Some n ; nodes = e ^+ h.nodes }
   ) else (
     admit ();
