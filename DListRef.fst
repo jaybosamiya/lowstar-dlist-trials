@@ -89,9 +89,6 @@ let ( =|> ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
     (ensures (fun h1 _ h2 ->
          modifies (only a) h1 h2 /\
          dlist_is_valid h2 a /\
-         (forall (f:dlist t -> Type0) x. {:pattern f (x@h2)}
-            h1 `contains` x /\
-            f (x@h1) /\ not_aliased00 x a ==> f (x@h2)) /\
          (a@h1).p == (a@h2).p /\
          (a@h1).blink == (a@h2).blink /\
          b@h1 == b@h2 /\
@@ -106,9 +103,6 @@ let ( <|= ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
     (ensures (fun h1 _ h2 ->
          modifies (only b) h1 h2 /\
          dlist_is_valid h2 b /\
-         (forall (f:dlist t -> Type0) x. {:pattern f (x@h2)}
-            h1 `contains` x /\
-            f (x@h1) /\ not_aliased00 x b ==> f (x@h2)) /\
          a@h1 == a@h2 /\
          (b@h1).p == (b@h2).p /\
          (b@h1).flink == (b@h2).flink /\
@@ -120,9 +114,6 @@ let ( !=|> ) (#t:Type) (a:ref (dlist t)) : ST unit
     (ensures (fun h1 _ h2 ->
          modifies (only a) h1 h2 /\
          dlist_is_valid h2 a /\
-         (forall (f:dlist t -> Type0) x. {:pattern f (x@h2)}
-            h1 `contains` x /\
-            f (x@h1) /\ not_aliased00 x a ==> f (x@h2)) /\
          (a@h1).p == (a@h2).p /\
          (a@h1).blink == (a@h2).blink /\
          (a@h2).flink == None)) =
@@ -133,9 +124,6 @@ let ( !<|= ) (#t:Type) (a:ref (dlist t)) : ST unit
     (ensures (fun h1 _ h2 ->
          modifies (only a) h1 h2 /\
          dlist_is_valid h2 a /\
-         (forall (f:dlist t -> Type0) x. {:pattern f (x@h2)}
-            h1 `contains` x /\
-            f (x@h1) /\ not_aliased00 x a ==> f (x@h2)) /\
          (a@h1).p == (a@h2).p /\
          (a@h2).flink == (a@h2).flink /\
          (a@h2).blink == None)) =
