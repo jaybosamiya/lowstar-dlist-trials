@@ -331,19 +331,11 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   ) else (
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
     let h2 = ST.get () in
-    assert ( (reveal y.nodes).[0]@h2 |> (reveal y.nodes).[1] );
     assert (
       let ynodes = reveal y.nodes in
       let hnodes = reveal h.nodes in
       (forall (i:nat{2 <= i /\ i < Seq.length ynodes /\ i-1 < Seq.length hnodes}).
-                ynodes.[i]@h2 == hnodes.[i-1]@h1));
-    assert ( length (reveal y.nodes) > 1 );
-    assert (let t = (reveal y.nodes).[0] in
-            addr_of t == addr_of e);
-    assert (let t = (reveal y.nodes).[1] in
-            addr_of t == addr_of n);
-    assert ((n@h1).flink == (n@h2).flink);
-    assert ( (reveal h.nodes).[0]@h1 |> (reveal h.nodes).[1] );
+                ynodes.[i]@h2 == hnodes.[i-1]@h1)); // OBSERVE
     assume (elements_dont_alias1 h2 y);
     assert (elements_dont_alias2 h2 y); // OBSERVE
     y
