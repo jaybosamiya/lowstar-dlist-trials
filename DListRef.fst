@@ -6,8 +6,6 @@ open FStar.Option
 open FStar.Seq
 open FStar.Ref
 
-#set-options "--use_two_phase_tc true"
-
 unopteq
 (** Node of a doubly linked list *)
 type dlist (t:Type0) = {
@@ -48,12 +46,15 @@ unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let not_aliased (#t:Type) (a:option (ref t)) (b:option (ref t)) : GTot Type0 =
   isNone a \/ isNone b \/
-  addr_of (getSome a) <> addr_of (getSome b)
+  (let (a:_{isSome a}) = a in // workaround for not using two phase type checker
+   let (b:_{isSome b}) = b in
+   addr_of (getSome a) <> addr_of (getSome b))
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let not_aliased0 (#t:Type) (a:ref t) (b:option (ref t)) : GTot Type0 =
   isNone b \/
-  addr_of a <> addr_of (getSome b)
+  (let (b:_{isSome b}) = b in // workaround for not using two phase type checker
+   addr_of a <> addr_of (getSome b))
 
 logic
 let not_aliased00 (#t:Type) (a:ref t) (b:ref t) : GTot Type0 =
@@ -71,7 +72,8 @@ let dlist_is_valid (#t:Type) (h0:heap) (n:ref (dlist t)) : GTot Type0 =
 unfold
 let (==$) (#t:Type) (a:option (ref t)) (b:ref t) =
   isSome a /\
-  addr_of (getSome a) = addr_of b
+  (let (a:_{isSome a}) = a in // workaround for not using two phase type checker
+   addr_of (getSome a) = addr_of b)
 
 unfold logic
 let ( |> ) (#t:Type) (a:dlist t) (b:ref (dlist t)) : GTot Type0 =
@@ -204,7 +206,9 @@ let all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
     (forall i j. // {:pattern (addr_of nodes.[i] <> addr_of nodes.[j])}
        // Why no trigger? See https://github.com/FStarLang/FStar/issues/1396
        (0 <= i /\ i < j /\ j < Seq.length nodes) ==>
-     addr_of nodes.[i] <> addr_of nodes.[j])
+       (let (i:nat{i < Seq.length nodes}) = i in // workaround for not using two phase type checker
+        let (j:nat{j < Seq.length nodes}) = j in
+        addr_of nodes.[i] <> addr_of nodes.[j]))
 
 logic
 let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
