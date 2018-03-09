@@ -333,14 +333,9 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   ) else (
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
     let h2 = ST.get () in
-    assert (let h0,h = h2,y in isSome h.lhead ==> h0 `contains` (getSome h.lhead));
-    assert (let h0,h = h2,y in isSome h.ltail ==> h0 `contains` (getSome h.ltail));
-    // Unable to prove the properties below
-    assert (all_nodes_contained h2 y);
-    assert (elements_are_valid h2 y);
+    assert (h2 `contains` (getSome y.ltail)); // OBSERVE
     assume (flink_valid h2 y);
-    assert (blink_valid h2 y);
+    assert (blink_valid h2 y); // OBSERVE
     assume (elements_dont_alias h2 y);
-    assert (all_elements_distinct h2 y);
     y
   )
