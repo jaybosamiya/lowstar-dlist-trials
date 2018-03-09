@@ -333,9 +333,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   ) else (
     let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
     let h2 = ST.get () in
-    assert (h2 `contains` (getSome y.ltail)); // OBSERVE
     assume (flink_valid h2 y);
-    assert (blink_valid h2 y); // OBSERVE
     assume (elements_dont_alias h2 y);
     y
   )
