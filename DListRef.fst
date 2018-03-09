@@ -324,7 +324,6 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   let Some n = h.lhead in
   !<|= e;
   e =|> n;
-  assert (not_aliased0 e (((reveal h.nodes).[0])@h1).flink); // OBSERVE
   e <|= n;
   let previously_singleton = compare_addrs n (getSome h.ltail) in
   if previously_singleton
