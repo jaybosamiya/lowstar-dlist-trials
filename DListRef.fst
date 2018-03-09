@@ -337,6 +337,5 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
       (forall (i:nat{2 <= i /\ i < Seq.length ynodes /\ i-1 < Seq.length hnodes}).
                 ynodes.[i]@h2 == hnodes.[i-1]@h1)); // OBSERVE
     assume (elements_dont_alias1 h2 y);
-    assert (elements_dont_alias2 h2 y); // OBSERVE
     y
   )
