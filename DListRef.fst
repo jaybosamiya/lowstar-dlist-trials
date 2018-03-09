@@ -139,7 +139,7 @@ let all_nodes_contained (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   (isSome h.lhead ==> h0 `contains` (getSome h.lhead)) /\
   (isSome h.ltail ==> h0 `contains` (getSome h.ltail)) /\
-  (forall i. {:pattern (h0 `contains` nodes.[i])}
+  (forall i. // {:pattern (h0 `contains` nodes.[i])}
      h0 `contains` nodes.[i])
 
 logic
@@ -147,7 +147,7 @@ let flink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
   all_nodes_contained h0 h /\
-  (forall i. {:pattern (nodes.[i]@h0 |> nodes.[i+1])}
+  (forall i. // {:pattern (nodes.[i]@h0 |> nodes.[i+1])}
      ((0 <= i /\ i < len - 1) ==>
       nodes.[i]@h0 |> nodes.[i+1]))
 
@@ -156,7 +156,7 @@ let blink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
   all_nodes_contained h0 h /\
-  (forall i. {:pattern (nodes.[i-1] <| nodes.[i]@h0)}
+  (forall i. // {:pattern (nodes.[i-1] <| nodes.[i]@h0)}
      ((1 <= i /\ i < len) ==>
       nodes.[i-1] <| nodes.[i]@h0))
 
@@ -176,7 +176,7 @@ logic
 let elements_dont_alias1 (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   all_nodes_contained h0 h /\
-  (forall i j. {:pattern (not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)}
+  (forall i j. // {:pattern (not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)}
      0 < i /\ i < j /\ j < length nodes ==>
    not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)
 
@@ -184,7 +184,7 @@ logic
 let elements_dont_alias2 (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   all_nodes_contained h0 h /\
-  (forall i j. {:pattern (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)}
+  (forall i j. // {:pattern (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)}
      0 < i /\ i < j /\ j < length nodes ==>
    not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)
 
@@ -197,7 +197,7 @@ logic
 let elements_are_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   all_nodes_contained h0 h /\
-  (forall i. {:pattern (dlist_is_valid h0 nodes.[i])}
+  (forall i. // {:pattern (dlist_is_valid h0 nodes.[i])}
      dlist_is_valid h0 nodes.[i])
 
 logic
@@ -248,11 +248,11 @@ let has_nothing_in (#t:eqtype) (h0:heap)
   (not_aliased0 e h.lhead) /\
   (not_aliased0 e h.ltail) /\
   (let nodes = reveal h.nodes in
-   (forall i. {:pattern (nodes.[i]@h0).flink}
+   (forall i. // {:pattern (nodes.[i]@h0).flink}
       (not_aliased0 e (nodes.[i]@h0).flink /\
        not_aliased (e@h0).flink (nodes.[i]@h0).flink /\
        not_aliased (e@h0).blink (nodes.[i]@h0).flink)) /\
-   (forall i. {:pattern (nodes.[i]@h0).blink}
+   (forall i. // {:pattern (nodes.[i]@h0).blink}
       (not_aliased0 e (nodes.[i]@h0).blink) /\
       not_aliased (e@h0).flink (nodes.[i]@h0).blink /\
       not_aliased (e@h0).blink (nodes.[i]@h0).blink))
@@ -281,7 +281,7 @@ val ghost_tail_properties :
     let s0 = reveal s in
     let t0 = reveal t in
     Seq.length t0 = Seq.length s0 - 1 /\
-    (forall i j. {:pattern (t0.[i] == s0.[j])}
+    (forall i j. // {:pattern (t0.[i] == s0.[j])}
        j = i + 1 /\ 0 <= i /\ i < Seq.length t0 ==> t0.[i] == s0.[j]))
 let ghost_tail_properties #t s = ()
 
@@ -311,7 +311,7 @@ let nonempty_nonsingleton_properties #t h = ()
 
 val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
   Lemma (let r = a ^+ b in
-         forall i j. {:pattern ((reveal b).[i] == (reveal r).[j])}
+         forall i j. // {:pattern ((reveal b).[i] == (reveal r).[j])}
            j = i + 1 /\ 0 <= i /\ i < length (reveal b) ==> (reveal b).[i] == (reveal r).[j])
 let ghost_append_properties #t a b = ()
 
@@ -336,11 +336,11 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
     assert (let h0,h = h2,y in isSome h.lhead ==> h0 `contains` (getSome h.lhead));
     assert (let h0,h = h2,y in isSome h.ltail ==> h0 `contains` (getSome h.ltail));
     // Unable to prove the properties below
-    assume (all_nodes_contained h2 y);
-    assume (elements_are_valid h2 y);
+    assert (all_nodes_contained h2 y);
+    assert (elements_are_valid h2 y);
     assume (flink_valid h2 y);
-    assume (blink_valid h2 y);
+    assert (blink_valid h2 y);
     assume (elements_dont_alias h2 y);
-    assume (all_elements_distinct h2 y);
+    assert (all_elements_distinct h2 y);
     y
   )
