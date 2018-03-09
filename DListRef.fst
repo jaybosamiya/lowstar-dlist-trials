@@ -69,7 +69,6 @@ let dlist_is_valid (#t:Type) (h0:heap) (n:ref (dlist t)) : GTot Type0 =
   h0 `contains` n /\
   dlist_is_valid' h0 (n@h0)
 
-unfold
 let (==$) (#t:Type) (a:option (ref t)) (b:ref t) =
   isSome a /\
   (let (a:_{isSome a}) = a in // workaround for not using two phase type checker
