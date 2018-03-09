@@ -75,11 +75,11 @@ let (==$) (#t:Type) (a:option (ref t)) (b:ref t) =
   (let (a:_{isSome a}) = a in // workaround for not using two phase type checker
    addr_of (getSome a) = addr_of b)
 
-unfold logic
+logic
 let ( |> ) (#t:Type) (a:dlist t) (b:ref (dlist t)) : GTot Type0 =
   a.flink ==$ b
 
-unfold logic
+logic
 let ( <| ) (#t:Type) (a:ref (dlist t)) (b: dlist t) : GTot Type0 =
   b.blink ==$ a
 
