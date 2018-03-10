@@ -236,3 +236,10 @@ Jay Bosamiya [2 hours ago]
 that makes sense, thanks for the clarification :slightly_smiling_face:
 
 *)
+
+let _ = ()
+
+let same_addr_implies_same (#t:Type) (h0:heap) (a:ref t) (b:ref t) : unit =
+  assume (h0 `contains` a);
+  assert (addr_of a = addr_of b ==>
+          sel h0 a == sel h0 b)
