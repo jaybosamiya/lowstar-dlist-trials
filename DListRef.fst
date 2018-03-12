@@ -403,5 +403,12 @@ let dlisthead_remove_head #t h =
   then (
     empty_list
   ) else (
-    h // TODO: Actually remove the head
+    let Some next = (!n).flink in
+    recall next;
+    // unlink them
+    !=|> n;
+    !<|= next;
+    let y = { lhead = Some next ; ltail = h.ltail ; nodes = ghost_tail h.nodes } in
+    admit (); // TODO: Actually prove that this is correct
+    y
   )
