@@ -296,7 +296,7 @@ val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
            j = i + 1 /\ 0 <= i /\ i < length (reveal b) ==> (reveal b).[i] == (reveal r).[j])
 let ghost_append_properties #t a b = ()
 
-#set-options "--z3rlimit 20"
+#set-options "--z3rlimit 25 --initial_fuel 8 --initial_ifuel 2 --z3refresh"
 
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t) ->
   ST (dlisthead t)
@@ -322,6 +322,8 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
                 ynodes.[i]@h2 == hnodes.[i-1]@h1)); // OBSERVE
     y
   )
+
+#reset-options
 
 val insertHeadList : #t:eqtype -> h:dlisthead t -> e:ref (dlist t) ->
   ST (dlisthead t)
