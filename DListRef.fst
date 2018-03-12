@@ -340,4 +340,23 @@ let insertHeadList #t h e =
   then dlisthead_update_head h e
   else singletonlist e
 
-#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 1"
+#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
+
+val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t) ->
+  ST (dlisthead t)
+    (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
+    (ensures (fun h1 y h2 -> modifies (e ^+^ (getSome h.ltail)) h1 h2 /\ dlisthead_is_valid h2 y))
+let dlisthead_update_tail #t h e =
+  let h1 = ST.get () in
+  let previously_singleton = is_singleton h in
+  let Some n = h.ltail in
+  !=|> e;
+  n =|> e;
+  n <|= e;
+  if previously_singleton
+  then (
+    { lhead = Some n ; ltail = Some e ; nodes = h.nodes +^ e }
+  ) else (
+    admit ();
+    h // TODO: Fix this
+  )
