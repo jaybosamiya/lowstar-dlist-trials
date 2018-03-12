@@ -200,14 +200,13 @@ logic
 let elements_are_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   all_nodes_contained h0 h /\
-  (forall i. // {:pattern (dlist_is_valid h0 nodes.[i])}
+  (forall i. {:pattern (nodes.[i])}
      dlist_is_valid h0 nodes.[i])
 
 logic
 let all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
     let nodes = reveal h.nodes in
-    (forall i j. // {:pattern (addr_of nodes.[i] <> addr_of nodes.[j])}
-       // Why no trigger? See https://github.com/FStarLang/FStar/issues/1396
+    (forall i j. {:pattern (nodes.[i]); (nodes.[j])}
        (0 <= i /\ i < j /\ j < Seq.length nodes) ==>
        (let (i:nat{i < Seq.length nodes}) = i in // workaround for not using two phase type checker
         let (j:nat{j < Seq.length nodes}) = j in
