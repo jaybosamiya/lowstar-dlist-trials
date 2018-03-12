@@ -287,8 +287,6 @@ let ghost_tail_properties #t s = ()
 let foo (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 1}) : Lemma
   (Seq.last (reveal (ghost_tail s)) == Seq.last (reveal s)) = ()
 
-#set-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
-
 let is_singleton (#t:Type) (h:nonempty_dlisthead t) : Tot bool =
   compare_addrs (getSome h.lhead) (getSome h.ltail)
 
@@ -313,6 +311,8 @@ val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
          forall i j. {:pattern ((reveal b).[i] == (reveal r).[j])}
            j = i + 1 /\ 0 <= i /\ i < length (reveal b) ==> (reveal b).[i] == (reveal r).[j])
 let ghost_append_properties #t a b = ()
+
+#set-options "--z3rlimit 20"
 
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t) ->
   ST (dlisthead t)
@@ -339,3 +339,5 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
     assert (elements_dont_alias1 h2 y); // OBSERVE
     y
   )
+
+#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 1"
