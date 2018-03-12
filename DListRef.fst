@@ -82,6 +82,7 @@ logic
 let ( <| ) (#t:Type) (a:ref (dlist t)) (b: dlist t) : GTot Type0 =
   b.blink ==$ a
 
+irreducible
 let ( =|> ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
@@ -96,6 +97,7 @@ let ( =|> ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
          (a@h2) |> b)) =
   a := { !a with flink = Some b }
 
+irreducible
 let ( <|= ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
@@ -110,6 +112,7 @@ let ( <|= ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
          a <| (b@h2))) =
   b := { !b with blink = Some a }
 
+irreducible
 let ( !=|> ) (#t:Type) (a:ref (dlist t)) : ST unit
     (requires (fun h0 -> h0 `contains` a))
     (ensures (fun h1 _ h2 ->
@@ -120,6 +123,7 @@ let ( !=|> ) (#t:Type) (a:ref (dlist t)) : ST unit
          (a@h2).flink == None)) =
   a := { !a with flink = None }
 
+irreducible
 let ( !<|= ) (#t:Type) (a:ref (dlist t)) : ST unit
     (requires (fun h0 -> h0 `contains` a))
     (ensures (fun h1 _ h2 ->
