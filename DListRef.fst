@@ -325,4 +325,18 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
     y
   )
 
+val insertHeadList : #t:eqtype -> h:dlisthead t -> e:ref (dlist t) ->
+  ST (dlisthead t)
+    (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
+    (ensures (fun h1 y h2 ->
+         (isSome h.lhead ==>
+          modifies (e ^+^ (getSome h.lhead)) h1 h2) /\
+         (~(isSome h.lhead) ==>
+          modifies (only e) h1 h2) /\
+         dlisthead_is_valid h2 y))
+let insertHeadList #t h e =
+  if isSome h.lhead
+  then dlisthead_update_head h e
+  else singletonlist e
+
 #reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 1"
