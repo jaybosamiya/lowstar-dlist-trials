@@ -398,6 +398,7 @@ val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
           modifies ((getSome h.lhead) ^+^ (reveal h.nodes).[1]) h1 h2) /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_head #t h =
+  let h1 = ST.get () in
   let Some n = h.lhead in
   if is_singleton h
   then (
@@ -409,6 +410,12 @@ let dlisthead_remove_head #t h =
     !=|> n;
     !<|= next;
     let y = { lhead = Some next ; ltail = h.ltail ; nodes = ghost_tail h.nodes } in
+    let h2 = ST.get () in
+    assert (
+      let ynodes = reveal y.nodes in
+      let hnodes = reveal h.nodes in
+      (forall (i:nat{1 <= i /\ i < Seq.length ynodes /\ i+1 < Seq.length hnodes}).
+                ynodes.[i]@h2 == hnodes.[i+1]@h1)); // OBSERVE
     admit (); // TODO: Actually prove that this is correct
     y
   )
