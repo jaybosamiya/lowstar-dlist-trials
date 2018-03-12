@@ -268,25 +268,6 @@ let dlisthead_make_valid_singleton #t h =
   let Some e = h.lhead in
   { h with ltail = h.lhead ; nodes = ~. e }
 
-unfold let ghost_tail (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
-  hide (Seq.tail (reveal s))
-
-val ghost_tail_properties :
-  #t:Type ->
-  s:erased (seq t){Seq.length (reveal s) > 0} ->
-  Lemma (
-    let l = Seq.length (reveal s) in
-    let t = ghost_tail s in
-    let s0 = reveal s in
-    let t0 = reveal t in
-    Seq.length t0 = Seq.length s0 - 1 /\
-    (forall i j. {:pattern (t0.[i] == s0.[j])}
-       j = i + 1 /\ 0 <= i /\ i < Seq.length t0 ==> t0.[i] == s0.[j]))
-let ghost_tail_properties #t s = ()
-
-let foo (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 1}) : Lemma
-  (Seq.last (reveal (ghost_tail s)) == Seq.last (reveal s)) = ()
-
 let is_singleton (#t:Type) (h:nonempty_dlisthead t) : Tot bool =
   compare_addrs (getSome h.lhead) (getSome h.ltail)
 
