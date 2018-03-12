@@ -369,6 +369,18 @@ let dlisthead_update_tail #t h e =
 
 #reset-options
 
-
+val insertTailList : #t:eqtype -> h:dlisthead t -> e:ref (dlist t) ->
+  ST (dlisthead t)
+    (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
+    (ensures (fun h1 y h2 ->
+         (isSome h.ltail ==>
+          modifies (e ^+^ (getSome h.ltail)) h1 h2) /\
+         (~(isSome h.lhead) ==>
+          modifies (only e) h1 h2) /\
+         dlisthead_is_valid h2 y))
+let insertTailList #t h e =
+  if isSome h.ltail
+  then dlisthead_update_tail h e
+  else singletonlist e
 
 #reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
