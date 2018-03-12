@@ -357,6 +357,12 @@ let dlisthead_update_tail #t h e =
   then (
     { lhead = Some n ; ltail = Some e ; nodes = h.nodes +^ e }
   ) else (
-    admit ();
-    h // TODO: Fix this
+    let y = { lhead = h.lhead ; ltail = Some e ; nodes = h.nodes +^ e } in
+    let h2 = ST.get () in
+    assert (
+      let ynodes = reveal y.nodes in
+      let hnodes = reveal h.nodes in
+      (forall (i:nat{0 <= i /\ i < Seq.length ynodes - 2 /\ i < Seq.length hnodes - 1}).
+                ynodes.[i]@h2 == hnodes.[i]@h1)); // OBSERVE
+    y
   )
