@@ -384,3 +384,23 @@ let insertTailList #t h e =
   else singletonlist e
 
 #reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
+
+val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
+  ST (dlisthead t)
+    (requires (fun h0 -> dlisthead_is_valid h0 h))
+    (ensures (fun h1 y h2 ->
+         (is_singleton h ==>
+          modifies (only (getSome h.lhead)) h1 h2) /\
+         (~(is_singleton h) ==>
+          modifies ((getSome h.lhead) ^+^ (reveal h.nodes).[1]) h1 h2) /\
+         dlisthead_is_valid h2 y))
+let dlisthead_remove_head #t h =
+  let Some n = h.lhead in
+  if is_singleton h
+  then (
+    !<|= n;
+    !=|> n;
+    empty_list
+  ) else (
+    h // TODO: Actually remove the head
+  )
