@@ -146,7 +146,7 @@ let flink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
   all_nodes_contained h0 h /\
-  (forall i. // {:pattern (nodes.[i]@h0 |> nodes.[i+1])}
+  (forall i. {:pattern ((nodes.[i]@h0).flink)}
      ((0 <= i /\ i < len - 1) ==>
       nodes.[i]@h0 |> nodes.[i+1]))
 
@@ -155,7 +155,7 @@ let blink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
   all_nodes_contained h0 h /\
-  (forall i. // {:pattern (nodes.[i-1] <| nodes.[i]@h0)}
+  (forall i. {:pattern ((nodes.[i]@h0).blink)}
      ((1 <= i /\ i < len) ==>
       nodes.[i-1] <| nodes.[i]@h0))
 
