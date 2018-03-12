@@ -398,8 +398,6 @@ let dlisthead_remove_head #t h =
   let Some n = h.lhead in
   if is_singleton h
   then (
-    !<|= n;
-    !=|> n;
     empty_list
   ) else (
     h // TODO: Actually remove the head
