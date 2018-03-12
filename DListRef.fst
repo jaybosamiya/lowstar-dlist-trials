@@ -340,7 +340,7 @@ let insertHeadList #t h e =
   then dlisthead_update_head h e
   else singletonlist e
 
-#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
+#set-options "--z3rlimit 25 --z3refresh"
 
 val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t) ->
   ST (dlisthead t)
@@ -366,3 +366,9 @@ let dlisthead_update_tail #t h e =
                 ynodes.[i]@h2 == hnodes.[i]@h1)); // OBSERVE
     y
   )
+
+#reset-options
+
+
+
+#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
