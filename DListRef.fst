@@ -136,6 +136,7 @@ let ( !<|= ) (#t:Type) (a:ref (dlist t)) : ST unit
 
 unfold let (~.) (#t:Type) (a:t) : Tot (erased (seq t)) = hide (Seq.create 1 a)
 unfold let (^+) (#t:Type) (a:t) (b:erased (seq t)) : Tot (erased (seq t)) = elift2 Seq.cons (hide a) b
+unfold let (+^) (#t:Type) (a:erased (seq t)) (b:t) : Tot (erased (seq t)) = elift2 Seq.snoc a (hide b)
 
 logic
 let all_nodes_contained (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
