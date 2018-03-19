@@ -416,7 +416,8 @@ let dlisthead_remove_head #t h =
       let hnodes = reveal h.nodes in
       (forall (i:nat{1 <= i /\ i < Seq.length ynodes /\ i+1 < Seq.length hnodes}).
                 ynodes.[i]@h2 == hnodes.[i+1]@h1)); // OBSERVE
-    admit (); // TODO: Actually prove that this is correct
+    assume (dlisthead_ghostly_connections h2 y);
+    assume (flink_valid h2 y);
     y
   )
 
