@@ -419,3 +419,17 @@ let dlisthead_remove_head #t h =
     admit (); // TODO: Actually prove that this is correct
     y
   )
+
+
+/// Useful code that can be copied over below
+
+(*
+    assert (all_nodes_contained h2 y);
+    assert (dlisthead_ghostly_connections h2 y);
+    assert (flink_valid h2 y);
+    assert (blink_valid h2 y);
+    assert (elements_are_valid h2 y);
+    assert (elements_dont_alias1 h2 y);
+    assert (elements_dont_alias2 h2 y);
+    assert (all_elements_distinct h2 y);
+*)
