@@ -385,10 +385,10 @@ let insertTailList #t h e =
   then dlisthead_update_tail h e
   else singletonlist e
 
-#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
-
 unfold let ghost_tail (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
   hide (Seq.tail (reveal s))
+
+#set-options "--z3rlimit 10"
 
 val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
@@ -427,6 +427,11 @@ let dlisthead_remove_head #t h =
     )
   )
 
+#reset-options
+
+
+
+#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
 /// Useful code that can be copied over below
 
