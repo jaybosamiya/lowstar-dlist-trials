@@ -442,7 +442,20 @@ val dlisthead_remove_tail: #t:eqtype -> h:nonempty_dlisthead t ->
           modifies ((getSome h.ltail) ^+^ nodes.[length nodes - 2]) h1 h2)) /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_tail #t h =
-  h // TODO: Work this out
+  let h1 = ST.get () in
+  if is_singleton h then (
+    empty_list
+  ) else (
+    let Some n = h.ltail in
+    let Some prev = (!n).blink in
+    recall prev;
+    let Some hhead = h.lhead in
+    if compare_addrs hhead prev then ( // we are left with a singleton
+      singletonlist prev
+    ) else (
+      h // TODO: Work this out
+    )
+  )
 
 /// Useful code that can be copied over below
 
