@@ -456,7 +456,16 @@ let dlisthead_remove_tail #t h =
     if compare_addrs hhead prev then ( // we are left with a singleton
       singletonlist prev
     ) else (
-      h // TODO: Work this out
+      let y = { lhead = h.lhead ; ltail = Some prev ; nodes = ghost_unsnoc h.nodes } in
+      let h2 = ST.get () in
+      assert (
+        let ynodes = reveal y.nodes in
+        let hnodes = reveal h.nodes in
+        (forall (i:nat{0 <= i /\ i < Seq.length ynodes - 1 /\ i < Seq.length hnodes - 2}).
+                  {:pattern (ynodes.[i]@h2)}
+           ynodes.[i]@h2 == hnodes.[i]@h1)); // OBSERVE
+      assume (dlisthead_ghostly_connections h2 y); // TODO
+      y
     )
   )
 
