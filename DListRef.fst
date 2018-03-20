@@ -429,9 +429,20 @@ let dlisthead_remove_head #t h =
 
 #reset-options
 
-
-
 #reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
+
+val dlisthead_remove_tail: #t:eqtype -> h:nonempty_dlisthead t ->
+  ST (dlisthead t)
+    (requires (fun h0 -> dlisthead_is_valid h0 h))
+    (ensures (fun h1 y h2 ->
+         (is_singleton h ==>
+          modifies (only (getSome h.ltail)) h1 h2) /\
+         (~(is_singleton h) ==>
+          (let nodes = reveal h.nodes in
+          modifies ((getSome h.ltail) ^+^ nodes.[length nodes - 2]) h1 h2)) /\
+         dlisthead_is_valid h2 y))
+let dlisthead_remove_tail #t h =
+  h // TODO: Work this out
 
 /// Useful code that can be copied over below
 
