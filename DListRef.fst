@@ -320,7 +320,8 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
       let ynodes = reveal y.nodes in
       let hnodes = reveal h.nodes in
       (forall (i:nat{2 <= i /\ i < Seq.length ynodes /\ i-1 < Seq.length hnodes}).
-                ynodes.[i]@h2 == hnodes.[i-1]@h1)); // OBSERVE
+         {:pattern (ynodes.[i]@h2)}
+         ynodes.[i]@h2 == hnodes.[i-1]@h1)); // OBSERVE
     y
   )
 
@@ -363,7 +364,8 @@ let dlisthead_update_tail #t h e =
       let ynodes = reveal y.nodes in
       let hnodes = reveal h.nodes in
       (forall (i:nat{0 <= i /\ i < Seq.length ynodes - 2 /\ i < Seq.length hnodes - 1}).
-                ynodes.[i]@h2 == hnodes.[i]@h1)); // OBSERVE
+         {:pattern (ynodes.[i]@h2)}
+         ynodes.[i]@h2 == hnodes.[i]@h1)); // OBSERVE
     y
   )
 
@@ -415,7 +417,8 @@ let dlisthead_remove_head #t h =
       let ynodes = reveal y.nodes in
       let hnodes = reveal h.nodes in
       (forall (i:nat{1 <= i /\ i < Seq.length ynodes /\ i+1 < Seq.length hnodes}).
-                ynodes.[i]@h2 == hnodes.[i+1]@h1)); // OBSERVE
+         {:pattern (ynodes.[i]@h2)}
+         ynodes.[i]@h2 == hnodes.[i+1]@h1)); // OBSERVE
     assume (isNone (y.ltail^@h2).flink);
     assert (dlisthead_ghostly_connections h2 y);
     assume (flink_valid h2 y);
