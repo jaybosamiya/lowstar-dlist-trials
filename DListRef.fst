@@ -411,18 +411,21 @@ let dlisthead_remove_head #t h =
     // unlink them
     !=|> n;
     !<|= next;
-    let y = { lhead = Some next ; ltail = h.ltail ; nodes = ghost_tail h.nodes } in
-    let h2 = ST.get () in
-    assert (
-      let ynodes = reveal y.nodes in
-      let hnodes = reveal h.nodes in
-      (forall (i:nat{1 <= i /\ i < Seq.length ynodes /\ i+1 < Seq.length hnodes}).
-         {:pattern (ynodes.[i]@h2)}
-         ynodes.[i]@h2 == hnodes.[i+1]@h1)); // OBSERVE
-    assume (isNone (y.ltail^@h2).flink);
-    assert (dlisthead_ghostly_connections h2 y);
-    assume (flink_valid h2 y);
-    y
+    let Some htail = h.ltail in
+    if compare_addrs htail next then ( // we are left with a singleton
+      singletonlist next
+    ) else (
+      let y = { lhead = Some next ; ltail = h.ltail ; nodes = ghost_tail h.nodes } in
+      let h2 = ST.get () in
+      assert (
+        let ynodes = reveal y.nodes in
+        let hnodes = reveal h.nodes in
+        (forall (i:nat{1 <= i /\ i < Seq.length ynodes /\ i+1 < Seq.length hnodes}).
+                  {:pattern (ynodes.[i]@h2)}
+           ynodes.[i]@h2 == hnodes.[i+1]@h1)); // OBSERVE
+      assume (flink_valid h2 y);
+      y
+    )
   )
 
 
