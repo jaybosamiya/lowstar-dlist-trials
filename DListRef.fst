@@ -423,7 +423,7 @@ let dlisthead_remove_head #t h =
         (forall (i:nat{1 <= i /\ i < Seq.length ynodes /\ i+1 < Seq.length hnodes}).
                   {:pattern (ynodes.[i]@h2)}
            ynodes.[i]@h2 == hnodes.[i+1]@h1)); // OBSERVE
-      assume (flink_valid h2 y);
+      assume ((reveal y.nodes).[0]@h2 |> (reveal y.nodes).[1]);
       y
     )
   )
