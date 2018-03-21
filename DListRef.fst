@@ -430,7 +430,9 @@ let dlisthead_remove_head #t h =
 #reset-options
 
 unfold let ghost_unsnoc (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
-  hide (fst (Seq.un_snoc (reveal s)))
+  let x = reveal s in
+  let l = length x - 1 in
+  hide (slice x 0 l)
 
 #reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
