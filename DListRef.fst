@@ -434,7 +434,7 @@ unfold let ghost_unsnoc (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) 
   let l = length x - 1 in
   hide (slice x 0 l)
 
-#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
+#set-options "--z3rlimit 50"
 
 val dlisthead_remove_tail: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
@@ -472,6 +472,10 @@ let dlisthead_remove_tail #t h =
       y
     )
   )
+
+#reset-options
+
+#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
 /// Useful code that can be copied over below
 
