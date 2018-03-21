@@ -475,7 +475,11 @@ let dlisthead_remove_tail #t h =
 
 #reset-options
 
-let rec get_ref_index (#t:Type) (s:seq (ref t)) (x:ref t{Seq.contains s x}) :
+// logic
+let contains_by_addr (#t:Type) (s:seq (ref t)) (x:ref t) : GTot Type0 =
+  (exists i. addr_of s.[i] == addr_of x)
+
+let rec get_ref_index (#t:Type) (s:seq (ref t)) (x:ref t{s `contains_by_addr` x}) :
   GTot (i:nat{i < Seq.length s})
     (decreases (Seq.length s)) =
   contains_elim s x;
@@ -484,7 +488,7 @@ let rec get_ref_index (#t:Type) (s:seq (ref t)) (x:ref t{Seq.contains s x}) :
     contains_cons h t x;
     1 + get_ref_index t x)
 
-val lemma_get_ref_index : #t:Type -> s:seq (ref t) -> x:ref t{Seq.contains s x} ->
+val lemma_get_ref_index : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_addr` x} ->
   Lemma (ensures (
     addr_of s.[get_ref_index s x] = addr_of x))
     (decreases (Seq.length s))
