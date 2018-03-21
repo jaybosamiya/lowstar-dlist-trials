@@ -475,6 +475,29 @@ let dlisthead_remove_tail #t h =
 
 #reset-options
 
+let rec get_ref_index (#t:Type) (s:seq (ref t)) (x:ref t{Seq.contains s x}) : GTot nat
+    (decreases (Seq.length s)) =
+  contains_elim s x;
+  let h, t = Seq.head s, Seq.tail s in
+  if compare_addrs h x then 0 else (
+    contains_cons h t x;
+    1 + get_ref_index t x)
+
+val lemma_get_ref_index : #t:Type -> s:seq (ref t) -> x:ref t{Seq.contains s x} ->
+  Lemma (ensures (
+    let i = get_ref_index s x in
+    i < Seq.length s /\
+    (let (i:nat{i < Seq.length s}) = i in // more workarounds for two phase
+         addr_of s.[i] = addr_of x)))
+    (decreases (Seq.length s))
+    [SMTPat (get_ref_index s x)]
+let rec lemma_get_ref_index #t s x =
+  contains_elim s x;
+  let h, t = Seq.head s, Seq.tail s in
+  if compare_addrs h x then () else (
+    contains_cons h t x;
+    lemma_get_ref_index t x)
+
 #reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
 /// Useful code that can be copied over below
