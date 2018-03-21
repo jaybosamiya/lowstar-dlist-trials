@@ -500,6 +500,18 @@ let rec lemma_get_ref_index #t s x =
     contains_cons h t x;
     lemma_get_ref_index t x)
 
+val split_seq_at_element : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_addr` x} ->
+  GTot (v:(seq (ref t) * ref t * seq (ref t)){
+      let l, m, r = v in
+      s == append l (cons m r) /\
+      addr_of m == addr_of x
+  })
+let split_seq_at_element #t s x =
+  let i = get_ref_index s x in
+  let l, mr = Seq.split s i in
+  lemma_split s i;
+  l, head mr, tail mr
+
 #reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
 /// Useful code that can be copied over below
