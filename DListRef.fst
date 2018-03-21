@@ -463,14 +463,12 @@ let dlisthead_remove_tail #t h =
     ) else (
       let y = { lhead = h.lhead ; ltail = Some prev ; nodes = ghost_unsnoc h.nodes } in
       let h2 = ST.get () in
-      admit ();
       assert (
         let ynodes = reveal y.nodes in
         let hnodes = reveal h.nodes in
         (forall (i:nat{0 <= i /\ i < Seq.length ynodes - 1 /\ i < Seq.length hnodes - 2}).
                   {:pattern (ynodes.[i]@h2)}
            ynodes.[i]@h2 == hnodes.[i]@h1)); // OBSERVE
-      assume (isNone (y.ltail^@h2).flink); // TODO
       y
     )
   )
