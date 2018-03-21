@@ -388,7 +388,7 @@ let insertTailList #t h e =
 unfold let ghost_tail (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
   hide (Seq.tail (reveal s))
 
-#set-options "--z3rlimit 10"
+#set-options "--z3rlimit 20"
 
 val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
