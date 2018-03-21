@@ -514,6 +514,22 @@ let split_seq_at_element #t s x =
 
 #reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
+val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t) ->
+  ST (dlisthead t)
+    (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\
+                         member_of h0 h e /\
+                         not_aliased0 e h.lhead /\ not_aliased0 e h.ltail))
+    (ensures (fun h1 y h2 ->
+         isSome (e@h1).flink /\ isSome (e@h1).blink /\
+         dlist_is_valid h2 e /\
+         isNone (e@h2).flink /\ isNone (e@h2).blink /\
+         modifies (e ^++ (getSome (e@h1).flink) ^+^ (getSome (e@h1).blink)) h1 h2 /\
+         dlisthead_is_valid h2 y))
+let dlisthead_remove_strictly_mid #t h e =
+  admit ();
+  assert (Seq.length (reveal h.nodes) >= 3); // would want to start from here
+  h // TODO: Actually do something
+
 /// Useful code that can be copied over below
 
 (*
