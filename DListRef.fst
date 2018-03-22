@@ -514,6 +514,8 @@ let dlisthead_remove_strictly_mid #t h e =
   !=|> e;
   prev =|> next;
   prev <|= next;
+  let nodes = h.nodes in // TODO: Fix this
+  let y = { lhead = h.lhead ; ltail = h.ltail ; nodes = nodes } in
   admit ();
   h // TODO: Actually do something
 
