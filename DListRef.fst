@@ -526,8 +526,6 @@ val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:ref 
          dlisthead_is_valid h2 y))
 let dlisthead_remove_strictly_mid #t h e =
   let h1 = ST.get () in
-  assert (Seq.length (reveal h.nodes) >= 3);
-  assert (isSome (e@h1).flink /\ isSome (e@h1).blink);
   let Some prev = (!e).blink in
   let Some next = (!e).flink in
   !<|= e;
