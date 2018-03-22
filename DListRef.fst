@@ -312,21 +312,15 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
   !<|= e;
   e =|> n;
   e <|= n;
-  let previously_singleton = compare_addrs n (getSome h.ltail) in
-  if previously_singleton
-  then (
-    { lhead = Some e ; ltail = Some n ; nodes = e ^+ h.nodes }
-  ) else (
-    let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
-    let h2 = ST.get () in
-    assert (
-      let ynodes = reveal y.nodes in
-      let hnodes = reveal h.nodes in
-      (forall (i:nat{2 <= i /\ i < Seq.length ynodes /\ i-1 < Seq.length hnodes}).
-         {:pattern (ynodes.[i]@h2)}
-         ynodes.[i]@h2 == hnodes.[i-1]@h1)); // OBSERVE
+  let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
+  let h2 = ST.get () in
+  assert (
+    let ynodes = reveal y.nodes in
+    let hnodes = reveal h.nodes in
+    (forall (i:nat{2 <= i /\ i < Seq.length ynodes /\ i-1 < Seq.length hnodes}).
+              {:pattern (ynodes.[i]@h2)}
+       ynodes.[i]@h2 == hnodes.[i-1]@h1)); // OBSERVE
     y
-  )
 
 #reset-options
 
@@ -357,20 +351,15 @@ let dlisthead_update_tail #t h e =
   !=|> e;
   n =|> e;
   n <|= e;
-  if previously_singleton
-  then (
-    { lhead = Some n ; ltail = Some e ; nodes = h.nodes +^ e }
-  ) else (
-    let y = { lhead = h.lhead ; ltail = Some e ; nodes = h.nodes +^ e } in
-    let h2 = ST.get () in
-    assert (
-      let ynodes = reveal y.nodes in
-      let hnodes = reveal h.nodes in
-      (forall (i:nat{0 <= i /\ i < Seq.length ynodes - 2 /\ i < Seq.length hnodes - 1}).
-         {:pattern (ynodes.[i]@h2)}
-         ynodes.[i]@h2 == hnodes.[i]@h1)); // OBSERVE
+  let y = { lhead = h.lhead ; ltail = Some e ; nodes = h.nodes +^ e } in
+  let h2 = ST.get () in
+  assert (
+    let ynodes = reveal y.nodes in
+    let hnodes = reveal h.nodes in
+    (forall (i:nat{0 <= i /\ i < Seq.length ynodes - 2 /\ i < Seq.length hnodes - 1}).
+              {:pattern (ynodes.[i]@h2)}
+       ynodes.[i]@h2 == hnodes.[i]@h1)); // OBSERVE
     y
-  )
 
 #reset-options
 
