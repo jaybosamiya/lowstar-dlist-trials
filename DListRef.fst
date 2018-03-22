@@ -528,8 +528,12 @@ let dlisthead_remove_strictly_mid #t h e =
   let h1 = ST.get () in
   let Some prev = (!e).blink in
   let Some next = (!e).flink in
+  recall prev;
+  recall next;
   !<|= e;
   !=|> e;
+  prev =|> next;
+  prev <|= next;
   admit ();
   h // TODO: Actually do something
 
