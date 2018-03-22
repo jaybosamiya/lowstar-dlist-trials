@@ -525,8 +525,14 @@ val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:ref 
          modifies (e ^++ (getSome (e@h1).flink) ^+^ (getSome (e@h1).blink)) h1 h2 /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_strictly_mid #t h e =
+  let h1 = ST.get () in
+  assert (Seq.length (reveal h.nodes) >= 3);
+  assert (isSome (e@h1).flink /\ isSome (e@h1).blink);
+  let Some prev = (!e).blink in
+  let Some next = (!e).flink in
+  !<|= e;
+  !=|> e;
   admit ();
-  assert (Seq.length (reveal h.nodes) >= 3); // would want to start from here
   h // TODO: Actually do something
 
 /// Useful code that can be copied over below
