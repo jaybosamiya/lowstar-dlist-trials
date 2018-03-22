@@ -480,16 +480,18 @@ let rec lemma_get_ref_index #t s x =
     lemma_get_ref_index t x)
 
 val split_seq_at_element : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_addr` x} ->
-  GTot (v:(seq (ref t) * ref t * seq (ref t)){
-      let l, m, r = v in
-      s == append l (cons m r) /\
-      addr_of m == addr_of x
+  GTot (v:(seq (ref t) * nat * seq (ref t)){
+      let l, i, r = v in
+      indexable s i /\ (
+      let (i:nat{i < length s}) = i in // workaround for two phase thing
+      s == append l (cons s.[i] r) /\
+      addr_of s.[i] == addr_of x)
   })
 let split_seq_at_element #t s x =
   let i = get_ref_index s x in
   let l, mr = Seq.split s i in
   lemma_split s i;
-  l, head mr, tail mr
+  l, i, tail mr
 
 #reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
