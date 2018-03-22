@@ -380,7 +380,7 @@ let insertTailList #t h e =
 unfold let ghost_tail (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
   hide (Seq.tail (reveal s))
 
-#set-options "--z3rlimit 20"
+#set-options "--z3rlimit 50 --max_fuel 4 --max_ifuel 1"
 
 val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
@@ -404,19 +404,15 @@ let dlisthead_remove_head #t h =
     !=|> n;
     !<|= next;
     let Some htail = h.ltail in
-    if compare_addrs htail next then ( // we are left with a singleton
-      singletonlist next
-    ) else (
-      let y = { lhead = Some next ; ltail = h.ltail ; nodes = ghost_tail h.nodes } in
-      let h2 = ST.get () in
-      assert (
-        let ynodes = reveal y.nodes in
-        let hnodes = reveal h.nodes in
-        (forall (i:nat{1 <= i /\ i < Seq.length ynodes /\ i+1 < Seq.length hnodes}).
-                  {:pattern (ynodes.[i]@h2)}
-           ynodes.[i]@h2 == hnodes.[i+1]@h1)); // OBSERVE
+    let y = { lhead = Some next ; ltail = h.ltail ; nodes = ghost_tail h.nodes } in
+    let h2 = ST.get () in
+    assert (
+      let ynodes = reveal y.nodes in
+      let hnodes = reveal h.nodes in
+      (forall (i:nat{1 <= i /\ i < Seq.length ynodes /\ i+1 < Seq.length hnodes}).
+                {:pattern (ynodes.[i]@h2)}
+         ynodes.[i]@h2 == hnodes.[i+1]@h1)); // OBSERVE
       y
-    )
   )
 
 #reset-options
@@ -449,20 +445,15 @@ let dlisthead_remove_tail #t h =
     //unlink them
     !<|= n;
     !=|> prev;
-    let Some hhead = h.lhead in
-    if compare_addrs hhead prev then ( // we are left with a singleton
-      singletonlist prev
-    ) else (
-      let y = { lhead = h.lhead ; ltail = Some prev ; nodes = ghost_unsnoc h.nodes } in
-      let h2 = ST.get () in
-      assert (
-        let ynodes = reveal y.nodes in
-        let hnodes = reveal h.nodes in
-        (forall (i:nat{0 <= i /\ i < Seq.length ynodes - 1 /\ i < Seq.length hnodes - 2}).
-                  {:pattern (ynodes.[i]@h2)}
-           ynodes.[i]@h2 == hnodes.[i]@h1)); // OBSERVE
+    let y = { lhead = h.lhead ; ltail = Some prev ; nodes = ghost_unsnoc h.nodes } in
+    let h2 = ST.get () in
+    assert (
+      let ynodes = reveal y.nodes in
+      let hnodes = reveal h.nodes in
+      (forall (i:nat{0 <= i /\ i < Seq.length ynodes - 1 /\ i < Seq.length hnodes - 2}).
+                {:pattern (ynodes.[i]@h2)}
+         ynodes.[i]@h2 == hnodes.[i]@h1)); // OBSERVE
       y
-    )
   )
 
 #reset-options
