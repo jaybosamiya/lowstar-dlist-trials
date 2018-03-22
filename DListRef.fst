@@ -236,11 +236,14 @@ let singletonlist #t e =
   !<|= e; !=|> e;
   { lhead = Some e ; ltail = Some e ; nodes = ~. e }
 
+// logic
+let contains_by_addr (#t:Type) (s:seq (ref t)) (x:ref t) : GTot Type0 =
+  (exists i. addr_of s.[i] == addr_of x)
+
 logic
-let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot bool =
-  let cmp x : GTot bool = addr_of x = addr_of e in
-  let r = Seq.ghost_find_l cmp (reveal h.nodes) in
-  isSome r
+let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot Type0 =
+  let nodes = reveal h.nodes in
+  nodes `contains_by_addr` e
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let has_nothing_in (#t:eqtype) (h0:heap)
@@ -474,10 +477,6 @@ let dlisthead_remove_tail #t h =
   )
 
 #reset-options
-
-// logic
-let contains_by_addr (#t:Type) (s:seq (ref t)) (x:ref t) : GTot Type0 =
-  (exists i. addr_of s.[i] == addr_of x)
 
 let rec get_ref_index (#t:Type) (s:seq (ref t)) (x:ref t{s `contains_by_addr` x}) :
   GTot (i:nat{i < Seq.length s})
