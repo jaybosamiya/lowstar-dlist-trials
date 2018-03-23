@@ -92,7 +92,6 @@ logic
 let ( <| ) (#t:Type) (a:gpointer (dlist t)) (b: dlist t) : GTot Type0 =
   b.blink ==$ a
 
-irreducible
 let ( =|> ) (#t:Type) (a:gpointer (dlist t)) (b:gpointer (dlist t)) : ST unit
     (requires (fun h0 ->
          h0 `B.live` a /\ h0 `B.live` b /\
@@ -107,7 +106,6 @@ let ( =|> ) (#t:Type) (a:gpointer (dlist t)) (b:gpointer (dlist t)) : ST unit
          (a@h2) |> b)) =
   a := { !a with flink = b }
 
-irreducible
 let ( <|= ) (#t:Type) (a:gpointer (dlist t)) (b:gpointer (dlist t)) : ST unit
     (requires (fun h0 ->
          h0 `B.live` a /\ h0 `B.live` b /\
@@ -122,7 +120,6 @@ let ( <|= ) (#t:Type) (a:gpointer (dlist t)) (b:gpointer (dlist t)) : ST unit
          a <| (b@h2))) =
   b := { !b with blink = a }
 
-irreducible
 let ( !=|> ) (#t:Type) (a:gpointer (dlist t)) : ST unit
     (requires (fun h0 -> h0 `B.live` a))
     (ensures (fun h1 _ h2 ->
@@ -133,7 +130,6 @@ let ( !=|> ) (#t:Type) (a:gpointer (dlist t)) : ST unit
          (a@h2).flink == null)) =
   a := { !a with flink = null }
 
-irreducible
 let ( !<|= ) (#t:Type) (a:gpointer (dlist t)) : ST unit
     (requires (fun h0 -> h0 `B.live` a))
     (ensures (fun h1 _ h2 ->
