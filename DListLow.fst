@@ -53,8 +53,16 @@ let empty_list #t =
 val getSome: (a:pointer_or_null 'a{is_not_null a}) -> (b:pointer 'a{a == b})
 let getSome a = a
 
-unfold let (@) (a:pointer 't) (h0:HS.mem{h0 `B.live` a}) = B.get h0 a 0
-unfold let (^@) (a:(pointer_or_null 't){is_not_null a}) (h0:HS.mem{h0 `B.live` (getSome a)}) = (getSome a) @ h0
+assume val good_pointer_mm : bool
+
+let has_good_pointer (#t:Type) (h0:HS.mem) (p:pointer t) =
+  B.live h0 p /\
+  B.max_length p = 1 /\
+  B.idx p = 0 /\
+  (FStar.Monotonic.Heap.is_mm (B.as_ref p) = good_pointer_mm)
+
+unfold let (@) (a:pointer 't) (h0:HS.mem{h0 `has_good_pointer` a}) = B.get h0 a 0
+unfold let (^@) (a:(pointer_or_null 't){is_not_null a}) (h0:HS.mem{h0 `has_good_pointer` (getSome a)}) = (getSome a) @ h0
 
 unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
 
@@ -84,7 +92,7 @@ let dlist_is_valid' (#t:Type) (h0:HS.mem) (n:dlist t) : GTot Type0 =
 
 // logic
 let dlist_is_valid (#t:Type) (h0:HS.mem) (n:pointer (dlist t)) : GTot Type0 =
-  h0 `B.live` n /\
+  h0 `has_good_pointer` n /\
   dlist_is_valid' #t h0 (n@h0)
 
 let (==$) (#t:Type) (a:(pointer_or_null t)) (b:pointer t) =
@@ -103,7 +111,7 @@ let ( <| ) (#t:Type) (a:pointer (dlist t)) (b: dlist t) : GTot Type0 =
 irreducible
 let ( =|> ) (#t:Type) (a:pointer (dlist t)) (b:pointer (dlist t)) : ST unit
     (requires (fun h0 ->
-         h0 `B.live` a /\ h0 `B.live` b /\
+         h0 `has_good_pointer` a /\ h0 `has_good_pointer` b /\
          not_aliased00 a b /\
          not_aliased0 b (a@h0).blink))
     (ensures (fun h1 _ h2 ->
@@ -118,7 +126,7 @@ let ( =|> ) (#t:Type) (a:pointer (dlist t)) (b:pointer (dlist t)) : ST unit
 irreducible
 let ( <|= ) (#t:Type) (a:pointer (dlist t)) (b:pointer (dlist t)) : ST unit
     (requires (fun h0 ->
-         h0 `B.live` a /\ h0 `B.live` b /\
+         h0 `has_good_pointer` a /\ h0 `has_good_pointer` b /\
          not_aliased00 a b /\
          not_aliased0 a (b@h0).flink))
     (ensures (fun h1 _ h2 ->
@@ -132,7 +140,7 @@ let ( <|= ) (#t:Type) (a:pointer (dlist t)) (b:pointer (dlist t)) : ST unit
 
 irreducible
 let ( !=|> ) (#t:Type) (a:pointer (dlist t)) : ST unit
-    (requires (fun h0 -> h0 `B.live` a))
+    (requires (fun h0 -> h0 `has_good_pointer` a))
     (ensures (fun h1 _ h2 ->
          modifies_1 a h1 h2 /\
          dlist_is_valid h2 a /\
@@ -143,7 +151,7 @@ let ( !=|> ) (#t:Type) (a:pointer (dlist t)) : ST unit
 
 irreducible
 let ( !<|= ) (#t:Type) (a:pointer (dlist t)) : ST unit
-    (requires (fun h0 -> h0 `B.live` a))
+    (requires (fun h0 -> h0 `has_good_pointer` a))
     (ensures (fun h1 _ h2 ->
          modifies_1 a h1 h2 /\
          dlist_is_valid h2 a /\
@@ -159,10 +167,10 @@ unfold let (+^) (#t:Type) (a:erased (seq t)) (b:t) : Tot (erased (seq t)) = elif
 logic
 let all_nodes_contained (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
-  (is_not_null h.lhead ==> h0 `B.live` (getSome h.lhead)) /\
-  (is_not_null h.ltail ==> h0 `B.live` (getSome h.ltail)) /\
-  (forall i. {:pattern (h0 `B.live` nodes.[i])}
-     h0 `B.live` nodes.[i]) /\
+  (is_not_null h.lhead ==> h0 `has_good_pointer` (getSome h.lhead)) /\
+  (is_not_null h.ltail ==> h0 `has_good_pointer` (getSome h.ltail)) /\
+  (forall i. {:pattern (h0 `has_good_pointer` nodes.[i])}
+     h0 `has_good_pointer` nodes.[i]) /\
   (forall i j. {:pattern (B.frameOf nodes.[i]); (B.frameOf nodes.[j])}
      B.frameOf nodes.[i] = B.frameOf nodes.[j])
 
@@ -173,7 +181,7 @@ let flink_valid (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i. {:pattern ((nodes.[i]@h0).flink)}
      ((0 <= i /\ i < len - 1) ==>
-      (let (a:_{h0 `B.live` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
+      (let (a:_{h0 `has_good_pointer` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
        nodes.[i]@h0 |> nodes.[i+1])))
 
 logic
@@ -183,7 +191,7 @@ let blink_valid (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i. {:pattern ((nodes.[i]@h0).blink)}
      ((1 <= i /\ i < len) ==>
-      (let (_:_{h0 `B.live` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
+      (let (_:_{h0 `has_good_pointer` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
       nodes.[i-1] <| nodes.[i]@h0)))
 
 logic
@@ -204,8 +212,8 @@ let elements_dont_alias1 (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)}
      0 < i /\ i < j /\ j < length nodes ==>
-   (let (_:_{h0 `B.live` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
-    let (_:_{h0 `B.live` nodes.[j]}) = nodes.[j] in
+   (let (_:_{h0 `has_good_pointer` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
+    let (_:_{h0 `has_good_pointer` nodes.[j]}) = nodes.[j] in
     not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink))
 
 logic
@@ -214,8 +222,8 @@ let elements_dont_alias2 (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)}
      0 < i /\ i < j /\ j < length nodes ==>
-   (let (_:_{h0 `B.live` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
-    let (_:_{h0 `B.live` nodes.[j]}) = nodes.[j] in
+   (let (_:_{h0 `has_good_pointer` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
+    let (_:_{h0 `has_good_pointer` nodes.[j]}) = nodes.[j] in
     not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink))
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
@@ -256,7 +264,7 @@ let test1 () : Tot unit = assert (forall h0 t. dlisthead_is_valid h0 (empty_list
 
 val singletonlist: #t:eqtype -> e:pointer (dlist t) ->
   ST (dlisthead t)
-  (requires (fun h0 -> h0 `B.live` e))
+  (requires (fun h0 -> h0 `has_good_pointer` e))
   (ensures (fun h0 y h1 -> modifies_1 e h0 h1 /\ dlisthead_is_valid h1 y))
 let singletonlist #t e =
   !<|= e; !=|> e;
@@ -274,7 +282,7 @@ let member_of (#t:eqtype) (h0:HS.mem) (h:dlisthead t) (e:pointer (dlist t)) : GT
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let has_nothing_in (#t:eqtype) (h0:HS.mem)
     (h:dlisthead t{dlisthead_is_valid h0 h})
-    (e:pointer (dlist t){h0 `B.live` e})
+    (e:pointer (dlist t){h0 `has_good_pointer` e})
   : GTot Type0 =
   (~(member_of h0 h e)) /\
   (not_aliased0 e h.lhead) /\
@@ -294,7 +302,7 @@ type nonempty_dlisthead t = (h:dlisthead t{is_not_null h.lhead /\ is_not_null h.
 val dlisthead_make_valid_singleton: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
     (requires (fun h0 ->
-         h0 `B.live` (getSome h.lhead) /\
+         h0 `has_good_pointer` (getSome h.lhead) /\
          is_null (h.lhead^@h0).flink /\ is_null (h.lhead^@h0).blink))
     (ensures (fun h1 y h2 -> modifies_none h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_make_valid_singleton #t h =
@@ -310,19 +318,7 @@ val nonempty_singleton_properties :
   ST unit
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ is_singleton h))
     (ensures (fun h0 _ h1 -> h0 == h1 /\ Seq.length (reveal h.nodes) == 1))
-let nonempty_singleton_properties #t h =
-  let h0 = ST.get () in
-  let n = reveal h.nodes in
-  let l = Seq.length n in
-  let hd = getSome h.lhead in
-  let tl = getSome h.ltail in
-  let fst = Seq.head n in
-  let lst = Seq.last n in
-  assert (compare_addrs hd fst);
-  assert (compare_addrs tl lst);
-  assert (compare_addrs hd tl);
-  assert (compare_addrs fst lst);
-  admit ()// TODO: Prove this
+let nonempty_singleton_properties #t h = ()
 
 val nonempty_nonsingleton_properties :
   #t:Type ->
