@@ -7,7 +7,7 @@ open FStar.Buffer
 open FStar.Int
 open FStar.Ghost
 open FStar.Seq
-open Pointers
+open Gpointers
 module U64 = FStar.UInt64
 module U32 = FStar.UInt32
 module U16 = FStar.UInt16
@@ -20,9 +20,9 @@ unopteq
 (** Node of a doubly linked list *)
 type dlist (t:Type0) = {
   (* forward link *)
-  flink: (pointer_or_null (dlist t));
+  flink: (gpointer_or_null (dlist t));
   (* backward link *)
-  blink: (pointer_or_null (dlist t));
+  blink: (gpointer_or_null (dlist t));
   (* payload *)
   p: t;
 }
@@ -30,9 +30,9 @@ type dlist (t:Type0) = {
 unopteq
 (** Doubly linked list head *)
 type dlisthead (t:Type0) ={
-  lhead: (pointer_or_null (dlist t));
-  ltail: (pointer_or_null (dlist t));
-  nodes: erased (seq (pointer (dlist t)));
+  lhead: (gpointer_or_null (dlist t));
+  ltail: (gpointer_or_null (dlist t));
+  nodes: erased (seq (gpointer (dlist t)));
 }
 
 (** Initialize an element of a doubly linked list *)
@@ -45,29 +45,29 @@ val empty_list: #t:Type -> dlisthead t
 let empty_list #t =
   { lhead = null ; ltail = null ; nodes = hide createEmpty }
 
-val getSome: (a:pointer_or_null 'a{is_not_null a}) -> (b:pointer 'a{a == b})
+val getSome: (a:gpointer_or_null 'a{is_not_null a}) -> (b:gpointer 'a{a == b})
 let getSome a = a
 
-unfold let (@) (a:pointer 't) (h0:HS.mem{h0 `B.live` a}) = B.get h0 a 0
-unfold let (^@) (a:(pointer_or_null 't){is_not_null a}) (h0:HS.mem{h0 `B.live` (getSome a)}) = (getSome a) @ h0
+unfold let (@) (a:gpointer 't) (h0:HS.mem{h0 `B.live` a}) = B.get h0 a 0
+unfold let (^@) (a:(gpointer_or_null 't){is_not_null a}) (h0:HS.mem{h0 `B.live` (getSome a)}) = (getSome a) @ h0
 
 unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
-let not_aliased (#t:Type) (a:(pointer_or_null t)) (b:(pointer_or_null t)) : GTot Type0 =
+let not_aliased (#t:Type) (a:(gpointer_or_null t)) (b:(gpointer_or_null t)) : GTot Type0 =
   is_null a \/ is_null b \/
   (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
    let (b:_{is_not_null b}) = b in
    disjoint (getSome a) (getSome b))
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
-let not_aliased0 (#t:Type) (a:pointer t) (b:(pointer_or_null t)) : GTot Type0 =
+let not_aliased0 (#t:Type) (a:gpointer t) (b:(gpointer_or_null t)) : GTot Type0 =
   is_null b \/
   (let (b:_{is_not_null b}) = b in // workaround for not using two phase type checker
    disjoint a (getSome b))
 
 logic
-let not_aliased00 (#t:Type) (a:pointer t) (b:pointer t) : GTot Type0 =
+let not_aliased00 (#t:Type) (a:gpointer t) (b:gpointer t) : GTot Type0 =
   disjoint a b
 
 logic
@@ -75,25 +75,25 @@ let dlist_is_valid' (#t:Type) (h0:HS.mem) (n:dlist t) : GTot Type0 =
   not_aliased n.flink n.blink
 
 // logic
-let dlist_is_valid (#t:Type) (h0:HS.mem) (n:pointer (dlist t)) : GTot Type0 =
+let dlist_is_valid (#t:Type) (h0:HS.mem) (n:gpointer (dlist t)) : GTot Type0 =
   h0 `B.live` n /\
   dlist_is_valid' #t h0 (n@h0)
 
-let (==$) (#t:Type) (a:(pointer_or_null t)) (b:pointer t) =
+let (==$) (#t:Type) (a:(gpointer_or_null t)) (b:gpointer t) =
   is_not_null a /\
   (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
    as_addr (getSome a) = as_addr b)
 
 logic
-let ( |> ) (#t:Type) (a:dlist t) (b:pointer (dlist t)) : GTot Type0 =
+let ( |> ) (#t:Type) (a:dlist t) (b:gpointer (dlist t)) : GTot Type0 =
   a.flink ==$ b
 
 logic
-let ( <| ) (#t:Type) (a:pointer (dlist t)) (b: dlist t) : GTot Type0 =
+let ( <| ) (#t:Type) (a:gpointer (dlist t)) (b: dlist t) : GTot Type0 =
   b.blink ==$ a
 
 irreducible
-let ( =|> ) (#t:Type) (a:pointer (dlist t)) (b:pointer (dlist t)) : ST unit
+let ( =|> ) (#t:Type) (a:gpointer (dlist t)) (b:gpointer (dlist t)) : ST unit
     (requires (fun h0 ->
          h0 `B.live` a /\ h0 `B.live` b /\
          not_aliased00 a b /\
@@ -108,7 +108,7 @@ let ( =|> ) (#t:Type) (a:pointer (dlist t)) (b:pointer (dlist t)) : ST unit
   a := { !a with flink = b }
 
 irreducible
-let ( <|= ) (#t:Type) (a:pointer (dlist t)) (b:pointer (dlist t)) : ST unit
+let ( <|= ) (#t:Type) (a:gpointer (dlist t)) (b:gpointer (dlist t)) : ST unit
     (requires (fun h0 ->
          h0 `B.live` a /\ h0 `B.live` b /\
          not_aliased00 a b /\
@@ -123,7 +123,7 @@ let ( <|= ) (#t:Type) (a:pointer (dlist t)) (b:pointer (dlist t)) : ST unit
   b := { !b with blink = a }
 
 irreducible
-let ( !=|> ) (#t:Type) (a:pointer (dlist t)) : ST unit
+let ( !=|> ) (#t:Type) (a:gpointer (dlist t)) : ST unit
     (requires (fun h0 -> h0 `B.live` a))
     (ensures (fun h1 _ h2 ->
          modifies_1 a h1 h2 /\
@@ -134,7 +134,7 @@ let ( !=|> ) (#t:Type) (a:pointer (dlist t)) : ST unit
   a := { !a with flink = null }
 
 irreducible
-let ( !<|= ) (#t:Type) (a:pointer (dlist t)) : ST unit
+let ( !<|= ) (#t:Type) (a:gpointer (dlist t)) : ST unit
     (requires (fun h0 -> h0 `B.live` a))
     (ensures (fun h1 _ h2 ->
          modifies_1 a h1 h2 /\
@@ -246,7 +246,7 @@ let dlisthead_is_valid (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
 
 let test1 () : Tot unit = assert (forall h0 t. dlisthead_is_valid h0 (empty_list #t))
 
-val singletonlist: #t:eqtype -> e:pointer (dlist t) ->
+val singletonlist: #t:eqtype -> e:gpointer (dlist t) ->
   ST (dlisthead t)
   (requires (fun h0 -> h0 `B.live` e))
   (ensures (fun h0 y h1 -> modifies_1 e h0 h1 /\ dlisthead_is_valid h1 y))
@@ -255,18 +255,18 @@ let singletonlist #t e =
   { lhead = e ; ltail = e ; nodes = ~. e }
 
 // logic
-let contains_by_addr (#t:Type) (s:seq (pointer t)) (x:pointer t) : GTot Type0 =
+let contains_by_addr (#t:Type) (s:seq (gpointer t)) (x:gpointer t) : GTot Type0 =
   (exists i. B.as_addr s.[i] == B.as_addr x)
 
 logic
-let member_of (#t:eqtype) (h0:HS.mem) (h:dlisthead t) (e:pointer (dlist t)) : GTot Type0 =
+let member_of (#t:eqtype) (h0:HS.mem) (h:dlisthead t) (e:gpointer (dlist t)) : GTot Type0 =
   let nodes = reveal h.nodes in
   nodes `contains_by_addr` e
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let has_nothing_in (#t:eqtype) (h0:HS.mem)
     (h:dlisthead t{dlisthead_is_valid h0 h})
-    (e:pointer (dlist t){h0 `B.live` e})
+    (e:gpointer (dlist t){h0 `B.live` e})
   : GTot Type0 =
   (~(member_of h0 h e)) /\
   (not_aliased0 e h.lhead) /\
@@ -320,12 +320,12 @@ let ghost_append_properties #t a b = ()
 
 #set-options "--z3rlimit 50 --z3refresh"
 
-val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:pointer (dlist t) ->
+val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 -> modifies_2 e (getSome h.lhead) h1 h2
                              /\ dlisthead_is_valid h2 y))
-let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:pointer (dlist t)) =
+let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlist t)) =
   let h1 = ST.get () in
   let n = h.lhead in
   !<|= e;
@@ -343,7 +343,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:pointer (dlist
 
 #reset-options
 
-val insertHeadList : #t:eqtype -> h:dlisthead t -> e:pointer (dlist t) ->
+val insertHeadList : #t:eqtype -> h:dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 ->
@@ -359,7 +359,7 @@ let insertHeadList #t h e =
 
 #set-options "--z3rlimit 25 --z3refresh"
 
-val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:pointer (dlist t) ->
+val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 -> modifies_2 e (getSome h.ltail) h1 h2 /\ dlisthead_is_valid h2 y))
@@ -382,7 +382,7 @@ let dlisthead_update_tail #t h e =
 
 #reset-options
 
-val insertTailList : #t:eqtype -> h:dlisthead t -> e:pointer (dlist t) ->
+val insertTailList : #t:eqtype -> h:dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 ->
@@ -477,7 +477,7 @@ let dlisthead_remove_tail #t h =
 
 #reset-options
 
-let rec get_ref_index (#t:Type) (s:seq (pointer t)) (x:pointer t{s `contains_by_addr` x}) :
+let rec get_ref_index (#t:Type) (s:seq (gpointer t)) (x:gpointer t{s `contains_by_addr` x}) :
   GTot (i:nat{i < Seq.length s})
     (decreases (Seq.length s)) =
   contains_elim s x;
@@ -486,7 +486,7 @@ let rec get_ref_index (#t:Type) (s:seq (pointer t)) (x:pointer t{s `contains_by_
     contains_cons h t x;
     1 + get_ref_index t x)
 
-val lemma_get_ref_index : #t:Type -> s:seq (pointer t) -> x:pointer t{s `contains_by_addr` x} ->
+val lemma_get_ref_index : #t:Type -> s:seq (gpointer t) -> x:gpointer t{s `contains_by_addr` x} ->
   Lemma (ensures (
     compare_addrs s.[get_ref_index s x] x))
     (decreases (Seq.length s))
@@ -498,8 +498,8 @@ let rec lemma_get_ref_index #t s x =
     contains_cons h t x;
     lemma_get_ref_index t x)
 
-val split_seq_at_element : #t:Type -> s:seq (pointer t) -> x:pointer t{s `contains_by_addr` x} ->
-  GTot (v:(seq (pointer t) * nat * seq (pointer t)){
+val split_seq_at_element : #t:Type -> s:seq (gpointer t) -> x:gpointer t{s `contains_by_addr` x} ->
+  GTot (v:(seq (gpointer t) * nat * seq (gpointer t)){
       let l, i, r = v in
       indexable s i /\ (
       let (i:nat{i < length s}) = i in // workaround for two phase thing
@@ -514,7 +514,7 @@ let split_seq_at_element #t s x =
 
 #reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
-val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:pointer (dlist t) ->
+val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\
                          member_of h0 h e /\
