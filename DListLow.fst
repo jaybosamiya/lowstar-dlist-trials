@@ -5,11 +5,9 @@ open FStar.HyperStack
 open FStar.HyperStack.ST
 open FStar.Buffer
 open FStar.Int
-open C
-open C.Nullity
 open FStar.Ghost
 open FStar.Seq
-open PointerEquality
+open Pointers
 module U64 = FStar.UInt64
 module U32 = FStar.UInt32
 module U16 = FStar.UInt16
@@ -37,9 +35,6 @@ type dlisthead (t:Type0) ={
   nodes: erased (seq (pointer (dlist t)));
 }
 
-unfold let null #t = null t
-unfold let is_not_null p = not (is_null p)
-
 (** Initialize an element of a doubly linked list *)
 val empty_entry: #t:Type -> payload:t -> dlist t
 let empty_entry #t payload =
@@ -53,21 +48,10 @@ let empty_list #t =
 val getSome: (a:pointer_or_null 'a{is_not_null a}) -> (b:pointer 'a{a == b})
 let getSome a = a
 
-assume val good_pointer_mm : bool
-
-let has_good_pointer (#t:Type) (h0:HS.mem) (p:pointer t) =
-  B.live h0 p /\
-  B.max_length p = 1 /\
-  B.idx p = 0 /\
-  (FStar.Monotonic.Heap.is_mm (B.as_ref p) = good_pointer_mm)
-
-unfold let (@) (a:pointer 't) (h0:HS.mem{h0 `has_good_pointer` a}) = B.get h0 a 0
-unfold let (^@) (a:(pointer_or_null 't){is_not_null a}) (h0:HS.mem{h0 `has_good_pointer` (getSome a)}) = (getSome a) @ h0
+unfold let (@) (a:pointer 't) (h0:HS.mem{h0 `B.live` a}) = B.get h0 a 0
+unfold let (^@) (a:(pointer_or_null 't){is_not_null a}) (h0:HS.mem{h0 `B.live` (getSome a)}) = (getSome a) @ h0
 
 unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
-
-unfold let ( := ) a b = a.(0ul) <- b
-unfold let ( ! ) a = !* a
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let not_aliased (#t:Type) (a:(pointer_or_null t)) (b:(pointer_or_null t)) : GTot Type0 =
@@ -92,7 +76,7 @@ let dlist_is_valid' (#t:Type) (h0:HS.mem) (n:dlist t) : GTot Type0 =
 
 // logic
 let dlist_is_valid (#t:Type) (h0:HS.mem) (n:pointer (dlist t)) : GTot Type0 =
-  h0 `has_good_pointer` n /\
+  h0 `B.live` n /\
   dlist_is_valid' #t h0 (n@h0)
 
 let (==$) (#t:Type) (a:(pointer_or_null t)) (b:pointer t) =
@@ -111,7 +95,7 @@ let ( <| ) (#t:Type) (a:pointer (dlist t)) (b: dlist t) : GTot Type0 =
 irreducible
 let ( =|> ) (#t:Type) (a:pointer (dlist t)) (b:pointer (dlist t)) : ST unit
     (requires (fun h0 ->
-         h0 `has_good_pointer` a /\ h0 `has_good_pointer` b /\
+         h0 `B.live` a /\ h0 `B.live` b /\
          not_aliased00 a b /\
          not_aliased0 b (a@h0).blink))
     (ensures (fun h1 _ h2 ->
@@ -126,7 +110,7 @@ let ( =|> ) (#t:Type) (a:pointer (dlist t)) (b:pointer (dlist t)) : ST unit
 irreducible
 let ( <|= ) (#t:Type) (a:pointer (dlist t)) (b:pointer (dlist t)) : ST unit
     (requires (fun h0 ->
-         h0 `has_good_pointer` a /\ h0 `has_good_pointer` b /\
+         h0 `B.live` a /\ h0 `B.live` b /\
          not_aliased00 a b /\
          not_aliased0 a (b@h0).flink))
     (ensures (fun h1 _ h2 ->
@@ -140,7 +124,7 @@ let ( <|= ) (#t:Type) (a:pointer (dlist t)) (b:pointer (dlist t)) : ST unit
 
 irreducible
 let ( !=|> ) (#t:Type) (a:pointer (dlist t)) : ST unit
-    (requires (fun h0 -> h0 `has_good_pointer` a))
+    (requires (fun h0 -> h0 `B.live` a))
     (ensures (fun h1 _ h2 ->
          modifies_1 a h1 h2 /\
          dlist_is_valid h2 a /\
@@ -151,7 +135,7 @@ let ( !=|> ) (#t:Type) (a:pointer (dlist t)) : ST unit
 
 irreducible
 let ( !<|= ) (#t:Type) (a:pointer (dlist t)) : ST unit
-    (requires (fun h0 -> h0 `has_good_pointer` a))
+    (requires (fun h0 -> h0 `B.live` a))
     (ensures (fun h1 _ h2 ->
          modifies_1 a h1 h2 /\
          dlist_is_valid h2 a /\
@@ -167,10 +151,10 @@ unfold let (+^) (#t:Type) (a:erased (seq t)) (b:t) : Tot (erased (seq t)) = elif
 logic
 let all_nodes_contained (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
-  (is_not_null h.lhead ==> h0 `has_good_pointer` (getSome h.lhead)) /\
-  (is_not_null h.ltail ==> h0 `has_good_pointer` (getSome h.ltail)) /\
-  (forall i. {:pattern (h0 `has_good_pointer` nodes.[i])}
-     h0 `has_good_pointer` nodes.[i]) /\
+  (is_not_null h.lhead ==> h0 `B.live` (getSome h.lhead)) /\
+  (is_not_null h.ltail ==> h0 `B.live` (getSome h.ltail)) /\
+  (forall i. {:pattern (h0 `B.live` nodes.[i])}
+     h0 `B.live` nodes.[i]) /\
   (forall i j. {:pattern (B.frameOf nodes.[i]); (B.frameOf nodes.[j])}
      B.frameOf nodes.[i] = B.frameOf nodes.[j])
 
@@ -181,7 +165,7 @@ let flink_valid (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i. {:pattern ((nodes.[i]@h0).flink)}
      ((0 <= i /\ i < len - 1) ==>
-      (let (a:_{h0 `has_good_pointer` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
+      (let (a:_{h0 `B.live` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
        nodes.[i]@h0 |> nodes.[i+1])))
 
 logic
@@ -191,7 +175,7 @@ let blink_valid (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i. {:pattern ((nodes.[i]@h0).blink)}
      ((1 <= i /\ i < len) ==>
-      (let (_:_{h0 `has_good_pointer` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
+      (let (_:_{h0 `B.live` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
       nodes.[i-1] <| nodes.[i]@h0)))
 
 logic
@@ -212,8 +196,8 @@ let elements_dont_alias1 (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)}
      0 < i /\ i < j /\ j < length nodes ==>
-   (let (_:_{h0 `has_good_pointer` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
-    let (_:_{h0 `has_good_pointer` nodes.[j]}) = nodes.[j] in
+   (let (_:_{h0 `B.live` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
+    let (_:_{h0 `B.live` nodes.[j]}) = nodes.[j] in
     not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink))
 
 logic
@@ -222,8 +206,8 @@ let elements_dont_alias2 (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)}
      0 < i /\ i < j /\ j < length nodes ==>
-   (let (_:_{h0 `has_good_pointer` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
-    let (_:_{h0 `has_good_pointer` nodes.[j]}) = nodes.[j] in
+   (let (_:_{h0 `B.live` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
+    let (_:_{h0 `B.live` nodes.[j]}) = nodes.[j] in
     not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink))
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
@@ -264,7 +248,7 @@ let test1 () : Tot unit = assert (forall h0 t. dlisthead_is_valid h0 (empty_list
 
 val singletonlist: #t:eqtype -> e:pointer (dlist t) ->
   ST (dlisthead t)
-  (requires (fun h0 -> h0 `has_good_pointer` e))
+  (requires (fun h0 -> h0 `B.live` e))
   (ensures (fun h0 y h1 -> modifies_1 e h0 h1 /\ dlisthead_is_valid h1 y))
 let singletonlist #t e =
   !<|= e; !=|> e;
@@ -282,7 +266,7 @@ let member_of (#t:eqtype) (h0:HS.mem) (h:dlisthead t) (e:pointer (dlist t)) : GT
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let has_nothing_in (#t:eqtype) (h0:HS.mem)
     (h:dlisthead t{dlisthead_is_valid h0 h})
-    (e:pointer (dlist t){h0 `has_good_pointer` e})
+    (e:pointer (dlist t){h0 `B.live` e})
   : GTot Type0 =
   (~(member_of h0 h e)) /\
   (not_aliased0 e h.lhead) /\
@@ -302,7 +286,7 @@ type nonempty_dlisthead t = (h:dlisthead t{is_not_null h.lhead /\ is_not_null h.
 val dlisthead_make_valid_singleton: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
     (requires (fun h0 ->
-         h0 `has_good_pointer` (getSome h.lhead) /\
+         h0 `B.live` (getSome h.lhead) /\
          is_null (h.lhead^@h0).flink /\ is_null (h.lhead^@h0).blink))
     (ensures (fun h1 y h2 -> modifies_none h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_make_valid_singleton #t h =
@@ -339,14 +323,15 @@ let ghost_append_properties #t a b = ()
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:pointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
-    (ensures (fun h1 y h2 -> modifies (e ^+^ (getSome h.lhead)) h1 h2 /\ dlisthead_is_valid h2 y))
+    (ensures (fun h1 y h2 -> modifies_2 e (getSome h.lhead) h1 h2
+                             /\ dlisthead_is_valid h2 y))
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:pointer (dlist t)) =
   let h1 = ST.get () in
-  let Some n = h.lhead in
+  let n = h.lhead in
   !<|= e;
   e =|> n;
   e <|= n;
-  let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
+  let y = { lhead = e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
   let h2 = ST.get () in
   assert (
     let ynodes = reveal y.nodes in
@@ -363,9 +348,9 @@ val insertHeadList : #t:eqtype -> h:dlisthead t -> e:pointer (dlist t) ->
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 ->
          (is_not_null h.lhead ==>
-          modifies (e ^+^ (getSome h.lhead)) h1 h2) /\
+          modifies_2 e (getSome h.lhead) h1 h2) /\
          (~(is_not_null h.lhead) ==>
-          modifies (only e) h1 h2) /\
+          modifies_1 e h1 h2) /\
          dlisthead_is_valid h2 y))
 let insertHeadList #t h e =
   if is_not_null h.lhead
@@ -377,15 +362,15 @@ let insertHeadList #t h e =
 val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:pointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
-    (ensures (fun h1 y h2 -> modifies (e ^+^ (getSome h.ltail)) h1 h2 /\ dlisthead_is_valid h2 y))
+    (ensures (fun h1 y h2 -> modifies_2 e (getSome h.ltail) h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_update_tail #t h e =
   let h1 = ST.get () in
   let previously_singleton = is_singleton h in
-  let Some n = h.ltail in
+  let n = h.ltail in
   !=|> e;
   n =|> e;
   n <|= e;
-  let y = { lhead = h.lhead ; ltail = Some e ; nodes = h.nodes +^ e } in
+  let y = { lhead = h.lhead ; ltail = e ; nodes = h.nodes +^ e } in
   let h2 = ST.get () in
   assert (
     let ynodes = reveal y.nodes in
@@ -402,9 +387,9 @@ val insertTailList : #t:eqtype -> h:dlisthead t -> e:pointer (dlist t) ->
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 ->
          (is_not_null h.ltail ==>
-          modifies (e ^+^ (getSome h.ltail)) h1 h2) /\
+          modifies_2 e (getSome h.ltail) h1 h2) /\
          (~(is_not_null h.lhead) ==>
-          modifies (only e) h1 h2) /\
+          modifies_1 e h1 h2) /\
          dlisthead_is_valid h2 y))
 let insertTailList #t h e =
   if is_not_null h.ltail
@@ -421,24 +406,24 @@ val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
     (requires (fun h0 -> dlisthead_is_valid h0 h))
     (ensures (fun h1 y h2 ->
          (is_singleton h ==>
-          modifies (only (getSome h.lhead)) h1 h2) /\
+          modifies_1 (getSome h.lhead) h1 h2) /\
          (~(is_singleton h) ==>
-          modifies ((getSome h.lhead) ^+^ (reveal h.nodes).[1]) h1 h2) /\
+          modifies_2 (getSome h.lhead) (reveal h.nodes).[1] h1 h2) /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_head #t h =
   let h1 = ST.get () in
-  let Some n = h.lhead in
+  let n = h.lhead in
   if is_singleton h
   then (
     empty_list
   ) else (
-    let Some next = (!n).flink in
+    let next = (!n).flink in
     recall next;
     // unlink them
     !=|> n;
     !<|= next;
-    let Some htail = h.ltail in
-    let y = { lhead = Some next ; ltail = h.ltail ; nodes = ghost_tail h.nodes } in
+    let htail = h.ltail in
+    let y = { lhead = next ; ltail = h.ltail ; nodes = ghost_tail h.nodes } in
     let h2 = ST.get () in
     assert (
       let ynodes = reveal y.nodes in
@@ -463,23 +448,23 @@ val dlisthead_remove_tail: #t:eqtype -> h:nonempty_dlisthead t ->
     (requires (fun h0 -> dlisthead_is_valid h0 h))
     (ensures (fun h1 y h2 ->
          (is_singleton h ==>
-          modifies (only (getSome h.ltail)) h1 h2) /\
+          modifies_1 (getSome h.ltail) h1 h2) /\
          (~(is_singleton h) ==>
           (let nodes = reveal h.nodes in
-          modifies ((getSome h.ltail) ^+^ nodes.[length nodes - 2]) h1 h2)) /\
+          modifies_2 (getSome h.ltail) nodes.[length nodes - 2] h1 h2)) /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_tail #t h =
   let h1 = ST.get () in
   if is_singleton h then (
     empty_list
   ) else (
-    let Some n = h.ltail in
-    let Some prev = (!n).blink in
+    let n = h.ltail in
+    let prev = (!n).blink in
     recall prev;
     //unlink them
     !<|= n;
     !=|> prev;
-    let y = { lhead = h.lhead ; ltail = Some prev ; nodes = ghost_unsnoc h.nodes } in
+    let y = { lhead = h.lhead ; ltail = prev ; nodes = ghost_unsnoc h.nodes } in
     let h2 = ST.get () in
     assert (
       let ynodes = reveal y.nodes in
@@ -503,9 +488,9 @@ let rec get_ref_index (#t:Type) (s:seq (pointer t)) (x:pointer t{s `contains_by_
 
 val lemma_get_ref_index : #t:Type -> s:seq (pointer t) -> x:pointer t{s `contains_by_addr` x} ->
   Lemma (ensures (
-    addr_of s.[get_ref_index s x] = addr_of x))
+    compare_addrs s.[get_ref_index s x] x))
     (decreases (Seq.length s))
-    [SMTPat (addr_of s.[get_ref_index s x])]
+    [SMTPat (s.[get_ref_index s x])]
 let rec lemma_get_ref_index #t s x =
   contains_elim s x;
   let h, t = Seq.head s, Seq.tail s in
@@ -519,7 +504,7 @@ val split_seq_at_element : #t:Type -> s:seq (pointer t) -> x:pointer t{s `contai
       indexable s i /\ (
       let (i:nat{i < length s}) = i in // workaround for two phase thing
       s == append l (cons s.[i] r) /\
-      addr_of s.[i] == addr_of x)
+      compare_addrs s.[i] x)
   })
 let split_seq_at_element #t s x =
   let i = get_ref_index s x in
@@ -538,12 +523,12 @@ val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:poin
          is_not_null (e@h1).flink /\ is_not_null (e@h1).blink /\
          dlist_is_valid h2 e /\
          is_null (e@h2).flink /\ is_null (e@h2).blink /\
-         modifies (e ^++ (getSome (e@h1).flink) ^+^ (getSome (e@h1).blink)) h1 h2 /\
+         modifies_3 e (getSome (e@h1).flink) (getSome (e@h1).blink) h1 h2 /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_strictly_mid #t h e =
   let h1 = ST.get () in
-  let Some prev = (!e).blink in
-  let Some next = (!e).flink in
+  let prev = (!e).blink in
+  let next = (!e).flink in
   recall prev;
   recall next;
   !<|= e;
