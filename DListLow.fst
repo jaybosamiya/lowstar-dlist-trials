@@ -182,7 +182,9 @@ let dlisthead_ghostly_connections (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot T
   all_nodes_contained h0 h /\
   ~empty ==> (
     h.lhead ==$ nodes.[0] /\
+    B.frameOf h.lhead = B.frameOf nodes.[0] /\
     h.ltail ==$ nodes.[len-1] /\
+    B.frameOf h.ltail = B.frameOf nodes.[len-1] /\
     is_null (h.lhead^@h0).blink /\
     is_null (h.ltail^@h0).flink)
 
