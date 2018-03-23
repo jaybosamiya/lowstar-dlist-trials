@@ -14,8 +14,8 @@ type gpointer t = (p:C.Nullity.pointer t{
     ST.is_eternal_region (B.frameOf p)
   })
 
-type gpointer_or_null t = (p:C.Nullity.pointer t{
-    B.max_length p = 0 /\
+type gpointer_or_null t = (p:C.Nullity.pointer_or_null t{
+    B.max_length p <= 1 /\
     B.idx p = 0 /\
     ~(HS.is_mm (B.content p)) /\
     ST.is_eternal_region (B.frameOf p)
