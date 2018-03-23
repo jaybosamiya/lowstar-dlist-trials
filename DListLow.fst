@@ -53,8 +53,8 @@ let empty_list #t =
 val getSome: (a:pointer_or_null 'a{is_not_null a}) -> (b:pointer 'a{a == b})
 let getSome a = a
 
-unfold let (@) (a:pointer 't) (h0:HS.mem{h0 `B.contains` a}) = B.get h0 a 0
-unfold let (^@) (a:(pointer_or_null 't){is_not_null a}) (h0:HS.mem{h0 `B.contains` (getSome a)}) = (getSome a) @ h0
+unfold let (@) (a:pointer 't) (h0:HS.mem{h0 `B.live` a}) = B.get h0 a 0
+unfold let (^@) (a:(pointer_or_null 't){is_not_null a}) (h0:HS.mem{h0 `B.live` (getSome a)}) = (getSome a) @ h0
 
 unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
 
@@ -84,7 +84,7 @@ let dlist_is_valid' (#t:Type) (h0:HS.mem) (n:dlist t) : GTot Type0 =
 
 // logic
 let dlist_is_valid (#t:Type) (h0:HS.mem) (n:pointer (dlist t)) : GTot Type0 =
-  h0 `B.contains` n /\
+  h0 `B.live` n /\
   dlist_is_valid' #t h0 (n@h0)
 
 let (==$) (#t:Type) (a:(pointer_or_null t)) (b:pointer t) =
