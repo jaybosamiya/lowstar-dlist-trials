@@ -243,3 +243,42 @@ let same_addr_implies_same (#t:Type) (h0:heap) (a:ref t) (b:ref t) : unit =
   assume (h0 `contains` a);
   assert (addr_of a = addr_of b ==>
           sel h0 a == sel h0 b)
+
+module HS = FStar.HyperStack
+module CN = C.Nullity
+module B = FStar.Buffer
+
+let everything_that_must_be_same_to_deref_to_same (#t:Type) (h:HS.mem) (a:CN.pointer t) (b:CN.pointer t) =
+  assert ((
+      B.frameOf a = B.frameOf b /\
+      B.live h a /\ B.live h b /\
+      B.max_length a = B.max_length b /\
+      B.idx a = B.idx b /\
+      B.as_ref a == B.as_ref b /\
+  True) ==> (
+      B.get h a 0 == B.get h b 0
+  ))
+
+type pointer t = (p:CN.pointer t{B.max_length p = 1 /\ B.idx p = 0}) // Nice Pointers??
+
+let xyzzy (#t:Type) (h:HS.mem) (a:pointer t) (b:CN.pointer t) =
+  assert ((
+      B.frameOf a = B.frameOf b /\
+      B.live h a /\ B.live h b /\
+      B.as_ref a === B.as_ref b /\
+  True) ==> (
+      B.get h a 0 == B.get h b 0
+  ))
+
+let xyzzy1 (#t:Type) (h:HS.mem) (a b:CN.pointer t) =
+  assume (
+    B.frameOf a = B.frameOf b /\
+    B.live h a /\ B.live h b /\
+    B.as_addr a == B.as_addr b /\
+    B.max_length a = B.max_length b /\
+    B.idx a = B.idx b /\
+    is_mm (B.as_ref a) = is_mm (B.as_ref b)
+  );
+  assert (
+      B.get h a 0 == B.get h b 0
+  )
