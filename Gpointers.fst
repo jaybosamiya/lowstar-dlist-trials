@@ -1,7 +1,5 @@
 module Gpointers
 
-open C.Nullity
-open FStar.Buffer
 module HS = FStar.HyperStack
 module ST = FStar.HyperStack.ST
 module B = FStar.Buffer
@@ -16,6 +14,13 @@ type gpointer t = (p:C.Nullity.pointer t{
 
 type gpointer_or_null t = (p:C.Nullity.pointer_or_null t{
     B.max_length p <= 1 /\
+    B.idx p = 0 /\
+    ~(HS.is_mm (B.content p)) /\
+    ST.is_eternal_region (B.frameOf p)
+  })
+
+type gnull t = (p:C.Nullity.pointer_or_null t{
+    B.max_length p = 0 /\
     B.idx p = 0 /\
     ~(HS.is_mm (B.content p)) /\
     ST.is_eternal_region (B.frameOf p)
@@ -40,7 +45,17 @@ assume val compare_addrs:
 
 unfold let is_null (p:gpointer_or_null 't) = CN.is_null p
 unfold let is_not_null (p:gpointer_or_null 't) = not (CN.is_null p)
-assume val null : #t:Type -> p:gpointer_or_null t{is_null p}
+
+assume val null : #t:Type -> gnull t
+
+let test_null #t =
+  let p : gpointer_or_null t = null in
+  assert (is_null p)
+
+open C.Nullity
+open FStar.Buffer
 
 unfold let ( := ) a b = a.(0ul) <- b
 unfold let ( ! ) a = !* a
+
+unfold let recall (#t:Type) (p: gpointer_or_null t) = recall p
