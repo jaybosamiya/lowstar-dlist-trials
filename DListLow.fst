@@ -281,16 +281,6 @@ let has_nothing_in (#t:eqtype) (h0:HS.mem)
 
 type nonempty_dlisthead t = (h:dlisthead t{is_not_null h.lhead /\ is_not_null h.ltail})
 
-val dlisthead_make_valid_singleton: #t:eqtype -> h:nonempty_dlisthead t ->
-  ST (dlisthead t)
-    (requires (fun h0 ->
-         h0 `B.live` (getSome h.lhead) /\
-         is_null (h.lhead^@h0).flink /\ is_null (h.lhead^@h0).blink))
-    (ensures (fun h1 y h2 -> modifies_none h1 h2 /\ dlisthead_is_valid h2 y))
-let dlisthead_make_valid_singleton #t h =
-  let e = h.lhead in
-  { h with ltail = h.lhead ; nodes = ~. e }
-
 let is_singleton (#t:Type) (h:nonempty_dlisthead t) : Tot bool =
   compare_addrs (getSome h.lhead) (getSome h.ltail)
 
