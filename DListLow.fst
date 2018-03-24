@@ -150,9 +150,7 @@ let all_nodes_contained (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   (is_not_null h.lhead ==> h0 `B.live` (getSome h.lhead)) /\
   (is_not_null h.ltail ==> h0 `B.live` (getSome h.ltail)) /\
   (forall i. {:pattern (h0 `B.live` nodes.[i])}
-     h0 `B.live` nodes.[i]) /\
-  (forall i j. {:pattern (B.frameOf nodes.[i]); (B.frameOf nodes.[j])}
-     B.frameOf nodes.[i] = B.frameOf nodes.[j])
+     h0 `B.live` nodes.[i])
 
 logic
 let flink_valid (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
@@ -182,9 +180,7 @@ let dlisthead_ghostly_connections (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot T
   all_nodes_contained h0 h /\
   ~empty ==> (
     h.lhead ==$ nodes.[0] /\
-    B.frameOf h.lhead = B.frameOf nodes.[0] /\
     h.ltail ==$ nodes.[len-1] /\
-    B.frameOf h.ltail = B.frameOf nodes.[len-1] /\
     is_null (h.lhead^@h0).blink /\
     is_null (h.ltail^@h0).flink)
 
