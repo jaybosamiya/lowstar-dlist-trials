@@ -16,6 +16,8 @@ module HS = FStar.HyperStack
 module B = FStar.Buffer
 module ST = FStar.HyperStack.ST
 
+#set-options "--use_two_phase_tc true"
+
 unopteq
 (** Node of a doubly linked list *)
 type dlist (t:Type0) = {
@@ -56,23 +58,22 @@ unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let not_aliased (#t:Type) (a:(gpointer_or_null t)) (b:(gpointer_or_null t)) : GTot Type0 =
   is_null a \/ is_null b \/
-  (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
-   let (b:_{is_not_null b}) = b in
-   disjoint (getSome a) (getSome b))
+  disjoint (getSome a) (getSome b)
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let not_aliased0 (#t:Type) (a:gpointer t) (b:(gpointer_or_null t)) : GTot Type0 =
   is_null b \/
-  (let (b:_{is_not_null b}) = b in // workaround for not using two phase type checker
-   disjoint a (getSome b))
+  disjoint a (getSome b)
 
 logic
 let not_aliased00 (#t:Type) (a:gpointer t) (b:gpointer t) : GTot Type0 =
   disjoint a b
 
-logic
+// logic
 let dlist_is_valid' (#t:Type) (h0:HS.mem) (n:dlist t) : GTot Type0 =
-  not_aliased n.flink n.blink
+  not_aliased n.flink n.blink /\
+  h0 `B.live` n.flink /\
+  h0 `B.live` n.blink
 
 // logic
 let dlist_is_valid (#t:Type) (h0:HS.mem) (n:gpointer (dlist t)) : GTot Type0 =
@@ -81,8 +82,7 @@ let dlist_is_valid (#t:Type) (h0:HS.mem) (n:gpointer (dlist t)) : GTot Type0 =
 
 let (==$) (#t:Type) (a:(gpointer_or_null t)) (b:gpointer t) =
   is_not_null a /\
-  (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
-   as_addr (getSome a) = as_addr b)
+  as_addr (getSome a) = as_addr b
 
 logic
 let ( |> ) (#t:Type) (a:dlist t) (b:gpointer (dlist t)) : GTot Type0 =
@@ -159,8 +159,7 @@ let flink_valid (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i. {:pattern ((nodes.[i]@h0).flink)}
      ((0 <= i /\ i < len - 1) ==>
-      (let (a:_{h0 `B.live` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
-       nodes.[i]@h0 |> nodes.[i+1])))
+      (nodes.[i]@h0 |> nodes.[i+1])))
 
 logic
 let blink_valid (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
@@ -169,8 +168,7 @@ let blink_valid (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i. {:pattern ((nodes.[i]@h0).blink)}
      ((1 <= i /\ i < len) ==>
-      (let (_:_{h0 `B.live` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
-      nodes.[i-1] <| nodes.[i]@h0)))
+      (nodes.[i-1] <| nodes.[i]@h0)))
 
 logic
 let dlisthead_ghostly_connections (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
@@ -190,9 +188,7 @@ let elements_dont_alias1 (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)}
      0 < i /\ i < j /\ j < length nodes ==>
-   (let (_:_{h0 `B.live` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
-    let (_:_{h0 `B.live` nodes.[j]}) = nodes.[j] in
-    not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink))
+   (not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink))
 
 logic
 let elements_dont_alias2 (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
@@ -200,9 +196,7 @@ let elements_dont_alias2 (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)}
      0 < i /\ i < j /\ j < length nodes ==>
-   (let (_:_{h0 `B.live` nodes.[i]}) = nodes.[i] in // workaround for 2 phase
-    let (_:_{h0 `B.live` nodes.[j]}) = nodes.[j] in
-    not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink))
+   (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink))
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let elements_dont_alias (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
@@ -221,9 +215,7 @@ let all_elements_distinct (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
     let nodes = reveal h.nodes in
     (forall i j. {:pattern (nodes.[i]); (nodes.[j])}
        (0 <= i /\ i < j /\ j < Seq.length nodes) ==>
-       (let (i:nat{i < Seq.length nodes}) = i in // workaround for not using two phase type checker
-        let (j:nat{j < Seq.length nodes}) = j in
-        disjoint nodes.[i] nodes.[j]))
+       (disjoint nodes.[i] nodes.[j]))
 
 logic
 let dlisthead_is_valid (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
