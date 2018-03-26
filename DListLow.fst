@@ -478,7 +478,6 @@ val split_seq_at_element : #t:Type -> s:seq (gpointer t) -> x:gpointer t{s `cont
   GTot (v:(seq (gpointer t) * nat * seq (gpointer t)){
       let l, i, r = v in
       indexable s i /\ (
-      let (i:nat{i < length s}) = i in // workaround for two phase thing
       s == append l (cons s.[i] r) /\
       compare_addrs s.[i] x)
   })
