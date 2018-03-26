@@ -57,7 +57,7 @@ let test_null #t =
 open C.Nullity
 open FStar.Buffer
 
-unfold let ( := ) a b = a.(0ul) <- b
-unfold let ( ! ) a = !* a
+unfold let ( := ) (a:gpointer 't) (b:'t) = a.(0ul) <- b
+unfold let ( ! ) (a:gpointer 't) = !* a
 
 unfold let recall (#t:Type) (p: gpointer_or_null t) = recall p
