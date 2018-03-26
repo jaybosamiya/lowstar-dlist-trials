@@ -292,7 +292,7 @@ val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
            j = i + 1 /\ 0 <= i /\ i < length (reveal b) ==> (reveal b).[i] == (reveal r).[j])
 let ghost_append_properties #t a b = ()
 
-#set-options "--z3rlimit 50 --z3refresh"
+#set-options "--z3rlimit 100 --z3refresh"
 
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
@@ -307,13 +307,20 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlis
   e <|= n;
   let y = { lhead = e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
   let h2 = ST.get () in
-  assert (
-    let ynodes = reveal y.nodes in
-    let hnodes = reveal h.nodes in
-    (forall (i:nat{2 <= i /\ i < Seq.length ynodes /\ i-1 < Seq.length hnodes}).
-              {:pattern (ynodes.[i]@h2)}
-       ynodes.[i]@h2 == hnodes.[i-1]@h1)); // OBSERVE
-  admit ();
+  // assert (
+  //   let ynodes = reveal y.nodes in
+  //   let hnodes = reveal h.nodes in
+  //   (forall (i:nat{2 <= i /\ i < Seq.length ynodes /\ i-1 < Seq.length hnodes}).
+  //             {:pattern (ynodes.[i]@h2)}
+  //      ynodes.[i]@h2 == hnodes.[i-1]@h1)); // OBSERVE
+  assume (all_nodes_contained h2 y);
+  // assert (dlisthead_ghostly_connections h2 y);
+  // assert (flink_valid h2 y);
+  // assert (blink_valid h2 y);
+  // assert (elements_are_valid h2 y);
+  // assert (elements_dont_alias1 h2 y);
+  // assert (elements_dont_alias2 h2 y);
+  // assert (all_elements_distinct h2 y);
     y
 
 #reset-options
