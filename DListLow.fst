@@ -510,6 +510,7 @@ let dlisthead_remove_strictly_mid #t h e =
   recall next;
   !<|= e;
   !=|> e;
+  admit ();
   prev =|> next;
   prev <|= next;
   let nodes = h.nodes in // TODO: Fix this
