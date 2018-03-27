@@ -305,23 +305,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlis
   !<|= e;
   e =|> n;
   e <|= n;
-  let y = { lhead = e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
-  let h2 = ST.get () in
-  (if is_singleton h then
-     assume (h2 `B.live` (getSome (h.ltail)))
-   else (
-     assert (h2 `B.live` (getSome (h.ltail)))
-   ));
-   // admit ();
-  assume (
-       let h0, h = h2, y in
-       let nodes = reveal h.nodes in
-       (is_not_null h.ltail ==> h0 `B.live` (getSome h.ltail)) /\
-       (forall i. {:pattern (h0 `B.live` nodes.[i])}
-          h0 `B.live` nodes.[i])
-  );
-  // admit ();
-    y
+  { lhead = e ; ltail = h.ltail ; nodes = e ^+ h.nodes }
 
 #reset-options
 
