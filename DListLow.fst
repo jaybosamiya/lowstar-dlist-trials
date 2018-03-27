@@ -323,7 +323,7 @@ let insertHeadList #t h e =
   then dlisthead_update_head h e
   else singletonlist e
 
-#set-options "--z3rlimit 25 --z3refresh"
+#set-options "--z3rlimit 100 --z3refresh"
 
 val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
@@ -336,16 +336,7 @@ let dlisthead_update_tail #t h e =
   !=|> e;
   n =|> e;
   n <|= e;
-  let y = { lhead = h.lhead ; ltail = e ; nodes = h.nodes +^ e } in
-  let h2 = ST.get () in
-  assert (
-    let ynodes = reveal y.nodes in
-    let hnodes = reveal h.nodes in
-    (forall (i:nat{0 <= i /\ i < Seq.length ynodes - 2 /\ i < Seq.length hnodes - 1}).
-              {:pattern (ynodes.[i]@h2)}
-       ynodes.[i]@h2 == hnodes.[i]@h1)); // OBSERVE
-  admit ();
-    y
+  { lhead = h.lhead ; ltail = e ; nodes = h.nodes +^ e }
 
 #reset-options
 
