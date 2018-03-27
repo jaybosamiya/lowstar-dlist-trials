@@ -8,6 +8,7 @@ module CN = C.Nullity
 assume val gpointer_frame : (f:Monotonic.HyperHeap.rid{ST.is_eternal_region f})
 
 type gpointer t = (p:C.Nullity.pointer t{
+    B.max_length p = B.length p /\
     B.max_length p = 1 /\
     B.idx p = 0 /\
     ~(HS.is_mm (B.content p)) /\
@@ -15,6 +16,7 @@ type gpointer t = (p:C.Nullity.pointer t{
   })
 
 type gpointer_or_null t = (p:C.Nullity.pointer_or_null t{
+    B.max_length p = B.length p /\
     B.max_length p <= 1 /\
     B.idx p = 0 /\
     ~(HS.is_mm (B.content p)) /\
@@ -22,6 +24,7 @@ type gpointer_or_null t = (p:C.Nullity.pointer_or_null t{
   })
 
 type gnull t = (p:C.Nullity.pointer_or_null t{
+    B.max_length p = B.length p /\
     B.max_length p = 0 /\
     B.idx p = 0 /\
     ~(HS.is_mm (B.content p)) /\
