@@ -47,7 +47,7 @@ val empty_list: #t:Type -> dlisthead t
 let empty_list #t =
   { lhead = null ; ltail = null ; nodes = hide createEmpty }
 
-val getSome: (a:gpointer_or_null 'a{is_not_null a}) -> (b:gpointer 'a{a == b})
+val getSome: (a:gpointer_or_null 'a{is_not_null a}) -> (b:gpointer 'a{g_ptr_eq a b})
 let getSome a = a
 
 unfold let (@) (a:gpointer 't) (h0:HS.mem{h0 `B.live` a}) = B.get h0 a 0
@@ -80,7 +80,7 @@ let dlist_is_valid (#t:Type) (h0:HS.mem) (n:gpointer (dlist t)) : GTot Type0 =
 
 let (==$) (#t:Type) (a:(gpointer_or_null t)) (b:gpointer t) =
   is_not_null a /\
-  (getSome a) == b
+  g_ptr_eq (getSome a) b
 
 logic
 let ( |> ) (#t:Type) (a:dlist t) (b:gpointer (dlist t)) : GTot Type0 =
@@ -268,7 +268,7 @@ let has_nothing_in (#t:eqtype) (h0:HS.mem)
 type nonempty_dlisthead t = (h:dlisthead t{is_not_null h.lhead /\ is_not_null h.ltail})
 
 let ghost_is_singleton (#t:Type) (h:nonempty_dlisthead t) : GTot bool =
-  compare_addrs (getSome h.lhead) (getSome h.ltail)
+  g_ptr_eq (getSome h.lhead) (getSome h.ltail)
 
 let is_singleton (#t:Type) (h:nonempty_dlisthead t) : ST bool
     (requires (fun h0 -> h0 `B.live` h.lhead /\ h0 `B.live` h.ltail))

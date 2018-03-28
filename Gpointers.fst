@@ -32,6 +32,13 @@ type gnull t = (p:C.Nullity.pointer_or_null t{
   })
 
 (** Allow comparing pointers *)
+assume val g_ptr_eq:
+  #a:Type ->
+  p:gpointer a ->
+  q:gpointer a ->
+  GTot (b:bool{b <==> (p == q)})
+
+(** Allow comparing pointers *)
 // inline_for_extraction
 assume val ptr_eq:
   #a:Type ->
@@ -39,14 +46,7 @@ assume val ptr_eq:
   q:gpointer a ->
   ST.ST bool
     (requires (fun h -> B.live h p /\ B.live h q))
-    (ensures (fun h0 b h1 -> h0==h1 /\ (b <==> (p == q))))
-
-(** Allow comparing pointers *)
-assume val compare_addrs:
-  #a:Type ->
-  p:gpointer a ->
-  q:gpointer a ->
-  GTot (b:bool{b <==> (p == q)})
+    (ensures (fun h0 b h1 -> h0==h1 /\ (b <==> (g_ptr_eq p q))))
 
 unfold let is_null (p:gpointer_or_null 't) = CN.is_null p
 unfold let is_not_null (p:gpointer_or_null 't) = not (CN.is_null p)
