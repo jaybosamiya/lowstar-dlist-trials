@@ -6,21 +6,23 @@ open FStar.Option
 open FStar.Seq
 open FStar.Ref
 
-assume val g_ptr_eq:
+val g_ptr_eq:
   #a:Type ->
   p:ref a ->
   q:ref a ->
   GTot (b:bool{b <==> (addr_of p = addr_of q)})
+let g_ptr_eq #a p q = addr_of p = addr_of q
 
 (** Allow comparing pointers *)
 // inline_for_extraction
-assume val ptr_eq:
+val ptr_eq:
   #a:Type ->
   p:ref a ->
   q:ref a ->
   ST.ST bool
     (requires (fun h -> h `contains` p /\ h `contains` q))
     (ensures (fun h0 b h1 -> h0==h1 /\ (b <==> (g_ptr_eq p q))))
+let ptr_eq #a p q = compare_addrs p q
 
 let disjoint (#t:Type) (a b:ref t) = not (g_ptr_eq a b)
 
