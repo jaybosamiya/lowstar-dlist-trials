@@ -92,7 +92,7 @@ let dlist_is_valid (#t:Type) (h0:heap) (n:ref (dlist t)) : GTot Type0 =
 let (==$) (#t:Type) (a:option (ref t)) (b:ref t) =
   isSome a /\
   (let (a:_{isSome a}) = a in // workaround for not using two phase type checker
-   addr_of (getSome a) = addr_of b)
+   g_ptr_eq (getSome a) b)
 
 logic
 let ( |> ) (#t:Type) (a:dlist t) (b:ref (dlist t)) : GTot Type0 =
@@ -231,7 +231,7 @@ let all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
        (0 <= i /\ i < j /\ j < Seq.length nodes) ==>
        (let (i:nat{i < Seq.length nodes}) = i in // workaround for not using two phase type checker
         let (j:nat{j < Seq.length nodes}) = j in
-        addr_of nodes.[i] <> addr_of nodes.[j]))
+        disjoint nodes.[i] nodes.[j]))
 
 logic
 let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -258,7 +258,7 @@ let singletonlist #t e =
 
 // logic
 let contains_by_addr (#t:Type) (s:seq (ref t)) (x:ref t) : GTot Type0 =
-  (exists i. addr_of s.[i] == addr_of x)
+  (exists i. g_ptr_eq s.[i] x)
 
 logic
 let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot Type0 =
@@ -349,7 +349,7 @@ let insertHeadList #t h e =
   then dlisthead_update_head h e
   else singletonlist e
 
-#set-options "--z3rlimit 25 --z3refresh"
+#set-options "--z3rlimit 50 --z3refresh"
 
 val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t) ->
   ST (dlisthead t)
@@ -452,9 +452,9 @@ let rec get_ref_index (#t:Type) (s:seq (ref t)) (x:ref t{s `contains_by_addr` x}
 
 val lemma_get_ref_index : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_addr` x} ->
   Lemma (ensures (
-    addr_of s.[get_ref_index s x] = addr_of x))
+    g_ptr_eq s.[get_ref_index s x] x))
     (decreases (Seq.length s))
-    [SMTPat (addr_of s.[get_ref_index s x])]
+    [SMTPat (g_ptr_eq s.[get_ref_index s x] x)]
 let rec lemma_get_ref_index #t s x =
   contains_elim s x;
   let h, t = Seq.head s, Seq.tail s in
@@ -468,7 +468,7 @@ val split_seq_at_element : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_ad
       indexable s i /\ (
       let (i:nat{i < length s}) = i in // workaround for two phase thing
       s == append l (cons s.[i] r) /\
-      addr_of s.[i] == addr_of x)
+      g_ptr_eq s.[i] x)
   })
 let split_seq_at_element #t s x =
   let i = get_ref_index s x in
