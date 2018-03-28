@@ -80,7 +80,7 @@ let dlist_is_valid (#t:Type) (h0:HS.mem) (n:gpointer (dlist t)) : GTot Type0 =
 
 let (==$) (#t:Type) (a:(gpointer_or_null t)) (b:gpointer t) =
   is_not_null a /\
-  as_addr (getSome a) = as_addr b
+  (getSome a) == b
 
 logic
 let ( |> ) (#t:Type) (a:dlist t) (b:gpointer (dlist t)) : GTot Type0 =
@@ -240,7 +240,7 @@ let singletonlist #t e =
 
 // logic
 let contains_by_addr (#t:Type) (s:seq (gpointer t)) (x:gpointer t) : GTot Type0 =
-  (exists i. B.as_addr s.[i] == B.as_addr x)
+  (exists i. s.[i] == x)
 
 logic
 let member_of (#t:eqtype) (h0:HS.mem) (h:dlisthead t) (e:gpointer (dlist t)) : GTot Type0 =
@@ -267,14 +267,19 @@ let has_nothing_in (#t:eqtype) (h0:HS.mem)
 
 type nonempty_dlisthead t = (h:dlisthead t{is_not_null h.lhead /\ is_not_null h.ltail})
 
-let is_singleton (#t:Type) (h:nonempty_dlisthead t) : Tot bool =
+let ghost_is_singleton (#t:Type) (h:nonempty_dlisthead t) : GTot bool =
   compare_addrs (getSome h.lhead) (getSome h.ltail)
+
+let is_singleton (#t:Type) (h:nonempty_dlisthead t) : ST bool
+    (requires (fun h0 -> h0 `B.live` h.lhead /\ h0 `B.live` h.ltail))
+    (ensures (fun h0 b h1 -> h0 == h1 /\ (b <==> ghost_is_singleton h))) =
+  ptr_eq (getSome h.lhead) (getSome h.ltail)
 
 val nonempty_singleton_properties :
   #t:Type ->
   h:nonempty_dlisthead t ->
   ST unit
-    (requires (fun h0 -> dlisthead_is_valid h0 h /\ is_singleton h))
+    (requires (fun h0 -> dlisthead_is_valid h0 h /\ ghost_is_singleton h))
     (ensures (fun h0 _ h1 -> h0 == h1 /\ Seq.length (reveal h.nodes) == 1))
 let nonempty_singleton_properties #t h = ()
 
@@ -282,7 +287,7 @@ val nonempty_nonsingleton_properties :
   #t:Type ->
   h:nonempty_dlisthead t ->
   ST unit
-    (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(compare_addrs (getSome h.lhead) (getSome h.ltail))))
+    (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(ghost_is_singleton h)))
     (ensures (fun h0 _ h1 -> h0 == h1 /\ Seq.length (reveal h.nodes) > 1))
 let nonempty_nonsingleton_properties #t h = ()
 
@@ -305,6 +310,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlis
   !<|= e;
   e =|> n;
   e <|= n;
+  admit ();
   { lhead = e ; ltail = h.ltail ; nodes = e ^+ h.nodes }
 
 #reset-options
@@ -336,6 +342,7 @@ let dlisthead_update_tail #t h e =
   !=|> e;
   n =|> e;
   n <|= e;
+  admit ();
   { lhead = h.lhead ; ltail = e ; nodes = h.nodes +^ e }
 
 #reset-options
@@ -363,9 +370,9 @@ val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h))
     (ensures (fun h1 y h2 ->
-         (is_singleton h ==>
+         (ghost_is_singleton h ==>
           modifies_1 (getSome h.lhead) h1 h2) /\
-         (~(is_singleton h) ==>
+         (~(ghost_is_singleton h) ==>
           modifies_2 (getSome h.lhead) (reveal h.nodes).[1] h1 h2) /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_head #t h =
@@ -406,9 +413,9 @@ val dlisthead_remove_tail: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h))
     (ensures (fun h1 y h2 ->
-         (is_singleton h ==>
+         (ghost_is_singleton h ==>
           modifies_1 (getSome h.ltail) h1 h2) /\
-         (~(is_singleton h) ==>
+         (~(ghost_is_singleton h) ==>
           (let nodes = reveal h.nodes in
           modifies_2 (getSome h.ltail) nodes.[length nodes - 2] h1 h2)) /\
          dlisthead_is_valid h2 y))
