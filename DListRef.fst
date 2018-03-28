@@ -6,6 +6,24 @@ open FStar.Option
 open FStar.Seq
 open FStar.Ref
 
+assume val g_ptr_eq:
+  #a:Type ->
+  p:ref a ->
+  q:ref a ->
+  GTot (b:bool{b <==> (addr_of p = addr_of q)})
+
+(** Allow comparing pointers *)
+// inline_for_extraction
+assume val ptr_eq:
+  #a:Type ->
+  p:ref a ->
+  q:ref a ->
+  ST.ST bool
+    (requires (fun h -> h `contains` p /\ h `contains` q))
+    (ensures (fun h0 b h1 -> h0==h1 /\ (b <==> (g_ptr_eq p q))))
+
+let disjoint (#t:Type) (a b:ref t) = not (g_ptr_eq a b)
+
 unopteq
 (** Node of a doubly linked list *)
 type dlist (t:Type0) = {
@@ -48,17 +66,17 @@ let not_aliased (#t:Type) (a:option (ref t)) (b:option (ref t)) : GTot Type0 =
   isNone a \/ isNone b \/
   (let (a:_{isSome a}) = a in // workaround for not using two phase type checker
    let (b:_{isSome b}) = b in
-   addr_of (getSome a) <> addr_of (getSome b))
+   disjoint (getSome a) (getSome b))
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let not_aliased0 (#t:Type) (a:ref t) (b:option (ref t)) : GTot Type0 =
   isNone b \/
   (let (b:_{isSome b}) = b in // workaround for not using two phase type checker
-   addr_of a <> addr_of (getSome b))
+   disjoint a (getSome b))
 
 logic
 let not_aliased00 (#t:Type) (a:ref t) (b:ref t) : GTot Type0 =
-  addr_of a <> addr_of b
+  disjoint a b
 
 logic
 let dlist_is_valid' (#t:Type) (h0:heap) (n:dlist t) : GTot Type0 =
@@ -300,7 +318,7 @@ val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
            j = i + 1 /\ 0 <= i /\ i < length (reveal b) ==> (reveal b).[i] == (reveal r).[j])
 let ghost_append_properties #t a b = ()
 
-#set-options "--z3rlimit 50 --z3refresh"
+#set-options "--z3rlimit 100 --z3refresh"
 
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t) ->
   ST (dlisthead t)
