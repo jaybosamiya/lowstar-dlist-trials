@@ -155,18 +155,18 @@ let flink_valid (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
   all_nodes_contained h0 h /\
-  (forall i. {:pattern ((nodes.[i]@h0).flink)}
-     ((0 <= i /\ i < len - 1) ==>
-      (nodes.[i]@h0 |> nodes.[i+1])))
+  (forall i j. {:pattern ((nodes.[i]@h0).flink); (nodes.[j])}
+     ((0 <= i /\ i < len - 1 /\ j = i+1) ==>
+      (nodes.[i]@h0 |> nodes.[j])))
 
 logic
 let blink_valid (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
   all_nodes_contained h0 h /\
-  (forall i. {:pattern ((nodes.[i]@h0).blink)}
-     ((1 <= i /\ i < len) ==>
-      (nodes.[i-1] <| nodes.[i]@h0)))
+  (forall i j. {:pattern ((nodes.[i]@h0).blink); (nodes.[j])}
+     ((1 <= i /\ i < len /\ j=i-1) ==>
+      (nodes.[j] <| nodes.[i]@h0)))
 
 logic
 let dlisthead_ghostly_connections (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
