@@ -307,20 +307,11 @@ val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 -> modifies (e ^+^ (getSome h.lhead)) h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t)) =
-  let h1 = ST.get () in
   let Some n = h.lhead in
   !<|= e;
   e =|> n;
   e <|= n;
-  let y = { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
-  let h2 = ST.get () in
-  assert (
-    let ynodes = reveal y.nodes in
-    let hnodes = reveal h.nodes in
-    (forall (i:nat{2 <= i /\ i < Seq.length ynodes /\ i-1 < Seq.length hnodes}).
-              {:pattern (ynodes.[i]@h2)}
-       ynodes.[i]@h2 == hnodes.[i-1]@h1)); // OBSERVE
-    y
+  { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ h.nodes }
 
 #reset-options
 
@@ -345,21 +336,12 @@ val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 -> modifies (e ^+^ (getSome h.ltail)) h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_update_tail #t h e =
-  let h1 = ST.get () in
   let previously_singleton = is_singleton h in
   let Some n = h.ltail in
   !=|> e;
   n =|> e;
   n <|= e;
-  let y = { lhead = h.lhead ; ltail = Some e ; nodes = h.nodes +^ e } in
-  let h2 = ST.get () in
-  assert (
-    let ynodes = reveal y.nodes in
-    let hnodes = reveal h.nodes in
-    (forall (i:nat{0 <= i /\ i < Seq.length ynodes - 2 /\ i < Seq.length hnodes - 1}).
-              {:pattern (ynodes.[i]@h2)}
-       ynodes.[i]@h2 == hnodes.[i]@h1)); // OBSERVE
-    y
+  { lhead = h.lhead ; ltail = Some e ; nodes = h.nodes +^ e }
 
 #reset-options
 
@@ -392,7 +374,6 @@ val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
           modifies ((getSome h.lhead) ^+^ (reveal h.nodes).[1]) h1 h2) /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_head #t h =
-  let h1 = ST.get () in
   let Some n = h.lhead in
   if is_singleton h
   then (
@@ -403,16 +384,7 @@ let dlisthead_remove_head #t h =
     // unlink them
     !=|> n;
     !<|= next;
-    let Some htail = h.ltail in
-    let y = { lhead = Some next ; ltail = h.ltail ; nodes = ghost_tail h.nodes } in
-    let h2 = ST.get () in
-    assert (
-      let ynodes = reveal y.nodes in
-      let hnodes = reveal h.nodes in
-      (forall (i:nat{1 <= i /\ i < Seq.length ynodes /\ i+1 < Seq.length hnodes}).
-                {:pattern (ynodes.[i]@h2)}
-         ynodes.[i]@h2 == hnodes.[i+1]@h1)); // OBSERVE
-      y
+    { lhead = Some next ; ltail = h.ltail ; nodes = ghost_tail h.nodes }
   )
 
 #reset-options
@@ -435,7 +407,6 @@ val dlisthead_remove_tail: #t:eqtype -> h:nonempty_dlisthead t ->
           modifies ((getSome h.ltail) ^+^ nodes.[length nodes - 2]) h1 h2)) /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_tail #t h =
-  let h1 = ST.get () in
   if is_singleton h then (
     empty_list
   ) else (
@@ -445,15 +416,7 @@ let dlisthead_remove_tail #t h =
     //unlink them
     !<|= n;
     !=|> prev;
-    let y = { lhead = h.lhead ; ltail = Some prev ; nodes = ghost_unsnoc h.nodes } in
-    let h2 = ST.get () in
-    assert (
-      let ynodes = reveal y.nodes in
-      let hnodes = reveal h.nodes in
-      (forall (i:nat{0 <= i /\ i < Seq.length ynodes - 1 /\ i < Seq.length hnodes - 2}).
-                {:pattern (ynodes.[i]@h2)}
-         ynodes.[i]@h2 == hnodes.[i]@h1)); // OBSERVE
-      y
+    { lhead = h.lhead ; ltail = Some prev ; nodes = ghost_unsnoc h.nodes }
   )
 
 #reset-options
