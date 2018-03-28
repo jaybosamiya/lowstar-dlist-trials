@@ -185,7 +185,7 @@ let elements_dont_alias1 (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   all_nodes_contained h0 h /\
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)}
-     0 < i /\ i < j /\ j < length nodes ==>
+     0 <= i /\ i < j /\ j < length nodes ==>
    (not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink))
 
 logic
@@ -193,7 +193,7 @@ let elements_dont_alias2 (#t:Type) (h0:HS.mem) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   all_nodes_contained h0 h /\
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)}
-     0 < i /\ i < j /\ j < length nodes ==>
+     0 <= i /\ i < j /\ j < length nodes ==>
    (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink))
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
