@@ -10,8 +10,12 @@ val g_ptr_eq:
   #a:Type ->
   p:ref a ->
   q:ref a ->
-  GTot (b:bool{b <==> (addr_of p = addr_of q)})
-let g_ptr_eq #a p q = addr_of p = addr_of q
+  GTot (b:Type0{b <==> (p == q)})
+let g_ptr_eq #a p q = (p == q)
+
+(* If two refs have the same address, and are in the heap, they are equal *)
+assume val ref_extensionality (#a:Type0) (#rel:Preorder.preorder a) (h:Heap.heap) (r1 r2:Heap.mref a rel) : Lemma
+ (Heap.contains h r1 /\ Heap.contains h r2 /\ Heap.addr_of r1 = Heap.addr_of r2 ==> r1 == r2)
 
 (** Allow comparing pointers *)
 // inline_for_extraction
@@ -22,9 +26,11 @@ val ptr_eq:
   ST.ST bool
     (requires (fun h -> h `contains` p /\ h `contains` q))
     (ensures (fun h0 b h1 -> h0==h1 /\ (b <==> (g_ptr_eq p q))))
-let ptr_eq #a p q = compare_addrs p q
+let ptr_eq #a p q =
+  ref_extensionality (ST.get ()) p q;
+  compare_addrs p q
 
-let disjoint (#t:Type) (a b:ref t) = not (g_ptr_eq a b)
+let disjoint (#t:Type) (a b:ref t) = not (addr_of a = addr_of b)
 
 unopteq
 (** Node of a doubly linked list *)
@@ -450,31 +456,31 @@ let rec get_ref_index (#t:Type) (s:seq (ref t)) (x:ref t{s `contains_by_addr` x}
     contains_cons h t x;
     1 + get_ref_index t x)
 
-val lemma_get_ref_index : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_addr` x} ->
-  Lemma (ensures (
-    g_ptr_eq s.[get_ref_index s x] x))
-    (decreases (Seq.length s))
-    [SMTPat (g_ptr_eq s.[get_ref_index s x] x)]
-let rec lemma_get_ref_index #t s x =
-  contains_elim s x;
-  let h, t = Seq.head s, Seq.tail s in
-  if compare_addrs h x then () else (
-    contains_cons h t x;
-    lemma_get_ref_index t x)
+// val lemma_get_ref_index : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_addr` x} ->
+//   Lemma (ensures (
+//     g_ptr_eq s.[get_ref_index s x] x))
+//     (decreases (Seq.length s))
+//     [SMTPat (g_ptr_eq s.[get_ref_index s x] x)]
+// let rec lemma_get_ref_index #t s x =
+//   contains_elim s x;
+//   let h, t = Seq.head s, Seq.tail s in
+//   if compare_addrs h x then () else (
+//     contains_cons h t x;
+//     lemma_get_ref_index t x)
 
-val split_seq_at_element : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_addr` x} ->
-  GTot (v:(seq (ref t) * nat * seq (ref t)){
-      let l, i, r = v in
-      indexable s i /\ (
-      let (i:nat{i < length s}) = i in // workaround for two phase thing
-      s == append l (cons s.[i] r) /\
-      g_ptr_eq s.[i] x)
-  })
-let split_seq_at_element #t s x =
-  let i = get_ref_index s x in
-  let l, mr = Seq.split s i in
-  lemma_split s i;
-  l, i, tail mr
+// val split_seq_at_element : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_addr` x} ->
+//   GTot (v:(seq (ref t) * nat * seq (ref t)){
+//       let l, i, r = v in
+//       indexable s i /\ (
+//       let (i:nat{i < length s}) = i in // workaround for two phase thing
+//       s == append l (cons s.[i] r) /\
+//       g_ptr_eq s.[i] x)
+//   })
+// let split_seq_at_element #t s x =
+//   let i = get_ref_index s x in
+//   let l, mr = Seq.split s i in
+//   lemma_split s i;
+//   l, i, tail mr
 
 #reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
@@ -497,7 +503,6 @@ let dlisthead_remove_strictly_mid #t h e =
   recall next;
   !<|= e;
   !=|> e;
-  admit (); // It is no longer able to prove that prev and next.flink are not aliased
   prev =|> next;
   prev <|= next;
   let nodes = h.nodes in // TODO: Fix this
