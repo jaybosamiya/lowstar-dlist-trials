@@ -249,8 +249,49 @@ let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
               flink_valid h0 h /\
               blink_valid h0 h) /\
   elements_are_valid h0 h /\
-  elements_dont_alias h0 h /\
-  all_elements_distinct h0 h
+  elements_dont_alias h0 h
+
+let rec two_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) (i j:int) : Lemma
+  (requires (0 <= i /\ i < j /\ j < Seq.length (reveal h.nodes)) /\
+	    ~(length (reveal h.nodes) == 0) /\
+            dlisthead_ghostly_connections h0 h /\
+            flink_valid h0 h /\
+            blink_valid h0 h /\
+	    elements_are_valid h0 h /\
+	    elements_dont_alias h0 h)
+  (ensures
+     (let nodes = reveal h.nodes in
+      let (i:nat{i < Seq.length nodes}) = i in // workaround for not using two phase type checker
+      let (j:nat{j < Seq.length nodes}) = j in
+      disjoint nodes.[i] nodes.[j])) =
+  let nodes = reveal h.nodes in
+  if 0 <= i && i < j && j < Seq.length nodes then (
+    let b = FStar.StrongExcludedMiddle.strong_excluded_middle (disjoint nodes.[i] nodes.[j]) in
+    if not b then (
+      if i = 0 then (
+	assert( isNone (nodes.[i]@h0).blink);
+        assert( isSome (nodes.[j]@h0).blink)
+      ) else (
+	two_elements_distinct h0 h (i - 1) (j - 1)
+      )
+    ) else ()
+  ) else ()
+
+let lemma_all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : Lemma
+    (requires dlisthead_is_valid h0 h)
+    (ensures all_elements_distinct h0 h) =
+  let nodes = reveal h.nodes in
+  let two_elements_distinct_helper (i j:int) : Lemma
+    ((0 <= i /\ i < j /\ j < Seq.length nodes) ==>
+       (let (i:nat{i < Seq.length nodes}) = i in // workaround for not using two phase type checker
+        let (j:nat{j < Seq.length nodes}) = j in
+        disjoint nodes.[i] nodes.[j]))
+    =
+    if 0 <= i && i < j && j < Seq.length nodes then (
+      two_elements_distinct h0 h i j
+    ) else ()
+  in
+  FStar.Classical.forall_intro_2 two_elements_distinct_helper
 
 let test1 () : Tot unit = assert (forall h0 t. dlisthead_is_valid h0 (empty_list #t))
 
@@ -499,6 +540,8 @@ let dlisthead_remove_strictly_mid #t h e =
   let h1 = ST.get () in
   let Some prev = (!e).blink in
   let Some next = (!e).flink in
+  lemma_all_elements_distinct (ST.get ()) h; // required to be able to say [prev]
+                                             //     and [next] are not same
   recall prev;
   recall next;
   !<|= e;
