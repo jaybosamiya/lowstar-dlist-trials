@@ -497,7 +497,7 @@ let dlisthead_remove_strictly_mid #t h e =
   recall next;
   !<|= e;
   !=|> e;
-  admit ();
+  admit (); // It is no longer able to prove that prev and next.flink are not aliased
   prev =|> next;
   prev <|= next;
   let nodes = h.nodes in // TODO: Fix this
