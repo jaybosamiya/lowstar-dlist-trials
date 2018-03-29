@@ -227,7 +227,7 @@ let elements_are_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
 logic
 let all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
     let nodes = reveal h.nodes in
-    (forall i j. {:pattern (nodes.[i]); (nodes.[j])}
+    (forall i j. {:pattern (disjoint nodes.[i] nodes.[j])}
        (0 <= i /\ i < j /\ j < Seq.length nodes) ==>
        (let (i:nat{i < Seq.length nodes}) = i in // workaround for not using two phase type checker
         let (j:nat{j < Seq.length nodes}) = j in
@@ -349,7 +349,7 @@ let insertHeadList #t h e =
   then dlisthead_update_head h e
   else singletonlist e
 
-#set-options "--z3rlimit 50 --z3refresh"
+#set-options "--z3rlimit 100 --z3refresh"
 
 val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t) ->
   ST (dlisthead t)
@@ -382,7 +382,7 @@ let insertTailList #t h e =
 unfold let ghost_tail (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
   hide (Seq.tail (reveal s))
 
-#set-options "--z3rlimit 50 --max_fuel 4 --max_ifuel 1"
+#set-options "--z3rlimit 100"
 
 val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
@@ -497,6 +497,7 @@ let dlisthead_remove_strictly_mid #t h e =
   recall next;
   !<|= e;
   !=|> e;
+  admit ();
   prev =|> next;
   prev <|= next;
   let nodes = h.nodes in // TODO: Fix this
