@@ -279,6 +279,8 @@ let lemma_all_elements_distinct (#t:Type) (h0:HS.mem) (h:dlisthead t) : Lemma
 
 let test1 () : Tot unit = assert (forall h0 t. dlisthead_is_valid h0 (empty_list #t))
 
+#set-options "--z3rlimit 100"
+
 val singletonlist: #t:eqtype -> e:gpointer (dlist t) ->
   ST (dlisthead t)
   (requires (fun h0 -> h0 `B.live` e))
@@ -351,7 +353,7 @@ val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
            j = i + 1 /\ 0 <= i /\ i < length (reveal b) ==> (reveal b).[i] == (reveal r).[j])
 let ghost_append_properties #t a b = ()
 
-#set-options "--z3rlimit 100 --z3refresh"
+#set-options "--z3rlimit 300 --z3refresh"
 
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
@@ -380,7 +382,7 @@ let insertHeadList #t h e =
   then dlisthead_update_head h e
   else singletonlist e
 
-#set-options "--z3rlimit 100 --z3refresh"
+#set-options "--z3rlimit 300 --z3refresh"
 
 val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
@@ -413,7 +415,7 @@ let insertTailList #t h e =
 unfold let ghost_tail (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
   hide (Seq.tail (reveal s))
 
-#set-options "--z3rlimit 100"
+#set-options "--z3rlimit 300"
 
 val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
@@ -445,7 +447,7 @@ unfold let ghost_unsnoc (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) 
   let l = length x - 1 in
   hide (slice x 0 l)
 
-#set-options "--z3rlimit 50"
+#set-options "--z3rlimit 300"
 
 val dlisthead_remove_tail: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
