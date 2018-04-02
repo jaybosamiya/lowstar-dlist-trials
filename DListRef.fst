@@ -239,7 +239,7 @@ let all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
         let (j:nat{j < Seq.length nodes}) = j in
         disjoint nodes.[i] nodes.[j]))
 
-logic
+unfold logic
 let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
