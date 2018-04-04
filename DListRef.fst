@@ -342,21 +342,14 @@ let dlisthead_make_valid_singleton #t h =
   let Some e = h.lhead in
   { h with ltail = h.lhead ; nodes = ~. e }
 
-let g_is_singleton (#t:Type) (h:nonempty_dlisthead t) : GTot Type0 =
-  g_ptr_eq (getSome h.lhead) (getSome h.ltail)
-
-let is_singleton (#t:Type) (h:nonempty_dlisthead t) :
-  ST bool
-    (requires (fun h0 -> h0 `contains` (getSome h.lhead) /\
-                      h0 `contains` (getSome h.ltail)))
-    (ensures (fun h0 b h1 -> h0 == h1 /\ modifies_none h0 h1 /\ b <==> g_is_singleton h)) =
-  ptr_eq (getSome h.lhead) (getSome h.ltail)
+let is_singleton (#t:Type) (h:nonempty_dlisthead t) : Tot bool =
+  compare_addrs (getSome h.lhead) (getSome h.ltail)
 
 val nonempty_singleton_properties :
   #t:Type ->
   h:nonempty_dlisthead t ->
   ST unit
-    (requires (fun h0 -> dlisthead_is_valid h0 h /\ g_is_singleton h))
+    (requires (fun h0 -> dlisthead_is_valid h0 h /\ is_singleton h))
     (ensures (fun h0 _ h1 -> h0 == h1 /\ Seq.length (reveal h.nodes) == 1))
 let nonempty_singleton_properties #t h = ()
 
@@ -364,7 +357,7 @@ val nonempty_nonsingleton_properties :
   #t:Type ->
   h:nonempty_dlisthead t ->
   ST unit
-    (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(g_ptr_eq (getSome h.lhead) (getSome h.ltail))))
+    (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(compare_addrs (getSome h.lhead) (getSome h.ltail))))
     (ensures (fun h0 _ h1 -> h0 == h1 /\ Seq.length (reveal h.nodes) > 1))
 let nonempty_nonsingleton_properties #t h = ()
 
@@ -442,9 +435,9 @@ val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h))
     (ensures (fun h1 y h2 ->
-         (g_is_singleton h ==>
+         (is_singleton h ==>
           modifies (only (getSome h.lhead)) h1 h2) /\
-         (~(g_is_singleton h) ==>
+         (~(is_singleton h) ==>
           modifies ((getSome h.lhead) ^+^ (reveal h.nodes).[1]) h1 h2) /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_head #t h =
@@ -474,9 +467,9 @@ val dlisthead_remove_tail: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h))
     (ensures (fun h1 y h2 ->
-         (g_is_singleton h ==>
+         (is_singleton h ==>
           modifies (only (getSome h.ltail)) h1 h2) /\
-         (~(g_is_singleton h) ==>
+         (~(is_singleton h) ==>
           (let nodes = reveal h.nodes in
           modifies ((getSome h.ltail) ^+^ nodes.[length nodes - 2]) h1 h2)) /\
          dlisthead_is_valid h2 y))
@@ -495,14 +488,14 @@ let dlisthead_remove_tail #t h =
 
 #reset-options
 
-// let rec get_ref_index (#t:Type) (s:seq (ref t)) (x:ref t{s `contains_by_addr` x}) :
-//   GTot (i:nat{i < Seq.length s})
-//     (decreases (Seq.length s)) =
-//   contains_elim s x;
-//   let h, t = Seq.head s, Seq.tail s in
-//   if ptr_eq h x then 0 else (
-//     contains_cons h t x;
-//     1 + get_ref_index t x)
+let rec get_ref_index (#t:Type) (s:seq (ref t)) (x:ref t{s `contains_by_addr` x}) :
+  GTot (i:nat{i < Seq.length s})
+    (decreases (Seq.length s)) =
+  contains_elim s x;
+  let h, t = Seq.head s, Seq.tail s in
+  if compare_addrs h x then 0 else (
+    contains_cons h t x;
+    1 + get_ref_index t x)
 
 // val lemma_get_ref_index : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_addr` x} ->
 //   Lemma (ensures (
@@ -512,7 +505,7 @@ let dlisthead_remove_tail #t h =
 // let rec lemma_get_ref_index #t s x =
 //   contains_elim s x;
 //   let h, t = Seq.head s, Seq.tail s in
-//   if ptr_eq h x then () else (
+//   if compare_addrs h x then () else (
 //     contains_cons h t x;
 //     lemma_get_ref_index t x)
 
