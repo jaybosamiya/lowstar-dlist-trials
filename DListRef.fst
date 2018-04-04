@@ -342,8 +342,8 @@ let dlisthead_make_valid_singleton #t h =
   let Some e = h.lhead in
   { h with ltail = h.lhead ; nodes = ~. e }
 
-let g_is_singleton (#t:Type) (h:nonempty_dlisthead t) : GTot bool =
-  compare_addrs (getSome h.lhead) (getSome h.ltail)
+let g_is_singleton (#t:Type) (h:nonempty_dlisthead t) : GTot Type0 =
+  g_ptr_eq (getSome h.lhead) (getSome h.ltail)
 
 let is_singleton (#t:Type) (h:nonempty_dlisthead t) : Tot bool = // TODO:FIXME: Make into ST
   compare_addrs (getSome h.lhead) (getSome h.ltail)
