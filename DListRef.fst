@@ -360,7 +360,7 @@ val nonempty_nonsingleton_properties :
   #t:Type ->
   h:nonempty_dlisthead t ->
   ST unit
-    (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(compare_addrs (getSome h.lhead) (getSome h.ltail))))
+    (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(g_is_singleton h)))
     (ensures (fun h0 _ h1 -> h0 == h1 /\ Seq.length (reveal h.nodes) > 1))
 let nonempty_nonsingleton_properties #t h = ()
 
@@ -491,14 +491,14 @@ let dlisthead_remove_tail #t h =
 
 #reset-options
 
-let rec get_ref_index (#t:Type) (s:seq (ref t)) (x:ref t{s `contains_by_addr` x}) :
-  GTot (i:nat{i < Seq.length s})
-    (decreases (Seq.length s)) =
-  contains_elim s x;
-  let h, t = Seq.head s, Seq.tail s in
-  if compare_addrs h x then 0 else (
-    contains_cons h t x;
-    1 + get_ref_index t x)
+// let rec get_ref_index (#t:Type) (s:seq (ref t)) (x:ref t{s `contains_by_addr` x}) :
+//   GTot (i:nat{i < Seq.length s})
+//     (decreases (Seq.length s)) =
+//   contains_elim s x;
+//   let h, t = Seq.head s, Seq.tail s in
+//   if compare_addrs h x then 0 else (
+//     contains_cons h t x;
+//     1 + get_ref_index t x)
 
 // val lemma_get_ref_index : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_addr` x} ->
 //   Lemma (ensures (
