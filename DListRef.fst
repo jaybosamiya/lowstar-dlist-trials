@@ -253,12 +253,12 @@ let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
 
 let rec two_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) (i j:int) : Lemma
   (requires (0 <= i /\ i < j /\ j < Seq.length (reveal h.nodes)) /\
-	    ~(length (reveal h.nodes) == 0) /\
+            ~(length (reveal h.nodes) == 0) /\
             dlisthead_ghostly_connections h0 h /\
             flink_valid h0 h /\
             blink_valid h0 h /\
-	    elements_are_valid h0 h /\
-	    elements_dont_alias h0 h)
+            elements_are_valid h0 h /\
+            elements_dont_alias h0 h)
   (ensures
      (let nodes = reveal h.nodes in
       let (i:nat{i < Seq.length nodes}) = i in // workaround for not using two phase type checker
@@ -269,10 +269,10 @@ let rec two_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) (i j:int) : Le
     let b = FStar.StrongExcludedMiddle.strong_excluded_middle (disjoint nodes.[i] nodes.[j]) in
     if not b then (
       if i = 0 then (
-	assert( isNone (nodes.[i]@h0).blink);
+        assert( isNone (nodes.[i]@h0).blink);
         assert( isSome (nodes.[j]@h0).blink)
       ) else (
-	two_elements_distinct h0 h (i - 1) (j - 1)
+        two_elements_distinct h0 h (i - 1) (j - 1)
       )
     ) else ()
   ) else ()
