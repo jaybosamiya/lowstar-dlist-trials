@@ -342,14 +342,17 @@ let dlisthead_make_valid_singleton #t h =
   let Some e = h.lhead in
   { h with ltail = h.lhead ; nodes = ~. e }
 
-let is_singleton (#t:Type) (h:nonempty_dlisthead t) : Tot bool =
+let g_is_singleton (#t:Type) (h:nonempty_dlisthead t) : GTot bool =
+  compare_addrs (getSome h.lhead) (getSome h.ltail)
+
+let is_singleton (#t:Type) (h:nonempty_dlisthead t) : Tot bool = // TODO:FIXME: Make into ST
   compare_addrs (getSome h.lhead) (getSome h.ltail)
 
 val nonempty_singleton_properties :
   #t:Type ->
   h:nonempty_dlisthead t ->
   ST unit
-    (requires (fun h0 -> dlisthead_is_valid h0 h /\ is_singleton h))
+    (requires (fun h0 -> dlisthead_is_valid h0 h /\ g_is_singleton h))
     (ensures (fun h0 _ h1 -> h0 == h1 /\ Seq.length (reveal h.nodes) == 1))
 let nonempty_singleton_properties #t h = ()
 
@@ -435,9 +438,9 @@ val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h))
     (ensures (fun h1 y h2 ->
-         (is_singleton h ==>
+         (g_is_singleton h ==>
           modifies (only (getSome h.lhead)) h1 h2) /\
-         (~(is_singleton h) ==>
+         (~(g_is_singleton h) ==>
           modifies ((getSome h.lhead) ^+^ (reveal h.nodes).[1]) h1 h2) /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_head #t h =
@@ -467,9 +470,9 @@ val dlisthead_remove_tail: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h))
     (ensures (fun h1 y h2 ->
-         (is_singleton h ==>
+         (g_is_singleton h ==>
           modifies (only (getSome h.ltail)) h1 h2) /\
-         (~(is_singleton h) ==>
+         (~(g_is_singleton h) ==>
           (let nodes = reveal h.nodes in
           modifies ((getSome h.ltail) ^+^ nodes.[length nodes - 2]) h1 h2)) /\
          dlisthead_is_valid h2 y))
