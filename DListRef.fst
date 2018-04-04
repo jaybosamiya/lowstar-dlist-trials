@@ -347,9 +347,9 @@ let g_is_singleton (#t:Type) (h:nonempty_dlisthead t) : GTot Type0 =
 
 let is_singleton (#t:Type) (h:nonempty_dlisthead t) :
   ST bool
-    (requires (fun h0 -> (isSome h.lhead ==> h0 `contains` (getSome h.lhead)) /\
-                      (isSome h.ltail ==> h0 `contains` (getSome h.ltail))))
-    (ensures (fun h0 b h1 -> h0 == h1 /\ b <==> g_is_singleton h)) =
+    (requires (fun h0 -> h0 `contains` (getSome h.lhead) /\
+                      h0 `contains` (getSome h.ltail)))
+    (ensures (fun h0 b h1 -> h0 == h1 /\ modifies_none h0 h1 /\ b <==> g_is_singleton h)) =
   ptr_eq (getSome h.lhead) (getSome h.ltail)
 
 val nonempty_singleton_properties :
