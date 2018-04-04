@@ -1,11 +1,16 @@
 module GpointersViaRefs
 
 open FStar.Ref
+open FStar.Option
+
+type gpointer t = ref t
+type gpointer_or_null t = option (ref t)
+type gnull t = (p:option (ref t){isNone p})
 
 val g_ptr_eq:
   #a:Type ->
-  p:ref a ->
-  q:ref a ->
+  p:gpointer a ->
+  q:gpointer a ->
   GTot (b:Type0{b <==> (p == q)})
 let g_ptr_eq #a p q = (p == q)
 
@@ -17,8 +22,8 @@ assume val ref_extensionality (#a:Type0) (#rel:Preorder.preorder a) (h:Heap.heap
 // inline_for_extraction
 val ptr_eq:
   #a:Type ->
-  p:ref a ->
-  q:ref a ->
+  p:gpointer a ->
+  q:gpointer a ->
   ST.ST bool
     (requires (fun h -> h `contains` p /\ h `contains` q))
     (ensures (fun h0 b h1 -> h0==h1 /\ (b <==> (g_ptr_eq p q))))
@@ -27,3 +32,17 @@ let ptr_eq #a p q =
   compare_addrs p q
 
 let disjoint (#t:Type) (a b:ref t) = not (addr_of a = addr_of b)
+
+unfold let is_null (p:gpointer_or_null 't) = isNone p
+unfold let is_not_null (p:gpointer_or_null 't) = not (isNone p)
+
+let null = None
+
+let test_null #t =
+  let p : gpointer_or_null t = null in
+  assert (is_null p)
+
+unfold let ( := ) (a:gpointer 't) (b:'t) = a := b
+unfold let ( ! ) (a:gpointer 't) = !a
+
+unfold let recall (#t:Type) (p: gpointer t) = recall p
