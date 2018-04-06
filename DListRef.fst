@@ -2,7 +2,6 @@ module DListRef
 
 open FStar
 open FStar.Ghost
-open FStar.Option
 open FStar.Seq
 open FStar.Ref
 open GpointersViaRefs
@@ -40,15 +39,15 @@ unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let not_aliased (#t:Type) (a:gpointer_or_null t) (b:gpointer_or_null t) : GTot Type0 =
-  isNone a \/ isNone b \/
-  (let (a:_{isSome a}) = a in // workaround for not using two phase type checker
-   let (b:_{isSome b}) = b in
+  is_null a \/ is_null b \/
+  (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
+   let (b:_{is_not_null b}) = b in
    disjoint (non_null a) (non_null b))
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let not_aliased0 (#t:Type) (a:gpointer t) (b:gpointer_or_null t) : GTot Type0 =
-  isNone b \/
-  (let (b:_{isSome b}) = b in // workaround for not using two phase type checker
+  is_null b \/
+  (let (b:_{is_not_null b}) = b in // workaround for not using two phase type checker
    disjoint a (non_null b))
 
 logic
@@ -65,8 +64,8 @@ let dlist_is_valid (#t:Type) (h0:heap) (n:gpointer (dlist t)) : GTot Type0 =
   dlist_is_valid' h0 (n@h0)
 
 let (==$) (#t:Type) (a:gpointer_or_null t) (b:gpointer t) =
-  isSome a /\
-  (let (a:_{isSome a}) = a in // workaround for not using two phase type checker
+  is_not_null a /\
+  (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
    g_ptr_eq (non_null a) b)
 
 logic
@@ -136,8 +135,8 @@ unfold let (+^) (#t:Type) (a:erased (seq t)) (b:t) : Tot (erased (seq t)) = elif
 logic
 let all_nodes_contained (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
-  (isSome h.lhead ==> h0 `contains` (non_null h.lhead)) /\
-  (isSome h.ltail ==> h0 `contains` (non_null h.ltail)) /\
+  (is_not_null h.lhead ==> h0 `contains` (non_null h.lhead)) /\
+  (is_not_null h.ltail ==> h0 `contains` (non_null h.ltail)) /\
   (forall i. {:pattern (h0 `contains` nodes.[i])}
      h0 `contains` nodes.[i])
 
@@ -168,8 +167,8 @@ let dlisthead_ghostly_connections (#t:Type) (h0:heap) (h:dlisthead t) : GTot Typ
   ~empty ==> (
     h.lhead ==$ nodes.[0] /\
     h.ltail ==$ nodes.[len-1] /\
-    isNone (h.lhead^@h0).blink /\
-    isNone (h.ltail^@h0).flink)
+    is_null (h.lhead^@h0).blink /\
+    is_null (h.ltail^@h0).flink)
 
 logic
 let elements_dont_alias1 (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -213,7 +212,7 @@ let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   let len = length nodes in
   let empty = (len = 0) in
-  (empty ==> isNone h.lhead /\ isNone h.ltail) /\
+  (empty ==> is_null h.lhead /\ is_null h.ltail) /\
   (~empty ==> dlisthead_ghostly_connections h0 h /\
               flink_valid h0 h /\
               blink_valid h0 h) /\
@@ -235,8 +234,8 @@ let rec two_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) (i j:int) : Le
     let b = FStar.StrongExcludedMiddle.strong_excluded_middle (disjoint nodes.[i] nodes.[j]) in
     if not b then (
       if i = 0 then (
-        assert( isNone (nodes.[i]@h0).blink);
-        assert( isSome (nodes.[j]@h0).blink)
+        assert( is_null (nodes.[i]@h0).blink);
+        assert( is_not_null (nodes.[j]@h0).blink)
       ) else (
         two_elements_distinct h0 h (i - 1) (j - 1)
       )
@@ -296,13 +295,13 @@ let has_nothing_in (#t:eqtype) (h0:heap)
       not_aliased (e@h0).flink (nodes.[i]@h0).blink /\
       not_aliased (e@h0).blink (nodes.[i]@h0).blink))
 
-type nonempty_dlisthead t = (h:dlisthead t{isSome h.lhead /\ isSome h.ltail})
+type nonempty_dlisthead t = (h:dlisthead t{is_not_null h.lhead /\ is_not_null h.ltail})
 
 val dlisthead_make_valid_singleton: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
     (requires (fun h0 ->
          h0 `contains` (non_null h.lhead) /\
-         isNone (h.lhead^@h0).flink /\ isNone (h.lhead^@h0).blink))
+         is_null (h.lhead^@h0).flink /\ is_null (h.lhead^@h0).blink))
     (ensures (fun h1 y h2 -> modifies_none h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_make_valid_singleton #t h =
   let Some e = h.lhead in
@@ -358,13 +357,13 @@ val insertHeadList : #t:eqtype -> h:dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 ->
-         (isSome h.lhead ==>
+         (is_not_null h.lhead ==>
           modifies (e ^+^ (non_null h.lhead)) h1 h2) /\
-         (~(isSome h.lhead) ==>
+         (~(is_not_null h.lhead) ==>
           modifies (only e) h1 h2) /\
          dlisthead_is_valid h2 y))
 let insertHeadList #t h e =
-  if isSome h.lhead
+  if is_not_null h.lhead
   then dlisthead_update_head h e
   else singletonlist e
 
@@ -388,13 +387,13 @@ val insertTailList : #t:eqtype -> h:dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 ->
-         (isSome h.ltail ==>
+         (is_not_null h.ltail ==>
           modifies (e ^+^ (non_null h.ltail)) h1 h2) /\
-         (~(isSome h.lhead) ==>
+         (~(is_not_null h.lhead) ==>
           modifies (only e) h1 h2) /\
          dlisthead_is_valid h2 y))
 let insertTailList #t h e =
-  if isSome h.ltail
+  if is_not_null h.ltail
   then dlisthead_update_tail h e
   else singletonlist e
 
@@ -503,9 +502,9 @@ val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:gpoi
                          member_of h0 h e /\
                          not_aliased0 e h.lhead /\ not_aliased0 e h.ltail))
     (ensures (fun h1 y h2 ->
-         isSome (e@h1).flink /\ isSome (e@h1).blink /\
+         is_not_null (e@h1).flink /\ is_not_null (e@h1).blink /\
          dlist_is_valid h2 e /\
-         isNone (e@h2).flink /\ isNone (e@h2).blink /\
+         is_null (e@h2).flink /\ is_null (e@h2).blink /\
          modifies (e ^++ (non_null (e@h1).flink) ^+^ (non_null (e@h1).blink)) h1 h2 /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_strictly_mid #t h e =
