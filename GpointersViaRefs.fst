@@ -50,14 +50,27 @@ unfold let recall (#t:Type) (p: gpointer t) = recall p
 val non_null:
   #t:Type ->
   a:gpointer_or_null t{is_not_null a} ->
-  b:gpointer t{a == Some b}
+  b:gpointer t
 let non_null #t a = Some?.v a
+
+val lemma_non_null :
+  #t:Type ->
+  a:gpointer_or_null t{is_not_null a} ->
+  Lemma (ensures (a == Some (non_null a)))
+    [SMTPat (non_null a)]
+let lemma_non_null #t a = ()
 
 val of_non_null:
   #t:Type ->
   a:gpointer t ->
-  b:gpointer_or_null t{is_not_null b /\ b == Some a}
+  b:gpointer_or_null t
 let of_non_null #t a = Some a
+
+val lemma_of_non_null:
+  #t:Type ->
+  a:gpointer t ->
+  Lemma (ensures (is_not_null (of_non_null a)) /\ (of_non_null a == Some a))
+let lemma_of_non_null #t a = ()
 
 unfold let (@) (a:gpointer 't) (h0:heap{h0 `contains` a}) = sel h0 a
 unfold let (^@) (a:gpointer_or_null 't{isSome a}) (h0:heap{h0 `contains` (non_null a)}) = (non_null a) @ h0
