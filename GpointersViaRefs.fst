@@ -53,5 +53,11 @@ val non_null:
   b:gpointer t{a == Some b}
 let non_null #t a = Some?.v a
 
+val of_non_null:
+  #t:Type ->
+  a:gpointer t ->
+  b:gpointer_or_null t{is_not_null b /\ b == Some a}
+let of_non_null #t a = Some a
+
 unfold let (@) (a:gpointer 't) (h0:heap{h0 `contains` a}) = sel h0 a
 unfold let (^@) (a:gpointer_or_null 't{isSome a}) (h0:heap{h0 `contains` (non_null a)}) = (non_null a) @ h0

@@ -89,7 +89,7 @@ let ( =|> ) (#t:Type) (a:gpointer (dlist t)) (b:gpointer (dlist t)) : ST unit
          (a@h1).blink == (a@h2).blink /\
          b@h1 == b@h2 /\
          (a@h2) |> b)) =
-  a := { !a with flink = Some b }
+  a := { !a with flink = of_non_null b }
 
 irreducible
 let ( <|= ) (#t:Type) (a:gpointer (dlist t)) (b:gpointer (dlist t)) : ST unit
@@ -104,7 +104,7 @@ let ( <|= ) (#t:Type) (a:gpointer (dlist t)) (b:gpointer (dlist t)) : ST unit
          (b@h1).p == (b@h2).p /\
          (b@h1).flink == (b@h2).flink /\
          a <| (b@h2))) =
-  b := { !b with blink = Some a }
+  b := { !b with blink = of_non_null a }
 
 irreducible
 let ( !=|> ) (#t:Type) (a:gpointer (dlist t)) : ST unit
@@ -266,7 +266,7 @@ val singletonlist: #t:eqtype -> e:gpointer (dlist t) ->
   (ensures (fun h0 y h1 -> modifies (only e) h0 h1 /\ dlisthead_is_valid h1 y))
 let singletonlist #t e =
   !<|= e; !=|> e;
-  { lhead = Some e ; ltail = Some e ; nodes = ~. e }
+  { lhead = of_non_null e ; ltail = of_non_null e ; nodes = ~. e }
 
 // logic
 let contains_by_addr (#t:Type) (s:seq (gpointer t)) (x:gpointer t) : GTot Type0 =
@@ -304,7 +304,7 @@ val dlisthead_make_valid_singleton: #t:eqtype -> h:nonempty_dlisthead t ->
          is_null (h.lhead^@h0).flink /\ is_null (h.lhead^@h0).blink))
     (ensures (fun h1 y h2 -> modifies_none h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_make_valid_singleton #t h =
-  let Some e = h.lhead in
+  let e = non_null h.lhead in
   { h with ltail = h.lhead ; nodes = ~. e }
 
 let g_is_singleton (#t:Type) (h:nonempty_dlisthead t) : GTot Type0 =
@@ -345,11 +345,11 @@ val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dl
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 -> modifies (e ^+^ (non_null h.lhead)) h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlist t)) =
-  let Some n = h.lhead in
+  let n = non_null h.lhead in
   !<|= e;
   e =|> n;
   e <|= n;
-  { lhead = Some e ; ltail = h.ltail ; nodes = e ^+ h.nodes }
+  { lhead = of_non_null e ; ltail = h.ltail ; nodes = e ^+ h.nodes }
 
 #reset-options
 
@@ -375,11 +375,11 @@ val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dl
     (ensures (fun h1 y h2 -> modifies (e ^+^ (non_null h.ltail)) h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_update_tail #t h e =
   let previously_singleton = is_singleton h in
-  let Some n = h.ltail in
+  let n = non_null h.ltail in
   !=|> e;
   n =|> e;
   n <|= e;
-  { lhead = h.lhead ; ltail = Some e ; nodes = h.nodes +^ e }
+  { lhead = h.lhead ; ltail = of_non_null e ; nodes = h.nodes +^ e }
 
 #reset-options
 
@@ -412,17 +412,17 @@ val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
           modifies ((non_null h.lhead) ^+^ (reveal h.nodes).[1]) h1 h2) /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_head #t h =
-  let Some n = h.lhead in
+  let n = non_null h.lhead in
   if is_singleton h
   then (
     empty_list
   ) else (
-    let Some next = (!n).flink in
+    let next = non_null (!n).flink in
     recall next;
     // unlink them
     !=|> n;
     !<|= next;
-    { lhead = Some next ; ltail = h.ltail ; nodes = ghost_tail h.nodes }
+    { lhead = of_non_null next ; ltail = h.ltail ; nodes = ghost_tail h.nodes }
   )
 
 #reset-options
@@ -448,13 +448,13 @@ let dlisthead_remove_tail #t h =
   if is_singleton h then (
     empty_list
   ) else (
-    let Some n = h.ltail in
-    let Some prev = (!n).blink in
+    let n = non_null h.ltail in
+    let prev = non_null (!n).blink in
     recall prev;
     //unlink them
     !<|= n;
     !=|> prev;
-    { lhead = h.lhead ; ltail = Some prev ; nodes = ghost_unsnoc h.nodes }
+    { lhead = h.lhead ; ltail = of_non_null prev ; nodes = ghost_unsnoc h.nodes }
   )
 
 #reset-options
@@ -509,8 +509,8 @@ val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:gpoi
          dlisthead_is_valid h2 y))
 let dlisthead_remove_strictly_mid #t h e =
   let h1 = ST.get () in
-  let Some prev = (!e).blink in
-  let Some next = (!e).flink in
+  let prev = non_null (!e).blink in
+  let next = non_null (!e).flink in
   lemma_all_elements_distinct (ST.get ()) h; // required to be able to say [prev]
                                              //     and [next] are not same
   recall prev;
