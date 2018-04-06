@@ -36,12 +36,6 @@ val empty_list: #t:Type -> dlisthead t
 let empty_list #t =
   { lhead = None ; ltail = None ; nodes = hide createEmpty }
 
-val getSome: (a:option 'a{isSome a}) -> (b:'a{a == Some b})
-let getSome a = Some?.v a
-
-unfold let (@) (a:gpointer 't) (h0:heap{h0 `contains` a}) = sel h0 a
-unfold let (^@) (a:gpointer_or_null 't{isSome a}) (h0:heap{h0 `contains` (getSome a)}) = (getSome a) @ h0
-
 unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
@@ -49,13 +43,13 @@ let not_aliased (#t:Type) (a:gpointer_or_null t) (b:gpointer_or_null t) : GTot T
   isNone a \/ isNone b \/
   (let (a:_{isSome a}) = a in // workaround for not using two phase type checker
    let (b:_{isSome b}) = b in
-   disjoint (getSome a) (getSome b))
+   disjoint (non_null a) (non_null b))
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let not_aliased0 (#t:Type) (a:gpointer t) (b:gpointer_or_null t) : GTot Type0 =
   isNone b \/
   (let (b:_{isSome b}) = b in // workaround for not using two phase type checker
-   disjoint a (getSome b))
+   disjoint a (non_null b))
 
 logic
 let not_aliased00 (#t:Type) (a:gpointer t) (b:gpointer t) : GTot Type0 =
@@ -73,7 +67,7 @@ let dlist_is_valid (#t:Type) (h0:heap) (n:gpointer (dlist t)) : GTot Type0 =
 let (==$) (#t:Type) (a:gpointer_or_null t) (b:gpointer t) =
   isSome a /\
   (let (a:_{isSome a}) = a in // workaround for not using two phase type checker
-   g_ptr_eq (getSome a) b)
+   g_ptr_eq (non_null a) b)
 
 logic
 let ( |> ) (#t:Type) (a:dlist t) (b:gpointer (dlist t)) : GTot Type0 =
@@ -142,8 +136,8 @@ unfold let (+^) (#t:Type) (a:erased (seq t)) (b:t) : Tot (erased (seq t)) = elif
 logic
 let all_nodes_contained (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
-  (isSome h.lhead ==> h0 `contains` (getSome h.lhead)) /\
-  (isSome h.ltail ==> h0 `contains` (getSome h.ltail)) /\
+  (isSome h.lhead ==> h0 `contains` (non_null h.lhead)) /\
+  (isSome h.ltail ==> h0 `contains` (non_null h.ltail)) /\
   (forall i. {:pattern (h0 `contains` nodes.[i])}
      h0 `contains` nodes.[i])
 
@@ -307,7 +301,7 @@ type nonempty_dlisthead t = (h:dlisthead t{isSome h.lhead /\ isSome h.ltail})
 val dlisthead_make_valid_singleton: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
     (requires (fun h0 ->
-         h0 `contains` (getSome h.lhead) /\
+         h0 `contains` (non_null h.lhead) /\
          isNone (h.lhead^@h0).flink /\ isNone (h.lhead^@h0).blink))
     (ensures (fun h1 y h2 -> modifies_none h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_make_valid_singleton #t h =
@@ -315,13 +309,13 @@ let dlisthead_make_valid_singleton #t h =
   { h with ltail = h.lhead ; nodes = ~. e }
 
 let g_is_singleton (#t:Type) (h:nonempty_dlisthead t) : GTot Type0 =
-  g_ptr_eq (getSome h.lhead) (getSome h.ltail)
+  g_ptr_eq (non_null h.lhead) (non_null h.ltail)
 
 let is_singleton (#t:Type) (h:nonempty_dlisthead t) :
   ST.ST bool
-    (requires (fun h0 -> h0 `contains` (getSome h.lhead) /\ h0 `contains` (getSome h.ltail)))
+    (requires (fun h0 -> h0 `contains` (non_null h.lhead) /\ h0 `contains` (non_null h.ltail)))
     (ensures (fun h0 b h1 -> h0==h1 /\ (b <==> g_is_singleton h))) =
-  ptr_eq (getSome h.lhead) (getSome h.ltail)
+  ptr_eq (non_null h.lhead) (non_null h.ltail)
 
 val nonempty_singleton_properties :
   #t:Type ->
@@ -350,7 +344,7 @@ let ghost_append_properties #t a b = ()
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
-    (ensures (fun h1 y h2 -> modifies (e ^+^ (getSome h.lhead)) h1 h2 /\ dlisthead_is_valid h2 y))
+    (ensures (fun h1 y h2 -> modifies (e ^+^ (non_null h.lhead)) h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlist t)) =
   let Some n = h.lhead in
   !<|= e;
@@ -365,7 +359,7 @@ val insertHeadList : #t:eqtype -> h:dlisthead t -> e:gpointer (dlist t) ->
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 ->
          (isSome h.lhead ==>
-          modifies (e ^+^ (getSome h.lhead)) h1 h2) /\
+          modifies (e ^+^ (non_null h.lhead)) h1 h2) /\
          (~(isSome h.lhead) ==>
           modifies (only e) h1 h2) /\
          dlisthead_is_valid h2 y))
@@ -379,7 +373,7 @@ let insertHeadList #t h e =
 val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
-    (ensures (fun h1 y h2 -> modifies (e ^+^ (getSome h.ltail)) h1 h2 /\ dlisthead_is_valid h2 y))
+    (ensures (fun h1 y h2 -> modifies (e ^+^ (non_null h.ltail)) h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_update_tail #t h e =
   let previously_singleton = is_singleton h in
   let Some n = h.ltail in
@@ -395,7 +389,7 @@ val insertTailList : #t:eqtype -> h:dlisthead t -> e:gpointer (dlist t) ->
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 ->
          (isSome h.ltail ==>
-          modifies (e ^+^ (getSome h.ltail)) h1 h2) /\
+          modifies (e ^+^ (non_null h.ltail)) h1 h2) /\
          (~(isSome h.lhead) ==>
           modifies (only e) h1 h2) /\
          dlisthead_is_valid h2 y))
@@ -414,9 +408,9 @@ val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
     (requires (fun h0 -> dlisthead_is_valid h0 h))
     (ensures (fun h1 y h2 ->
          (g_is_singleton h ==>
-          modifies (only (getSome h.lhead)) h1 h2) /\
+          modifies (only (non_null h.lhead)) h1 h2) /\
          (~(g_is_singleton h) ==>
-          modifies ((getSome h.lhead) ^+^ (reveal h.nodes).[1]) h1 h2) /\
+          modifies ((non_null h.lhead) ^+^ (reveal h.nodes).[1]) h1 h2) /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_head #t h =
   let Some n = h.lhead in
@@ -446,10 +440,10 @@ val dlisthead_remove_tail: #t:eqtype -> h:nonempty_dlisthead t ->
     (requires (fun h0 -> dlisthead_is_valid h0 h))
     (ensures (fun h1 y h2 ->
          (g_is_singleton h ==>
-          modifies (only (getSome h.ltail)) h1 h2) /\
+          modifies (only (non_null h.ltail)) h1 h2) /\
          (~(g_is_singleton h) ==>
           (let nodes = reveal h.nodes in
-          modifies ((getSome h.ltail) ^+^ nodes.[length nodes - 2]) h1 h2)) /\
+          modifies ((non_null h.ltail) ^+^ nodes.[length nodes - 2]) h1 h2)) /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_tail #t h =
   if is_singleton h then (
@@ -512,7 +506,7 @@ val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:gpoi
          isSome (e@h1).flink /\ isSome (e@h1).blink /\
          dlist_is_valid h2 e /\
          isNone (e@h2).flink /\ isNone (e@h2).blink /\
-         modifies (e ^++ (getSome (e@h1).flink) ^+^ (getSome (e@h1).blink)) h1 h2 /\
+         modifies (e ^++ (non_null (e@h1).flink) ^+^ (non_null (e@h1).blink)) h1 h2 /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_strictly_mid #t h e =
   let h1 = ST.get () in

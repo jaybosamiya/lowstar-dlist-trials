@@ -46,3 +46,12 @@ unfold let ( := ) (a:gpointer 't) (b:'t) = a := b
 unfold let ( ! ) (a:gpointer 't) = !a
 
 unfold let recall (#t:Type) (p: gpointer t) = recall p
+
+val non_null:
+  #t:Type ->
+  a:gpointer_or_null t{is_not_null a} ->
+  b:gpointer t{a == Some b}
+let non_null #t a = Some?.v a
+
+unfold let (@) (a:gpointer 't) (h0:heap{h0 `contains` a}) = sel h0 a
+unfold let (^@) (a:gpointer_or_null 't{isSome a}) (h0:heap{h0 `contains` (non_null a)}) = (non_null a) @ h0
