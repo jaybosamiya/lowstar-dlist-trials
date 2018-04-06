@@ -28,12 +28,12 @@ type dlisthead (t:Type0) ={
 (** Initialize an element of a doubly linked list *)
 val empty_entry: #t:Type -> payload:t -> dlist t
 let empty_entry #t payload =
-  { flink = None ; blink = None ; p = payload }
+  { flink = null ; blink = null ; p = payload }
 
 (** Initialize a doubly linked list head *)
 val empty_list: #t:Type -> dlisthead t
 let empty_list #t =
-  { lhead = None ; ltail = None ; nodes = hide createEmpty }
+  { lhead = null ; ltail = null ; nodes = hide createEmpty }
 
 unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
 
@@ -114,8 +114,8 @@ let ( !=|> ) (#t:Type) (a:gpointer (dlist t)) : ST unit
          dlist_is_valid h2 a /\
          (a@h1).p == (a@h2).p /\
          (a@h1).blink == (a@h2).blink /\
-         (a@h2).flink == None)) =
-  a := { !a with flink = None }
+         (a@h2).flink == null)) =
+  a := { !a with flink = null }
 
 irreducible
 let ( !<|= ) (#t:Type) (a:gpointer (dlist t)) : ST unit
@@ -125,8 +125,8 @@ let ( !<|= ) (#t:Type) (a:gpointer (dlist t)) : ST unit
          dlist_is_valid h2 a /\
          (a@h1).p == (a@h2).p /\
          (a@h1).flink == (a@h2).flink /\
-         (a@h2).blink == None)) =
-  a := { !a with blink = None }
+         (a@h2).blink == null)) =
+  a := { !a with blink = null }
 
 unfold let (~.) (#t:Type) (a:t) : Tot (erased (seq t)) = hide (Seq.create 1 a)
 unfold let (^+) (#t:Type) (a:t) (b:erased (seq t)) : Tot (erased (seq t)) = elift2 Seq.cons (hide a) b
