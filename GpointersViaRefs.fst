@@ -74,3 +74,25 @@ let lemma_of_non_null #t a = ()
 
 unfold let (@) (a:gpointer 't) (h0:heap{h0 `contains` a}) = sel h0 a
 unfold let (^@) (a:gpointer_or_null 't{isSome a}) (h0:heap{h0 `contains` (non_null a)}) = (non_null a) @ h0
+
+let (==$) (#t:Type) (a:gpointer_or_null t) (b:gpointer t) =
+  is_not_null a /\
+  (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
+   g_ptr_eq (non_null a) b)
+
+// logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
+let not_aliased (#t:Type) (a:gpointer_or_null t) (b:gpointer_or_null t) : GTot Type0 =
+  is_null a \/ is_null b \/
+  (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
+   let (b:_{is_not_null b}) = b in
+   disjoint (non_null a) (non_null b))
+
+// logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
+let not_aliased0 (#t:Type) (a:gpointer t) (b:gpointer_or_null t) : GTot Type0 =
+  is_null b \/
+  (let (b:_{is_not_null b}) = b in // workaround for not using two phase type checker
+   disjoint a (non_null b))
+
+logic
+let not_aliased00 (#t:Type) (a:gpointer t) (b:gpointer t) : GTot Type0 =
+  disjoint a b

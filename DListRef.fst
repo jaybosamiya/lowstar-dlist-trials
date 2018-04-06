@@ -37,23 +37,6 @@ let empty_list #t =
 
 unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
 
-// logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
-let not_aliased (#t:Type) (a:gpointer_or_null t) (b:gpointer_or_null t) : GTot Type0 =
-  is_null a \/ is_null b \/
-  (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
-   let (b:_{is_not_null b}) = b in
-   disjoint (non_null a) (non_null b))
-
-// logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
-let not_aliased0 (#t:Type) (a:gpointer t) (b:gpointer_or_null t) : GTot Type0 =
-  is_null b \/
-  (let (b:_{is_not_null b}) = b in // workaround for not using two phase type checker
-   disjoint a (non_null b))
-
-logic
-let not_aliased00 (#t:Type) (a:gpointer t) (b:gpointer t) : GTot Type0 =
-  disjoint a b
-
 logic
 let dlist_is_valid' (#t:Type) (h0:heap) (n:dlist t) : GTot Type0 =
   not_aliased n.flink n.blink
@@ -62,11 +45,6 @@ let dlist_is_valid' (#t:Type) (h0:heap) (n:dlist t) : GTot Type0 =
 let dlist_is_valid (#t:Type) (h0:heap) (n:gpointer (dlist t)) : GTot Type0 =
   h0 `contains` n /\
   dlist_is_valid' h0 (n@h0)
-
-let (==$) (#t:Type) (a:gpointer_or_null t) (b:gpointer t) =
-  is_not_null a /\
-  (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
-   g_ptr_eq (non_null a) b)
 
 logic
 let ( |> ) (#t:Type) (a:dlist t) (b:gpointer (dlist t)) : GTot Type0 =
