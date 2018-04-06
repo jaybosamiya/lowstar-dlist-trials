@@ -11,9 +11,9 @@ unopteq
 (** Node of a doubly linked list *)
 type dlist (t:Type0) = {
   (* forward link *)
-  flink: option (ref (dlist t));
+  flink: gpointer_or_null (dlist t);
   (* backward link *)
-  blink: option (ref (dlist t));
+  blink: gpointer_or_null (dlist t);
   (* payload *)
   p: t;
 }
@@ -21,9 +21,9 @@ type dlist (t:Type0) = {
 unopteq
 (** Doubly linked list head *)
 type dlisthead (t:Type0) ={
-  lhead: option (ref (dlist t));
-  ltail: option (ref (dlist t));
-  nodes: erased (seq (ref (dlist t)));
+  lhead: gpointer_or_null (dlist t);
+  ltail: gpointer_or_null (dlist t);
+  nodes: erased (seq (gpointer (dlist t)));
 }
 
 (** Initialize an element of a doubly linked list *)
@@ -39,26 +39,26 @@ let empty_list #t =
 val getSome: (a:option 'a{isSome a}) -> (b:'a{a == Some b})
 let getSome a = Some?.v a
 
-unfold let (@) (a:ref 't) (h0:heap{h0 `contains` a}) = sel h0 a
-unfold let (^@) (a:option (ref 't){isSome a}) (h0:heap{h0 `contains` (getSome a)}) = (getSome a) @ h0
+unfold let (@) (a:gpointer 't) (h0:heap{h0 `contains` a}) = sel h0 a
+unfold let (^@) (a:gpointer_or_null 't{isSome a}) (h0:heap{h0 `contains` (getSome a)}) = (getSome a) @ h0
 
 unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
-let not_aliased (#t:Type) (a:option (ref t)) (b:option (ref t)) : GTot Type0 =
+let not_aliased (#t:Type) (a:gpointer_or_null t) (b:gpointer_or_null t) : GTot Type0 =
   isNone a \/ isNone b \/
   (let (a:_{isSome a}) = a in // workaround for not using two phase type checker
    let (b:_{isSome b}) = b in
    disjoint (getSome a) (getSome b))
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
-let not_aliased0 (#t:Type) (a:ref t) (b:option (ref t)) : GTot Type0 =
+let not_aliased0 (#t:Type) (a:gpointer t) (b:gpointer_or_null t) : GTot Type0 =
   isNone b \/
   (let (b:_{isSome b}) = b in // workaround for not using two phase type checker
    disjoint a (getSome b))
 
 logic
-let not_aliased00 (#t:Type) (a:ref t) (b:ref t) : GTot Type0 =
+let not_aliased00 (#t:Type) (a:gpointer t) (b:gpointer t) : GTot Type0 =
   disjoint a b
 
 logic
@@ -66,25 +66,25 @@ let dlist_is_valid' (#t:Type) (h0:heap) (n:dlist t) : GTot Type0 =
   not_aliased n.flink n.blink
 
 // logic
-let dlist_is_valid (#t:Type) (h0:heap) (n:ref (dlist t)) : GTot Type0 =
+let dlist_is_valid (#t:Type) (h0:heap) (n:gpointer (dlist t)) : GTot Type0 =
   h0 `contains` n /\
   dlist_is_valid' h0 (n@h0)
 
-let (==$) (#t:Type) (a:option (ref t)) (b:ref t) =
+let (==$) (#t:Type) (a:gpointer_or_null t) (b:gpointer t) =
   isSome a /\
   (let (a:_{isSome a}) = a in // workaround for not using two phase type checker
    g_ptr_eq (getSome a) b)
 
 logic
-let ( |> ) (#t:Type) (a:dlist t) (b:ref (dlist t)) : GTot Type0 =
+let ( |> ) (#t:Type) (a:dlist t) (b:gpointer (dlist t)) : GTot Type0 =
   a.flink ==$ b
 
 logic
-let ( <| ) (#t:Type) (a:ref (dlist t)) (b: dlist t) : GTot Type0 =
+let ( <| ) (#t:Type) (a:gpointer (dlist t)) (b: dlist t) : GTot Type0 =
   b.blink ==$ a
 
 irreducible
-let ( =|> ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
+let ( =|> ) (#t:Type) (a:gpointer (dlist t)) (b:gpointer (dlist t)) : ST unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
          not_aliased00 a b /\
@@ -99,7 +99,7 @@ let ( =|> ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
   a := { !a with flink = Some b }
 
 irreducible
-let ( <|= ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
+let ( <|= ) (#t:Type) (a:gpointer (dlist t)) (b:gpointer (dlist t)) : ST unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
          not_aliased00 a b /\
@@ -114,7 +114,7 @@ let ( <|= ) (#t:Type) (a:ref (dlist t)) (b:ref (dlist t)) : ST unit
   b := { !b with blink = Some a }
 
 irreducible
-let ( !=|> ) (#t:Type) (a:ref (dlist t)) : ST unit
+let ( !=|> ) (#t:Type) (a:gpointer (dlist t)) : ST unit
     (requires (fun h0 -> h0 `contains` a))
     (ensures (fun h1 _ h2 ->
          modifies (only a) h1 h2 /\
@@ -125,7 +125,7 @@ let ( !=|> ) (#t:Type) (a:ref (dlist t)) : ST unit
   a := { !a with flink = None }
 
 irreducible
-let ( !<|= ) (#t:Type) (a:ref (dlist t)) : ST unit
+let ( !<|= ) (#t:Type) (a:gpointer (dlist t)) : ST unit
     (requires (fun h0 -> h0 `contains` a))
     (ensures (fun h1 _ h2 ->
          modifies (only a) h1 h2 /\
@@ -267,7 +267,7 @@ let lemma_all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : Lemma
 
 let test1 () : Tot unit = assert (forall h0 t. dlisthead_is_valid h0 (empty_list #t))
 
-val singletonlist: #t:eqtype -> e:ref (dlist t) ->
+val singletonlist: #t:eqtype -> e:gpointer (dlist t) ->
   ST (dlisthead t)
   (requires (fun h0 -> h0 `contains` e))
   (ensures (fun h0 y h1 -> modifies (only e) h0 h1 /\ dlisthead_is_valid h1 y))
@@ -276,18 +276,18 @@ let singletonlist #t e =
   { lhead = Some e ; ltail = Some e ; nodes = ~. e }
 
 // logic
-let contains_by_addr (#t:Type) (s:seq (ref t)) (x:ref t) : GTot Type0 =
+let contains_by_addr (#t:Type) (s:seq (gpointer t)) (x:gpointer t) : GTot Type0 =
   (exists i. g_ptr_eq s.[i] x)
 
 logic
-let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:ref (dlist t)) : GTot Type0 =
+let member_of (#t:eqtype) (h0:heap) (h:dlisthead t) (e:gpointer (dlist t)) : GTot Type0 =
   let nodes = reveal h.nodes in
   nodes `contains_by_addr` e
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let has_nothing_in (#t:eqtype) (h0:heap)
     (h:dlisthead t{dlisthead_is_valid h0 h})
-    (e:ref (dlist t){h0 `contains` e})
+    (e:gpointer (dlist t){h0 `contains` e})
   : GTot Type0 =
   (~(member_of h0 h e)) /\
   (not_aliased0 e h.lhead) /\
@@ -347,11 +347,11 @@ let ghost_append_properties #t a b = ()
 
 #set-options "--z3rlimit 100 --z3refresh"
 
-val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t) ->
+val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 -> modifies (e ^+^ (getSome h.lhead)) h1 h2 /\ dlisthead_is_valid h2 y))
-let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t)) =
+let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlist t)) =
   let Some n = h.lhead in
   !<|= e;
   e =|> n;
@@ -360,7 +360,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:ref (dlist t))
 
 #reset-options
 
-val insertHeadList : #t:eqtype -> h:dlisthead t -> e:ref (dlist t) ->
+val insertHeadList : #t:eqtype -> h:dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 ->
@@ -376,7 +376,7 @@ let insertHeadList #t h e =
 
 #set-options "--z3rlimit 100 --z3refresh"
 
-val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t) ->
+val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 -> modifies (e ^+^ (getSome h.ltail)) h1 h2 /\ dlisthead_is_valid h2 y))
@@ -390,7 +390,7 @@ let dlisthead_update_tail #t h e =
 
 #reset-options
 
-val insertTailList : #t:eqtype -> h:dlisthead t -> e:ref (dlist t) ->
+val insertTailList : #t:eqtype -> h:dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 ->
@@ -503,7 +503,7 @@ let dlisthead_remove_tail #t h =
 
 #reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
-val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:ref (dlist t) ->
+val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\
                          member_of h0 h e /\
