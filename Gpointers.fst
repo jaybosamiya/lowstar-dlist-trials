@@ -117,3 +117,7 @@ let not_aliased0 (#t:Type) (a:gpointer t) (b:gpointer_or_null t) : GTot Type0 =
 logic
 let not_aliased00 (#t:Type) (a:gpointer t) (b:gpointer t) : GTot Type0 =
   disjoint a b
+
+let modifies_1 = B.modifies_1
+let modifies_2 = B.modifies_2
+let modifies_3 = B.modifies_3
