@@ -49,7 +49,7 @@ assume val ptr_eq:
     (requires (fun h -> B.live h p /\ B.live h q))
     (ensures (fun h0 b h1 -> h0==h1 /\ (b <==> (g_ptr_eq p q))))
 
-let disjoint (#t:Type) (a b: gpointer t) = B.disjoint a b
+let disjoint (#t:Type) (a b: gpointer t) = B.as_addr a <> B.as_addr b
 
 unfold let is_null (p:gpointer_or_null 't) = CN.is_null p
 unfold let is_not_null (p:gpointer_or_null 't) = not (CN.is_null p)
