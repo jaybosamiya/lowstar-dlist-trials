@@ -289,7 +289,7 @@ let g_is_singleton (#t:Type) (h:nonempty_dlisthead t) : GTot Type0 =
   g_ptr_eq (non_null h.lhead) (non_null h.ltail)
 
 let is_singleton (#t:Type) (h:nonempty_dlisthead t) :
-  ST.ST bool
+  ST bool
     (requires (fun h0 -> h0 `contains` (non_null h.lhead) /\ h0 `contains` (non_null h.ltail)))
     (ensures (fun h0 b h1 -> h0==h1 /\ (b <==> g_is_singleton h))) =
   ptr_eq (non_null h.lhead) (non_null h.ltail)
