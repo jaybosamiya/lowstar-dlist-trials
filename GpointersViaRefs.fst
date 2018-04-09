@@ -96,3 +96,10 @@ let not_aliased0 (#t:Type) (a:gpointer t) (b:gpointer_or_null t) : GTot Type0 =
 logic
 let not_aliased00 (#t:Type) (a:gpointer t) (b:gpointer t) : GTot Type0 =
   disjoint a b
+
+let modifies_1 (#t:Type) (a:gpointer t) (h0 h1:heap) =
+  modifies (only a) h0 h1
+
+let modifies_2 (#t:Type) (a b:gpointer t) (h0 h1:heap) = modifies (a ^+^ b) h0 h1
+
+let modifies_3 (#t:Type) (a b c:gpointer t) (h0 h1:heap) = modifies (a ^++ b ^+^ c) h0 h1
