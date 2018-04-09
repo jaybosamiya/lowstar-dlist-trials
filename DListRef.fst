@@ -61,7 +61,7 @@ let ( =|> ) (#t:Type) (a:gpointer (dlist t)) (b:gpointer (dlist t)) : ST unit
          not_aliased00 a b /\
          not_aliased0 b (a@h0).blink))
     (ensures (fun h1 _ h2 ->
-         modifies (only a) h1 h2 /\
+         modifies_1 a h1 h2 /\
          dlist_is_valid h2 a /\
          (a@h1).p == (a@h2).p /\
          (a@h1).blink == (a@h2).blink /\
@@ -76,7 +76,7 @@ let ( <|= ) (#t:Type) (a:gpointer (dlist t)) (b:gpointer (dlist t)) : ST unit
          not_aliased00 a b /\
          not_aliased0 a (b@h0).flink))
     (ensures (fun h1 _ h2 ->
-         modifies (only b) h1 h2 /\
+         modifies_1 b h1 h2 /\
          dlist_is_valid h2 b /\
          a@h1 == a@h2 /\
          (b@h1).p == (b@h2).p /\
@@ -88,7 +88,7 @@ irreducible
 let ( !=|> ) (#t:Type) (a:gpointer (dlist t)) : ST unit
     (requires (fun h0 -> h0 `contains` a))
     (ensures (fun h1 _ h2 ->
-         modifies (only a) h1 h2 /\
+         modifies_1 a h1 h2 /\
          dlist_is_valid h2 a /\
          (a@h1).p == (a@h2).p /\
          (a@h1).blink == (a@h2).blink /\
@@ -99,7 +99,7 @@ irreducible
 let ( !<|= ) (#t:Type) (a:gpointer (dlist t)) : ST unit
     (requires (fun h0 -> h0 `contains` a))
     (ensures (fun h1 _ h2 ->
-         modifies (only a) h1 h2 /\
+         modifies_1 a h1 h2 /\
          dlist_is_valid h2 a /\
          (a@h1).p == (a@h2).p /\
          (a@h1).flink == (a@h2).flink /\
@@ -241,7 +241,7 @@ let test1 () : Tot unit = assert (forall h0 t. dlisthead_is_valid h0 (empty_list
 val singletonlist: #t:eqtype -> e:gpointer (dlist t) ->
   ST (dlisthead t)
   (requires (fun h0 -> h0 `contains` e))
-  (ensures (fun h0 y h1 -> modifies (only e) h0 h1 /\ dlisthead_is_valid h1 y))
+  (ensures (fun h0 y h1 -> modifies_1 e h0 h1 /\ dlisthead_is_valid h1 y))
 let singletonlist #t e =
   !<|= e; !=|> e;
   { lhead = of_non_null e ; ltail = of_non_null e ; nodes = ~. e }
@@ -321,7 +321,7 @@ let ghost_append_properties #t a b = ()
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
-    (ensures (fun h1 y h2 -> modifies (e ^+^ (non_null h.lhead)) h1 h2 /\ dlisthead_is_valid h2 y))
+    (ensures (fun h1 y h2 -> modifies_2 e (non_null h.lhead) h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlist t)) =
   let n = non_null h.lhead in
   !<|= e;
@@ -336,9 +336,9 @@ val insertHeadList : #t:eqtype -> h:dlisthead t -> e:gpointer (dlist t) ->
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 ->
          (is_not_null h.lhead ==>
-          modifies (e ^+^ (non_null h.lhead)) h1 h2) /\
+          modifies_2 e (non_null h.lhead) h1 h2) /\
          (~(is_not_null h.lhead) ==>
-          modifies (only e) h1 h2) /\
+          modifies_1 e h1 h2) /\
          dlisthead_is_valid h2 y))
 let insertHeadList #t h e =
   if is_not_null h.lhead
@@ -350,7 +350,7 @@ let insertHeadList #t h e =
 val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
-    (ensures (fun h1 y h2 -> modifies (e ^+^ (non_null h.ltail)) h1 h2 /\ dlisthead_is_valid h2 y))
+    (ensures (fun h1 y h2 -> modifies_2 e (non_null h.ltail) h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_update_tail #t h e =
   let previously_singleton = is_singleton h in
   let n = non_null h.ltail in
@@ -366,9 +366,9 @@ val insertTailList : #t:eqtype -> h:dlisthead t -> e:gpointer (dlist t) ->
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 ->
          (is_not_null h.ltail ==>
-          modifies (e ^+^ (non_null h.ltail)) h1 h2) /\
+          modifies_2 e (non_null h.ltail) h1 h2) /\
          (~(is_not_null h.lhead) ==>
-          modifies (only e) h1 h2) /\
+          modifies_1 e h1 h2) /\
          dlisthead_is_valid h2 y))
 let insertTailList #t h e =
   if is_not_null h.ltail
@@ -385,9 +385,9 @@ val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
     (requires (fun h0 -> dlisthead_is_valid h0 h))
     (ensures (fun h1 y h2 ->
          (g_is_singleton h ==>
-          modifies (only (non_null h.lhead)) h1 h2) /\
+          modifies_1 (non_null h.lhead) h1 h2) /\
          (~(g_is_singleton h) ==>
-          modifies ((non_null h.lhead) ^+^ (reveal h.nodes).[1]) h1 h2) /\
+          modifies_2 (non_null h.lhead) (reveal h.nodes).[1] h1 h2) /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_head #t h =
   let n = non_null h.lhead in
@@ -417,10 +417,10 @@ val dlisthead_remove_tail: #t:eqtype -> h:nonempty_dlisthead t ->
     (requires (fun h0 -> dlisthead_is_valid h0 h))
     (ensures (fun h1 y h2 ->
          (g_is_singleton h ==>
-          modifies (only (non_null h.ltail)) h1 h2) /\
+          modifies_1 (non_null h.ltail) h1 h2) /\
          (~(g_is_singleton h) ==>
           (let nodes = reveal h.nodes in
-          modifies ((non_null h.ltail) ^+^ nodes.[length nodes - 2]) h1 h2)) /\
+          modifies_2 (non_null h.ltail) nodes.[length nodes - 2] h1 h2)) /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_tail #t h =
   if is_singleton h then (
@@ -483,7 +483,7 @@ val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:gpoi
          is_not_null (e@h1).flink /\ is_not_null (e@h1).blink /\
          dlist_is_valid h2 e /\
          is_null (e@h2).flink /\ is_null (e@h2).blink /\
-         modifies (e ^++ (non_null (e@h1).flink) ^+^ (non_null (e@h1).blink)) h1 h2 /\
+         modifies_3 e (non_null (e@h1).flink) (non_null (e@h1).blink) h1 h2 /\
          dlisthead_is_valid h2 y))
 let dlisthead_remove_strictly_mid #t h e =
   let h1 = ST.get () in
