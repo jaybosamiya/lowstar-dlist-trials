@@ -51,8 +51,8 @@ assume val ptr_eq:
 
 let disjoint (#t:Type) (a b: gpointer t) = B.disjoint a b
 
-unfold let is_null (p:gpointer_or_null 't) = B.length p = 0
-unfold let is_not_null (p:gpointer_or_null 't) = B.length p <> 0
+unfold let is_null (p:gpointer_or_null 't) = CN.is_null p
+unfold let is_not_null (p:gpointer_or_null 't) = not (CN.is_null p)
 
 assume val null : #t:Type -> gnull t
 
