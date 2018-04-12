@@ -505,14 +505,8 @@ let dlisthead_remove_strictly_mid #t h e =
   let nodes = elift2_p remove_element h.nodes (Ghost.hide e) in
   let y = { lhead = h.lhead ; ltail = h.ltail ; nodes = nodes } in
   let h2 = ST.get () in
-  assert (all_nodes_contained h2 y);
-  assert (dlisthead_ghostly_connections h2 y);
   assume (flink_valid h2 y);
   assume (blink_valid h2 y);
-  assert (elements_are_valid h2 y);
-  assert (elements_dont_alias1 h2 y);
-  assert (elements_dont_alias2 h2 y);
-  assert (all_elements_distinct h2 y);
   y
 
 /// Useful code that can be copied over below
