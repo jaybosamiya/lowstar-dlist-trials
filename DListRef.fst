@@ -489,11 +489,8 @@ val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:gpoi
     (ensures (fun h1 y h2 ->
          is_not_null (e@h1).flink /\ is_not_null (e@h1).blink /\
          dlist_is_valid h2 e /\
-         is_null (e@h2).flink /\ is_null (e@h2).blink /\
-         modifies_3 e (non_null (e@h1).flink) (non_null (e@h1).blink) h1 h2 /\
-         // dlisthead_is_valid h2 y /\ // Temporarily commented out: TODO Fix this
-         True
-         ))
+         modifies_2 (non_null (e@h1).flink) (non_null (e@h1).blink) h1 h2 /\
+         dlisthead_is_valid h2 y))
 let dlisthead_remove_strictly_mid #t h e =
   let h1 = ST.get () in
   let prev = non_null (!e).blink in
@@ -502,8 +499,6 @@ let dlisthead_remove_strictly_mid #t h e =
                                              //     and [next] are not same
   recall prev;
   recall next;
-  !<|= e;
-  !=|> e;
   prev =|> next;
   prev <|= next;
   let nodes = elift2_p remove_element h.nodes (Ghost.hide e) in
