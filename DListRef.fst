@@ -437,40 +437,47 @@ let dlisthead_remove_tail #t h =
 
 #reset-options
 
-// let rec get_ref_index (#t:Type) (s:seq (ref t)) (x:ref t{s `contains_by_addr` x}) :
-//   GTot (i:nat{i < Seq.length s})
-//     (decreases (Seq.length s)) =
-//   contains_elim s x;
-//   let h, t = Seq.head s, Seq.tail s in
-//   if compare_addrs h x then 0 else (
-//     contains_cons h t x;
-//     1 + get_ref_index t x)
+// TODO: See if possible to do without the StrongExcludedMiddle
+let rec get_ref_index (#t:Type) (s:seq (gpointer t)) (x:ref t{s `contains_by_addr` x}) :
+  GTot (i:nat{i < Seq.length s})
+    (decreases (Seq.length s)) =
+  let l = seq_to_list s in
+  contains_elim s x;
+  let h, t = Seq.head s, Seq.tail s in
+  if FStar.StrongExcludedMiddle.strong_excluded_middle (g_ptr_eq h x) then 0 else (
+    contains_cons h t x;
+    1 + get_ref_index t x)
 
-// val lemma_get_ref_index : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_addr` x} ->
-//   Lemma (ensures (
-//     g_ptr_eq s.[get_ref_index s x] x))
-//     (decreases (Seq.length s))
-//     [SMTPat (g_ptr_eq s.[get_ref_index s x] x)]
-// let rec lemma_get_ref_index #t s x =
-//   contains_elim s x;
-//   let h, t = Seq.head s, Seq.tail s in
-//   if compare_addrs h x then () else (
-//     contains_cons h t x;
-//     lemma_get_ref_index t x)
+val lemma_get_ref_index : #t:Type -> s:seq (gpointer t) -> x:ref t{s `contains_by_addr` x} ->
+  Lemma (ensures (
+    g_ptr_eq s.[get_ref_index s x] x))
+    (decreases (Seq.length s))
+    [SMTPat (g_ptr_eq s.[get_ref_index s x] x)]
+let rec lemma_get_ref_index #t s x =
+  contains_elim s x;
+  let h, t = Seq.head s, Seq.tail s in
+  if FStar.StrongExcludedMiddle.strong_excluded_middle (g_ptr_eq h x) then () else (
+    contains_cons h t x;
+    lemma_get_ref_index t x)
 
-// val split_seq_at_element : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_addr` x} ->
-//   GTot (v:(seq (ref t) * nat * seq (ref t)){
-//       let l, i, r = v in
-//       indexable s i /\ (
-//       let (i:nat{i < length s}) = i in // workaround for two phase thing
-//       s == append l (cons s.[i] r) /\
-//       g_ptr_eq s.[i] x)
-//   })
-// let split_seq_at_element #t s x =
-//   let i = get_ref_index s x in
-//   let l, mr = Seq.split s i in
-//   lemma_split s i;
-//   l, i, tail mr
+val split_seq_at_element : #t:Type -> s:seq (gpointer t) -> x:ref t{s `contains_by_addr` x} ->
+  GTot (v:(seq (ref t) * nat * seq (ref t)){
+      let l, i, r = v in
+      indexable s i /\ (
+      let (i:nat{i < length s}) = i in // workaround for two phase thing
+      s == append l (cons s.[i] r) /\
+      g_ptr_eq s.[i] x)
+  })
+let split_seq_at_element #t s x =
+  let i = get_ref_index s x in
+  let l, mr = Seq.split s i in
+  lemma_split s i;
+  l, i, tail mr
+
+unfold let remove_element (#t:Type) (s:seq (gpointer t)) (x:ref t{s `contains_by_addr` x}) :
+  GTot (seq (gpointer t)) =
+  let l, i, r = split_seq_at_element s x in
+  Seq.append l r
 
 #reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
