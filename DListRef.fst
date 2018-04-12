@@ -467,12 +467,16 @@ val remove_element :
       (exists (idx:nat{idx < length s}).
           length r = length s - 1 /\
           g_ptr_eq s.[idx] x /\
-          (forall (i:nat{i < length s}). (* {:pattern TODO} *) (
-                    (i < idx ==> s.[i] == r.[i]) /\
-                    (i > idx ==> s.[i] == r.[i-1]))))})
+          (forall (i:nat{i < length r}). {:pattern (r.[i])} (
+               ((i < idx) ==> s.[i] == r.[i]) /\
+               ((i >= idx) ==> s.[i+1] == r.[i]))))})
     (decreases (length s))
 let rec remove_element #t s x =
-  dsnd (remove_element_aux s x)
+  let (| idx, r |) = remove_element_aux s x in
+  assert (
+    forall (i:nat{i < length s}). (
+      ((i > idx) ==> s.[i] == r.[i-1]))); // OBSERVE
+  r
 
 #reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
 
