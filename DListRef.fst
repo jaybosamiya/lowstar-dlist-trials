@@ -445,7 +445,8 @@ val remove_element_aux :
   GTot (idx:nat{idx < length s} & r:seq (gpointer t){
       length r = length s - 1 /\
       g_ptr_eq s.[idx] x /\
-      (forall (i:nat{i < length s}). (* {:pattern TODO} *) (
+      (forall (i:nat{i < length s}).
+         {:pattern (s.[i]); (r.[i]) \/ (s.[i]); (r.[i-1]) \/ (s.[i+1]); (r.[i])} (
                 (i < idx ==> s.[i] == r.[i]) /\
                 (i > idx ==> s.[i] == r.[i-1])))})
     (decreases (length s))
