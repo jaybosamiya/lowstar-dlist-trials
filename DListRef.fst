@@ -458,6 +458,8 @@ let rec remove_element_aux #t s x =
     let (|idx, r|) = remove_element_aux t x in
     (|idx + 1, Seq.cons h r |))
 
+#set-options "--z3rlimit 30 --z3refresh"
+
 irreducible
 val remove_element :
   #t:Type ->
@@ -478,7 +480,7 @@ let rec remove_element #t s x =
       ((i > idx) ==> s.[i] == r.[i-1]))); // OBSERVE
   r
 
-#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 20"
+#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 50"
 
 val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
