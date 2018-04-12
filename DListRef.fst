@@ -507,10 +507,10 @@ let dlisthead_remove_strictly_mid #t h e =
   assert (dlisthead_ghostly_connections h2 y);
   assume (flink_valid h2 y);
   assume (blink_valid h2 y);
-  assume (elements_are_valid h2 y);
-  assume (elements_dont_alias1 h2 y);
-  assume (elements_dont_alias2 h2 y);
-  assume (all_elements_distinct h2 y);
+  assert (elements_are_valid h2 y);
+  assert (elements_dont_alias1 h2 y);
+  assert (elements_dont_alias2 h2 y);
+  assert (all_elements_distinct h2 y);
   y
 
 /// Useful code that can be copied over below
