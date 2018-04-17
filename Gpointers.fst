@@ -4,6 +4,7 @@ module HS = FStar.HyperStack
 module ST = FStar.HyperStack.ST
 module B = FStar.Buffer
 module CN = C.Nullity
+module Mod = FStar.Modifies
 
 assume val gpointer_frame : (f:Monotonic.HyperHeap.rid{ST.is_eternal_region f})
 
@@ -118,6 +119,15 @@ logic
 let not_aliased00 (#t:Type) (a:gpointer t) (b:gpointer t) : GTot Type0 =
   disjoint a b
 
-let modifies_1 = B.modifies_1
-let modifies_2 = B.modifies_2
-let modifies_3 = B.modifies_3
+let modifies_1 (a:gpointer 'a) h0 h1 =
+  Mod.modifies (Mod.loc_buffer a) h0 h1
+let modifies_2 (a:gpointer 'a) (b:gpointer 'b) h0 h1 =
+  Mod.modifies (Mod.loc_union
+                  (Mod.loc_buffer a)
+                  (Mod.loc_buffer b)) h0 h1
+let modifies_3 (a:gpointer 'a) (b:gpointer 'b) (c:gpointer 'c) h0 h1 =
+  Mod.modifies (Mod.loc_union
+                  (Modifies.loc_union
+                     (Mod.loc_buffer a)
+                     (Mod.loc_buffer b))
+                  (Mod.loc_buffer c)) h0 h1
