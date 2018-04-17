@@ -437,50 +437,31 @@ let dlisthead_remove_tail #t h =
 
 #reset-options
 
-// TODO: See if possible to do without the StrongExcludedMiddle
-val remove_element_aux :
-  #t:Type ->
-  s:seq (gpointer t) ->
-  x:ref t{s `contains_by_addr` x} ->
-  GTot (idx:nat{idx < length s} & r:seq (gpointer t){
-      length r = length s - 1 /\
-      g_ptr_eq s.[idx] x /\
-      (forall (i:nat{i < length s}).
-         {:pattern (s.[i]); (r.[i]) \/ (s.[i]); (r.[i-1]) \/ (s.[i+1]); (r.[i])} (
-                (i < idx ==> s.[i] == r.[i]) /\
-                (i > idx ==> s.[i] == r.[i-1])))})
-    (decreases (length s))
-let rec remove_element_aux #t s x =
-  contains_elim s x;
-  let h, t = Seq.head s, Seq.tail s in
-  if StrongExcludedMiddle.strong_excluded_middle (g_ptr_eq h x) then (|0, t|) else (
-    contains_cons h t x;
-    let (|idx, r|) = remove_element_aux t x in
-    (|idx + 1, Seq.cons h r |))
-
 #set-options "--z3rlimit 30 --z3refresh"
 
+// TODO: See if possible to do without the StrongExcludedMiddle
 irreducible
 val remove_element :
   #t:Type ->
   s:seq (gpointer t) ->
   x:ref t{s `contains_by_addr` x} ->
-  GTot (r:seq (gpointer t){
-      (exists (idx:nat{idx < length s}).
-          length r = length s - 1 /\
-          g_ptr_eq s.[idx] x /\
-          (forall (i:nat{i < length r}). {:pattern (r.[i])} (
-               ((i < idx) ==> s.[i] == r.[i]) /\
-               ((i >= idx) ==> s.[i+1] == r.[i]))))})
+  GTot (res:(nat * seq (gpointer t)){
+      let idx, r = res in
+      (idx < length s) /\
+      (length r = length s - 1) /\
+      (g_ptr_eq s.[idx] x) /\
+      (forall (i:nat{i < length r}). {:pattern (r.[i])} (
+          ((i < idx) ==> s.[i] == r.[i]) /\
+          ((i >= idx) ==> s.[i+1] == r.[i])))})
     (decreases (length s))
 let rec remove_element #t s x =
-  let (| idx, r |) = remove_element_aux s x in
-  assert (
-    forall (i:nat{i < length s}). (
-      ((i > idx) ==> s.[i] == r.[i-1]))); // OBSERVE
-  r
+  contains_elim s x;
+  let h, t = Seq.head s, Seq.tail s in
+  if StrongExcludedMiddle.strong_excluded_middle (g_ptr_eq h x) then 0, t else (
+    contains_cons h t x;
+    let idx, r = remove_element t x in
+    idx + 1, Seq.cons h r)
 
-#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 50"
 
 val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
