@@ -462,6 +462,39 @@ let rec remove_element #t s x =
     let idx, r = remove_element t x in
     idx + 1, Seq.cons h r)
 
+// See https://github.com/FStarLang/FStar/pull/1428
+// Most probably this assumption will become part of ulib
+assume
+val elift2_pq : #a:Type
+              -> #c:Type
+              -> #p: (a -> c -> Type)
+              -> #b:Type
+              -> #q: (xa:a -> xc:c{p xa xc} -> b -> Type)
+              -> $f:(xa:a -> xc:c{p xa xc} -> GTot (y:b{q xa xc y}))
+              -> ra:erased a
+              -> rc:erased c{p (reveal ra) (reveal rc)}
+              -> Tot (x:erased b{reveal x == f (reveal ra) (reveal rc)})
+
+// // Needed if we don't get elift2_pq in
+// let remove_element (#t:Type) (s:seq (gpointer t)) (x:ref t{s `contains_by_addr` x})
+//   : GTot (idx:nat * r:seq (gpointer t)) = remove_element_aux s x
+// val remove_element_lemma:
+//   #t:Type ->
+//   s:seq (gpointer t) ->
+//   x:ref t{s `contains_by_addr` x} ->
+//   Lemma (
+//     let res = remove_element s x in
+//     let idx, r = res in
+//     (idx < length s) /\
+//     (length r = length s - 1) /\
+//     (g_ptr_eq s.[idx] x) /\
+//     (forall (i:nat{i < length r}). {:pattern (r.[i])} (
+//         ((i < idx) ==> s.[i] == r.[i]) /\
+//         ((i >= idx) ==> s.[i+1] == r.[i]))))
+//         [SMTPat (remove_element s x)]
+// let remove_element_lemma #t s x = ()
+
+#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 100"
 
 val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
@@ -483,7 +516,8 @@ let dlisthead_remove_strictly_mid #t h e =
   recall next;
   prev =|> next;
   prev <|= next;
-  let nodes = elift2_p remove_element h.nodes (Ghost.hide e) in
+  let nodes' = elift2_pq remove_element h.nodes (Ghost.hide e) in
+  let idx, nodes = elift1 fst nodes', elift1 snd nodes' in
   let y = { lhead = h.lhead ; ltail = h.ltail ; nodes = nodes } in
   let h2 = ST.get () in
   assume (flink_valid h2 y);
