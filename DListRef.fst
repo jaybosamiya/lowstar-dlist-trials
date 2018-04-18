@@ -316,7 +316,7 @@ val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
            j = i + 1 /\ 0 <= i /\ i < length (reveal b) ==> (reveal b).[i] == (reveal r).[j])
 let ghost_append_properties #t a b = ()
 
-#set-options "--z3rlimit 100 --z3refresh"
+#set-options "--z3rlimit 100 --z3refresh --max_fuel 0 --max_ifuel 0"
 
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
@@ -345,7 +345,7 @@ let insertHeadList #t h e =
   then dlisthead_update_head h e
   else singletonlist e
 
-#set-options "--z3rlimit 100 --z3refresh"
+#set-options "--z3rlimit 100 --z3refresh --max_fuel 0 --max_ifuel 0"
 
 val dlisthead_update_tail: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
@@ -378,7 +378,7 @@ let insertTailList #t h e =
 unfold let ghost_tail (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
   hide (Seq.tail (reveal s))
 
-#set-options "--z3rlimit 100"
+#set-options "--z3rlimit 100 --z3refresh --max_fuel 0 --max_ifuel 0"
 
 val dlisthead_remove_head: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
@@ -410,7 +410,7 @@ unfold let ghost_unsnoc (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) 
   let l = length x - 1 in
   hide (slice x 0 l)
 
-#set-options "--z3rlimit 50"
+#set-options "--z3rlimit 50 --z3refresh --max_fuel 0 --max_ifuel 0"
 
 val dlisthead_remove_tail: #t:eqtype -> h:nonempty_dlisthead t ->
   ST (dlisthead t)
@@ -494,7 +494,7 @@ val elift2_pq : #a:Type
 //         [SMTPat (remove_element s x)]
 // let remove_element_lemma #t s x = ()
 
-#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 100"
+#reset-options "--z3rlimit 1 --detail_errors --z3rlimit_factor 100 --max_fuel 0 --max_ifuel 0"
 
 val dlisthead_remove_strictly_mid: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
