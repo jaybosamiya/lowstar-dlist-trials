@@ -316,18 +316,28 @@ val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
            j = i + 1 /\ 0 <= i /\ i < length (reveal b) ==> (reveal b).[i] == (reveal r).[j])
 let ghost_append_properties #t a b = ()
 
-#set-options "--z3rlimit 100 --z3refresh"
+#set-options "--z3rlimit 100000 --z3refresh"
 
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 -> modifies_2 e (non_null h.lhead) h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlist t)) =
+  let h1 = HyperStack.ST.get () in
   let n = non_null h.lhead in
   !<|= e;
   e =|> n;
   e <|= n;
-  { lhead = of_non_null e ; ltail = h.ltail ; nodes = e ^+ h.nodes }
+  let y = { lhead = of_non_null e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
+  let h2 = HyperStack.ST.get () in
+  // assert (
+  //   let ynodes = reveal y.nodes in
+  //   let hnodes = reveal h.nodes in
+  //   (forall (i:nat{2 <= i /\ i < Seq.length ynodes /\ i-1 < Seq.length hnodes}).
+  //             {:pattern (ynodes.[i]@h2)}
+  //      h2 `contains` ynodes.[i] /\
+  //      ynodes.[i]@h2 == hnodes.[i-1]@h1)); // OBSERVE
+  y
 
 #reset-options
 
