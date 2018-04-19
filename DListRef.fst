@@ -183,9 +183,7 @@ let all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
     let nodes = reveal h.nodes in
     (forall i j. {:pattern (disjoint nodes.[i] nodes.[j])}
        (0 <= i /\ i < j /\ j < Seq.length nodes) ==>
-       (let (i:nat{i < Seq.length nodes}) = i in // workaround for not using two phase type checker
-        let (j:nat{j < Seq.length nodes}) = j in
-        disjoint nodes.[i] nodes.[j]))
+       (disjoint nodes.[i] nodes.[j]))
 
 unfold logic
 let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -206,8 +204,6 @@ let rec two_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) (i j:int) : Le
             elements_are_valid h0 h)
   (ensures
      (let nodes = reveal h.nodes in
-      let (i:nat{i < Seq.length nodes}) = i in // workaround for not using two phase type checker
-      let (j:nat{j < Seq.length nodes}) = j in
       disjoint nodes.[i] nodes.[j])) =
   let nodes = reveal h.nodes in
   if 0 <= i && i < j && j < Seq.length nodes then (
@@ -228,9 +224,7 @@ let lemma_all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : Lemma
   let nodes = reveal h.nodes in
   let two_elements_distinct_helper (i j:int) : Lemma
     ((0 <= i /\ i < j /\ j < Seq.length nodes) ==>
-       (let (i:nat{i < Seq.length nodes}) = i in // workaround for not using two phase type checker
-        let (j:nat{j < Seq.length nodes}) = j in
-        disjoint nodes.[i] nodes.[j]))
+       (disjoint nodes.[i] nodes.[j]))
     =
     if 0 <= i && i < j && j < Seq.length nodes then (
       two_elements_distinct h0 h i j
