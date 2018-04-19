@@ -520,8 +520,28 @@ let dlisthead_remove_strictly_mid #t h e =
   let idx, nodes = elift1 fst nodes', elift1 snd nodes' in
   let y = { lhead = h.lhead ; ltail = h.ltail ; nodes = nodes } in
   let h2 = ST.get () in
+  // assert (
+  //   let ynodes = reveal y.nodes in
+  //   let hnodes = reveal h.nodes in
+  //   (forall (i:nat{0 <= i /\ i < reveal idx - 1}).
+  //      i < length ynodes /\
+  //      i < length hnodes /\
+  //      ynodes.[i]@h2 == hnodes.[i]@h1 /\
+  //      True
+  //      )); // OBSERVE
+  // assert (
+  //   let h0, h = h2, y in
+  //   let nodes = reveal h.nodes in
+  //   let len = length nodes in
+  //   let loc = reveal idx in
+  //   (forall i. {:pattern ((nodes.[i]@h0).flink)}
+  //      ((0 <= i /\ i < loc - 2) ==>
+  //       nodes.[i]@h0 |> nodes.[i+1])) /\
+  //   True
+  // );
   assume (flink_valid h2 y);
   assume (blink_valid h2 y);
+  // admit () //;
   y
 
 /// Useful code that can be copied over below
