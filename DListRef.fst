@@ -112,7 +112,7 @@ unfold let (~.) (#t:Type) (a:t) : Tot (erased (seq t)) = hide (Seq.create 1 a)
 unfold let (^+) (#t:Type) (a:t) (b:erased (seq t)) : Tot (erased (seq t)) = elift2 Seq.cons (hide a) b
 unfold let (+^) (#t:Type) (a:erased (seq t)) (b:t) : Tot (erased (seq t)) = elift2 Seq.snoc a (hide b)
 
-let trigger_all_nodes_contained #t (h0:heap) (h:dlisthead t) i = True
+let trigger_all_nodes_contained #t (h0:heap) (h:dlisthead t) (i:nat{i < length (reveal h.nodes)}) = True
 
 logic
 let all_nodes_contained (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -179,11 +179,13 @@ let elements_dont_alias (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   elements_dont_alias1 h0 h /\
   elements_dont_alias2 h0 h
 
+let trigger_elements_are_valid (#t:Type) (h0:heap) (h:dlisthead t) i = true
+
 logic
 let elements_are_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   all_nodes_contained h0 h /\
-  (forall i. {:pattern (nodes.[i])}
+  (forall i. {:pattern (trigger_elements_are_valid h0 h i)}
      dlist_is_valid h0 nodes.[i])
 
 logic
@@ -207,6 +209,7 @@ let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
 
 let rec two_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) (i j:int) : Lemma
   (requires (0 <= i /\ i < j /\ j < Seq.length (reveal h.nodes)) /\
+            elements_are_valid h0 h /\
             dlisthead_ghostly_connections h0 h /\
             blink_valid h0 h /\
             elements_are_valid h0 h)
@@ -218,7 +221,9 @@ let rec two_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) (i j:int) : Le
     let b = FStar.StrongExcludedMiddle.strong_excluded_middle (disjoint nodes.[i] nodes.[j]) in
     if not b then (
       if i = 0 then (
+        let (h0:_{trigger_all_nodes_contained h0 h i /\ h0 `contains` nodes.[i]}) = h0 in
         assert( is_null (nodes.[i]@h0).blink);
+        let (h0:_{trigger_all_nodes_contained h0 h j /\ h0 `contains` nodes.[j]}) = h0 in
         assert( is_not_null (nodes.[j]@h0).blink)
       ) else (
         two_elements_distinct h0 h (i - 1) (j - 1)
@@ -320,7 +325,7 @@ val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
            j = i + 1 /\ 0 <= i /\ i < length (reveal b) ==> (reveal b).[i] == (reveal r).[j])
 let ghost_append_properties #t a b = ()
 
-#set-options "--z3rlimit 100 --z3refresh --max_fuel 0 --max_ifuel 0"
+#set-options "--z3rlimit 100 --z3refresh --max_fuel 0 --max_ifuel 0 --detail_errors"
 
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
