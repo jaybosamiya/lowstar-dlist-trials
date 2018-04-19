@@ -112,12 +112,14 @@ unfold let (~.) (#t:Type) (a:t) : Tot (erased (seq t)) = hide (Seq.create 1 a)
 unfold let (^+) (#t:Type) (a:t) (b:erased (seq t)) : Tot (erased (seq t)) = elift2 Seq.cons (hide a) b
 unfold let (+^) (#t:Type) (a:erased (seq t)) (b:t) : Tot (erased (seq t)) = elift2 Seq.snoc a (hide b)
 
+let trigger_all_nodes_contained #t (h0:heap) (h:dlisthead t) i = True
+
 logic
 let all_nodes_contained (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   (is_not_null h.lhead ==> h0 `contains` (non_null h.lhead)) /\
   (is_not_null h.ltail ==> h0 `contains` (non_null h.ltail)) /\
-  (forall i. {:pattern (h0 `contains` nodes.[i])}
+  (forall i. {:pattern (trigger_all_nodes_contained h0 h i)}
      h0 `contains` nodes.[i])
 
 logic
@@ -127,7 +129,8 @@ let flink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i. {:pattern ((nodes.[i]@h0).flink)}
      ((0 <= i /\ i < len - 1) ==>
-      nodes.[i]@h0 |> nodes.[i+1]))
+      (let (h0:_{trigger_all_nodes_contained h0 h i /\ h0 `contains` nodes.[i]}) = h0 in
+       nodes.[i]@h0 |> nodes.[i+1])))
 
 logic
 let blink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -136,7 +139,8 @@ let blink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i. {:pattern ((nodes.[i]@h0).blink)}
      ((1 <= i /\ i < len) ==>
-      nodes.[i-1] <| nodes.[i]@h0))
+      (let (h0:_{trigger_all_nodes_contained h0 h i /\ h0 `contains` nodes.[i]}) = h0 in
+       nodes.[i-1] <| nodes.[i]@h0)))
 
 logic
 let dlisthead_ghostly_connections (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -155,8 +159,10 @@ let elements_dont_alias1 (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   all_nodes_contained h0 h /\
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)}
-     0 <= i /\ i < j /\ j < length nodes ==>
-   not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)
+     0 <= i /\ i < j /\ j < length nodes ==> (
+     let (h0:_{trigger_all_nodes_contained h0 h i /\ h0 `contains` nodes.[i]}) = h0 in
+     let (h0:_{trigger_all_nodes_contained h0 h j /\ h0 `contains` nodes.[j]}) = h0 in
+     not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink))
 
 logic
 let elements_dont_alias2 (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -164,7 +170,9 @@ let elements_dont_alias2 (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)}
      0 <= i /\ i < j /\ j < length nodes ==>
-   not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)
+   (let (h0:_{trigger_all_nodes_contained h0 h i /\ h0 `contains` nodes.[i]}) = h0 in
+    let (h0:_{trigger_all_nodes_contained h0 h j /\ h0 `contains` nodes.[j]}) = h0 in
+    not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink))
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let elements_dont_alias (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -323,7 +331,9 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlis
   !<|= e;
   e =|> n;
   e <|= n;
-  { lhead = of_non_null e ; ltail = h.ltail ; nodes = e ^+ h.nodes }
+  let y = { lhead = of_non_null e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
+  let h2 = ST.get () in assert (elements_dont_alias h2 y); // OBSERVE: Shouldn't need to observe this though; should be obvious
+  y
 
 #reset-options
 
@@ -550,5 +560,5 @@ let dlisthead_remove_strictly_mid #t h e =
     assert (elements_are_valid h2 y);
     assert (elements_dont_alias1 h2 y);
     assert (elements_dont_alias2 h2 y);
-    assert (all_elements_distinct h2 y);
+    // assert (all_elements_distinct h2 y);
 *)
