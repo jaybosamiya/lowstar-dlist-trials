@@ -122,6 +122,12 @@ let all_nodes_contained (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   (forall i. {:pattern (trigger_all_nodes_contained h0 h i)}
      h0 `contains` nodes.[i])
 
+let get_all_nodes_contained (#t:Type) (h0:heap) (h:dlisthead t) (i:nat{i < length (reveal h.nodes)}) :
+  Lemma
+    (requires all_nodes_contained h0 h)
+    (ensures h0 `contains` (reveal h.nodes).[i]) =
+  assert (trigger_all_nodes_contained h0 h i)
+
 logic
 let flink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
@@ -129,7 +135,7 @@ let flink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i. {:pattern ((nodes.[i]@h0).flink)}
      ((0 <= i /\ i < len - 1) ==>
-      (let (h0:_{trigger_all_nodes_contained h0 h i /\ h0 `contains` nodes.[i]}) = h0 in
+      (get_all_nodes_contained h0 h i;
        nodes.[i]@h0 |> nodes.[i+1])))
 
 logic
@@ -139,7 +145,7 @@ let blink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i. {:pattern ((nodes.[i]@h0).blink)}
      ((1 <= i /\ i < len) ==>
-      (let (h0:_{trigger_all_nodes_contained h0 h i /\ h0 `contains` nodes.[i]}) = h0 in
+      (get_all_nodes_contained h0 h i;
        nodes.[i-1] <| nodes.[i]@h0)))
 
 logic
@@ -160,8 +166,8 @@ let elements_dont_alias1 (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)}
      0 <= i /\ i < j /\ j < length nodes ==> (
-     let (h0:_{trigger_all_nodes_contained h0 h i /\ h0 `contains` nodes.[i]}) = h0 in
-     let (h0:_{trigger_all_nodes_contained h0 h j /\ h0 `contains` nodes.[j]}) = h0 in
+     get_all_nodes_contained h0 h i;
+     get_all_nodes_contained h0 h j;
      not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink))
 
 logic
@@ -170,8 +176,8 @@ let elements_dont_alias2 (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)}
      0 <= i /\ i < j /\ j < length nodes ==>
-   (let (h0:_{trigger_all_nodes_contained h0 h i /\ h0 `contains` nodes.[i]}) = h0 in
-    let (h0:_{trigger_all_nodes_contained h0 h j /\ h0 `contains` nodes.[j]}) = h0 in
+   (get_all_nodes_contained h0 h i;
+    get_all_nodes_contained h0 h j;
     not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink))
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
