@@ -337,42 +337,25 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlis
   e <|= n;
   let y = { lhead = of_non_null e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
   let h2 = ST.get () in
-  let all_contained (i:nat{i < Seq.length (reveal y.nodes)}) : Lemma (
-    let nodes = reveal y.nodes in
-    h2 `contains` nodes.[i]) =
+  let p1 (i:nat{i < Seq.length (reveal y.nodes)}) : Lemma (
+      let nodes = reveal y.nodes in
+      let len = Seq.length nodes in
+      h2 `contains` nodes.[i] /\
+      (i < len - 1 ==> nodes.[i]@h2 |> nodes.[i+1]) /\
+      (1 <= i ==> nodes.[i-1] <| nodes.[i]@h2) /\
+      dlist_is_valid h2 nodes.[i]
+  ) =
     (if i > 0 then () else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
-  FStar.Classical.forall_intro all_contained;
-  let flinks (i:nat{i < Seq.length (reveal y.nodes) - 1}) : Lemma (
-    let nodes = reveal y.nodes in
-    (nodes.[i]@h2 |> nodes.[i+1])) =
-    (if i > 0 then () else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
-  FStar.Classical.forall_intro flinks;
-  let blinks (i:nat{1 <= i /\ i < Seq.length (reveal y.nodes)}) : Lemma (
-    let nodes = reveal y.nodes in
-    nodes.[i-1] <| nodes.[i]@h2) =
-    (if i > 0 then () else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
-  FStar.Classical.forall_intro blinks;
-  let valid (i:nat{i < Seq.length (reveal y.nodes)}) : Lemma (
-    let nodes = reveal y.nodes in
-    dlist_is_valid h2 nodes.[i]) =
-    (if i > 0 then () else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
-  FStar.Classical.forall_intro valid;
-  let dont_alias1 (i:nat{i < Seq.length (reveal y.nodes)})
-                  (j:nat{j < Seq.length (reveal y.nodes)}) : Lemma (
+  FStar.Classical.forall_intro p1;
+  let p2 (i:nat{i < Seq.length (reveal y.nodes)})
+         (j:nat{j < Seq.length (reveal y.nodes)}) : Lemma (
       let nodes = reveal y.nodes in
       i < j ==>
-          not_aliased (nodes.[i]@h2).flink (nodes.[j]@h2).flink) =
+          (not_aliased (nodes.[i]@h2).flink (nodes.[j]@h2).flink /\
+           not_aliased (nodes.[i]@h2).blink (nodes.[j]@h2).blink)) =
     (if i > 0 then () else ());
     (if j > 0 then () else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
-  FStar.Classical.forall_intro_2 dont_alias1;
-  let dont_alias2 (i:nat{i < Seq.length (reveal y.nodes)})
-                  (j:nat{j < Seq.length (reveal y.nodes)}) : Lemma (
-      let nodes = reveal y.nodes in
-      i < j ==>
-          not_aliased (nodes.[i]@h2).blink (nodes.[j]@h2).blink) =
-    (if i > 0 then () else ());
-    (if j > 0 then () else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
-  FStar.Classical.forall_intro_2 dont_alias2;
+  FStar.Classical.forall_intro_2 p2;
   y
 
 #reset-options
