@@ -185,12 +185,20 @@ let elements_dont_alias (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   elements_dont_alias1 h0 h /\
   elements_dont_alias2 h0 h
 
+let trigger_elements_are_valid (#t:Type) (h0:heap) (h:dlisthead t) i = True
+
 logic
 let elements_are_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   all_nodes_contained h0 h /\
-  (forall i. {:pattern (nodes.[i])}
+  (forall i. {:pattern (trigger_elements_are_valid h0 h i)}
      dlist_is_valid h0 nodes.[i])
+
+let get_elements_are_valid (#t:Type) (h0:heap) (h:dlisthead t) (i:nat{i < length (reveal h.nodes)}) :
+  Lemma
+    (requires elements_are_valid h0 h)
+    (ensures dlist_is_valid h0 (reveal h.nodes).[i]) =
+  assert (trigger_elements_are_valid h0 h i)
 
 logic
 let all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -225,8 +233,11 @@ let rec two_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) (i j:int) : Le
     if not b then (
       if i = 0 then (
         assert( is_null (nodes.[i]@h0).blink);
+        get_elements_are_valid h0 h j;
         assert( is_not_null (nodes.[j]@h0).blink)
       ) else (
+        get_elements_are_valid h0 h i;
+        get_elements_are_valid h0 h j;
         two_elements_distinct h0 h (i - 1) (j - 1)
       )
     ) else ()
@@ -275,13 +286,15 @@ let has_nothing_in (#t:eqtype) (h0:heap)
   (not_aliased0 e h.ltail) /\
   (let nodes = reveal h.nodes in
    (forall i. {:pattern (nodes.[i]@h0).flink}
-      (not_aliased0 e (nodes.[i]@h0).flink /\
-       not_aliased (e@h0).flink (nodes.[i]@h0).flink /\
-       not_aliased (e@h0).blink (nodes.[i]@h0).flink)) /\
+      (get_all_nodes_contained h0 h i;
+       (not_aliased0 e (nodes.[i]@h0).flink /\
+        not_aliased (e@h0).flink (nodes.[i]@h0).flink /\
+        not_aliased (e@h0).blink (nodes.[i]@h0).flink))) /\
    (forall i. {:pattern (nodes.[i]@h0).blink}
-      (not_aliased0 e (nodes.[i]@h0).blink) /\
-      not_aliased (e@h0).flink (nodes.[i]@h0).blink /\
-      not_aliased (e@h0).blink (nodes.[i]@h0).blink))
+      (get_all_nodes_contained h0 h i;
+       (not_aliased0 e (nodes.[i]@h0).blink) /\
+        not_aliased (e@h0).flink (nodes.[i]@h0).blink /\
+        not_aliased (e@h0).blink (nodes.[i]@h0).blink)))
 
 type nonempty_dlisthead t = (h:dlisthead t{is_not_null h.lhead /\ is_not_null h.ltail})
 
@@ -326,19 +339,27 @@ val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
            j = i + 1 /\ 0 <= i /\ i < length (reveal b) ==> (reveal b).[i] == (reveal r).[j])
 let ghost_append_properties #t a b = ()
 
-#set-options "--z3rlimit 100 --z3refresh --max_fuel 0 --max_ifuel 0"
+#set-options "--z3rlimit 100 --z3refresh --max_fuel 0 --max_ifuel 0 --detail_errors"
 
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ dlist_is_valid h0 e /\ has_nothing_in h0 h e))
     (ensures (fun h1 y h2 -> modifies_2 e (non_null h.lhead) h1 h2 /\ dlisthead_is_valid h2 y))
 let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlist t)) =
+  let h1 = ST.get () in
   let n = non_null h.lhead in
   !<|= e;
   e =|> n;
   e <|= n;
   let y = { lhead = of_non_null e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
-  let h2 = ST.get () in assert (elements_dont_alias h2 y); // OBSERVE: Shouldn't need to observe this though; should be obvious
+  let h2 = ST.get () in // assert (elements_dont_alias h2 y); // OBSERVE: Shouldn't need to observe this though; should be obvious
+  let all_contained (i:nat{i < Seq.length (reveal y.nodes)}) : Lemma (
+    let nodes = reveal y.nodes in
+    h2 `contains` nodes.[i]) =
+    if i > 0 then get_all_nodes_contained h1 h (i-1) else () in
+  FStar.Classical.forall_intro all_contained;
+  assert (all_nodes_contained h2 y);
+  admit ();
   y
 
 #reset-options
