@@ -353,6 +353,16 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlis
   e <|= n;
   let y = { lhead = of_non_null e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
   let h2 = ST.get () in
+  // let p1 (i:nat{i < Seq.length (reveal y.nodes)}) : Lemma (
+  //     let nodes = reveal y.nodes in
+  //     let len = length nodes in
+  //     h2 `contains` nodes.[i] /\
+  //     (i < len - 1 ==> nodes.[i]@h2 |> nodes.[i+1]) /\
+  //     (i > 0 ==> nodes.[i-1] <| nodes.[i]@h2) /\
+  //     dlist_is_valid h2 nodes.[i]
+  //   ) = if i > 0 then get_all_nodes_contained h1 h (i-1) else () in
+  // FStar.Classical.forall_intro p1; // Maybe this alternative style is better;
+  //                                  // or maybe the latter one might give better performance
   let all_contained (i:nat{i < Seq.length (reveal y.nodes)}) : Lemma (
     let nodes = reveal y.nodes in
     h2 `contains` nodes.[i]) =
