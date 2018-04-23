@@ -112,21 +112,13 @@ unfold let (~.) (#t:Type) (a:t) : Tot (erased (seq t)) = hide (Seq.create 1 a)
 unfold let (^+) (#t:Type) (a:t) (b:erased (seq t)) : Tot (erased (seq t)) = elift2 Seq.cons (hide a) b
 unfold let (+^) (#t:Type) (a:erased (seq t)) (b:t) : Tot (erased (seq t)) = elift2 Seq.snoc a (hide b)
 
-let trigger_all_nodes_contained #t (h0:heap) (h:dlisthead t) i = True
-
 logic
 let all_nodes_contained (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   let nodes = reveal h.nodes in
   (is_not_null h.lhead ==> h0 `contains` (non_null h.lhead)) /\
   (is_not_null h.ltail ==> h0 `contains` (non_null h.ltail)) /\
-  (forall i. {:pattern (trigger_all_nodes_contained h0 h i)}
+  (forall i. {:pattern (h0 `contains` nodes.[i])}
      h0 `contains` nodes.[i])
-
-let get_all_nodes_contained (#t:Type) (h0:heap) (h:dlisthead t) (i:nat{i < length (reveal h.nodes)}) :
-  Lemma
-    (requires all_nodes_contained h0 h)
-    (ensures h0 `contains` (reveal h.nodes).[i]) =
-  assert (trigger_all_nodes_contained h0 h i)
 
 logic
 let flink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -135,8 +127,7 @@ let flink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i. {:pattern ((nodes.[i]@h0).flink)}
      ((0 <= i /\ i < len - 1) ==>
-      (get_all_nodes_contained h0 h i;
-       nodes.[i]@h0 |> nodes.[i+1])))
+      (nodes.[i]@h0 |> nodes.[i+1])))
 
 logic
 let blink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -145,8 +136,7 @@ let blink_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i. {:pattern ((nodes.[i]@h0).blink)}
      ((1 <= i /\ i < len) ==>
-      (get_all_nodes_contained h0 h i;
-       nodes.[i-1] <| nodes.[i]@h0)))
+      (nodes.[i-1] <| nodes.[i]@h0)))
 
 logic
 let dlisthead_ghostly_connections (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -166,8 +156,6 @@ let elements_dont_alias1 (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink)}
      0 <= i /\ i < j /\ j < length nodes ==> (
-     get_all_nodes_contained h0 h i;
-     get_all_nodes_contained h0 h j;
      not_aliased (nodes.[i]@h0).flink (nodes.[j]@h0).flink))
 
 logic
@@ -176,9 +164,7 @@ let elements_dont_alias2 (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   all_nodes_contained h0 h /\
   (forall i j. {:pattern (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink)}
      0 <= i /\ i < j /\ j < length nodes ==>
-   (get_all_nodes_contained h0 h i;
-    get_all_nodes_contained h0 h j;
-    not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink))
+   (not_aliased (nodes.[i]@h0).blink (nodes.[j]@h0).blink))
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let elements_dont_alias (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -286,13 +272,11 @@ let has_nothing_in (#t:eqtype) (h0:heap)
   (not_aliased0 e h.ltail) /\
   (let nodes = reveal h.nodes in
    (forall i. {:pattern (nodes.[i]@h0).flink}
-      (get_all_nodes_contained h0 h i;
-       (not_aliased0 e (nodes.[i]@h0).flink /\
+      ((not_aliased0 e (nodes.[i]@h0).flink /\
         not_aliased (e@h0).flink (nodes.[i]@h0).flink /\
         not_aliased (e@h0).blink (nodes.[i]@h0).flink))) /\
    (forall i. {:pattern (nodes.[i]@h0).blink}
-      (get_all_nodes_contained h0 h i;
-       (not_aliased0 e (nodes.[i]@h0).blink) /\
+      ((not_aliased0 e (nodes.[i]@h0).blink) /\
         not_aliased (e@h0).flink (nodes.[i]@h0).blink /\
         not_aliased (e@h0).blink (nodes.[i]@h0).blink)))
 
@@ -353,52 +337,41 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlis
   e <|= n;
   let y = { lhead = of_non_null e ; ltail = h.ltail ; nodes = e ^+ h.nodes } in
   let h2 = ST.get () in
-  // let p1 (i:nat{i < Seq.length (reveal y.nodes)}) : Lemma (
-  //     let nodes = reveal y.nodes in
-  //     let len = length nodes in
-  //     h2 `contains` nodes.[i] /\
-  //     (i < len - 1 ==> nodes.[i]@h2 |> nodes.[i+1]) /\
-  //     (i > 0 ==> nodes.[i-1] <| nodes.[i]@h2) /\
-  //     dlist_is_valid h2 nodes.[i]
-  //   ) = if i > 0 then get_all_nodes_contained h1 h (i-1) else () in
-  // FStar.Classical.forall_intro p1; // Maybe this alternative style is better;
-  //                                  // or maybe the latter one might give better performance
   let all_contained (i:nat{i < Seq.length (reveal y.nodes)}) : Lemma (
     let nodes = reveal y.nodes in
     h2 `contains` nodes.[i]) =
-    if i > 0 then get_all_nodes_contained h1 h (i-1) else () in
+    (if i > 0 then () else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
   FStar.Classical.forall_intro all_contained;
   let flinks (i:nat{i < Seq.length (reveal y.nodes) - 1}) : Lemma (
     let nodes = reveal y.nodes in
-    (get_all_nodes_contained h1 h i;
-    nodes.[i]@h2 |> nodes.[i+1])) =
-    (if i > 0 then get_all_nodes_contained h1 h (i-1) else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
+    (nodes.[i]@h2 |> nodes.[i+1])) =
+    (if i > 0 then () else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
   FStar.Classical.forall_intro flinks;
   let blinks (i:nat{1 <= i /\ i < Seq.length (reveal y.nodes)}) : Lemma (
     let nodes = reveal y.nodes in
     nodes.[i-1] <| nodes.[i]@h2) =
-    (if i > 0 then get_all_nodes_contained h1 h (i-1) else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
+    (if i > 0 then () else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
   FStar.Classical.forall_intro blinks;
   let valid (i:nat{i < Seq.length (reveal y.nodes)}) : Lemma (
     let nodes = reveal y.nodes in
     dlist_is_valid h2 nodes.[i]) =
-    (if i > 0 then get_all_nodes_contained h1 h (i-1) else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
+    (if i > 0 then () else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
   FStar.Classical.forall_intro valid;
   let dont_alias1 (i:nat{i < Seq.length (reveal y.nodes)})
                   (j:nat{j < Seq.length (reveal y.nodes)}) : Lemma (
       let nodes = reveal y.nodes in
       i < j ==>
           not_aliased (nodes.[i]@h2).flink (nodes.[j]@h2).flink) =
-    (if i > 0 then get_all_nodes_contained h1 h (i-1) else ());
-    (if j > 0 then get_all_nodes_contained h1 h (j-1) else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
+    (if i > 0 then () else ());
+    (if j > 0 then () else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
   FStar.Classical.forall_intro_2 dont_alias1;
   let dont_alias2 (i:nat{i < Seq.length (reveal y.nodes)})
                   (j:nat{j < Seq.length (reveal y.nodes)}) : Lemma (
       let nodes = reveal y.nodes in
       i < j ==>
           not_aliased (nodes.[i]@h2).blink (nodes.[j]@h2).blink) =
-    (if i > 0 then get_all_nodes_contained h1 h (i-1) else ());
-    (if j > 0 then get_all_nodes_contained h1 h (j-1) else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
+    (if i > 0 then () else ());
+    (if j > 0 then () else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
   FStar.Classical.forall_intro_2 dont_alias2;
   y
 
