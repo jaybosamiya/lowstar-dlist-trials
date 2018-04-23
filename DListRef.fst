@@ -339,7 +339,7 @@ val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
            j = i + 1 /\ 0 <= i /\ i < length (reveal b) ==> (reveal b).[i] == (reveal r).[j])
 let ghost_append_properties #t a b = ()
 
-#set-options "--z3rlimit 100 --z3refresh --max_fuel 0 --max_ifuel 0 --detail_errors"
+#set-options "--max_fuel 0 --max_ifuel 0"
 
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
@@ -370,18 +370,19 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlis
   FStar.Classical.forall_intro all_contained;
   let flinks (i:nat{i < Seq.length (reveal y.nodes) - 1}) : Lemma (
     let nodes = reveal y.nodes in
-    nodes.[i]@h2 |> nodes.[i+1]) =
-    if i > 0 then get_all_nodes_contained h1 h (i-1) else () in
+    (get_all_nodes_contained h1 h i;
+    nodes.[i]@h2 |> nodes.[i+1])) =
+    (if i > 0 then get_all_nodes_contained h1 h (i-1) else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
   FStar.Classical.forall_intro flinks;
   let blinks (i:nat{1 <= i /\ i < Seq.length (reveal y.nodes)}) : Lemma (
     let nodes = reveal y.nodes in
     nodes.[i-1] <| nodes.[i]@h2) =
-    if i > 0 then get_all_nodes_contained h1 h (i-1) else () in
+    (if i > 0 then get_all_nodes_contained h1 h (i-1) else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
   FStar.Classical.forall_intro blinks;
   let valid (i:nat{i < Seq.length (reveal y.nodes)}) : Lemma (
     let nodes = reveal y.nodes in
     dlist_is_valid h2 nodes.[i]) =
-    if i > 0 then get_all_nodes_contained h1 h (i-1) else () in
+    (if i > 0 then get_all_nodes_contained h1 h (i-1) else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
   FStar.Classical.forall_intro valid;
   let dont_alias1 (i:nat{i < Seq.length (reveal y.nodes)})
                   (j:nat{j < Seq.length (reveal y.nodes)}) : Lemma (
@@ -389,7 +390,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlis
       i < j ==>
           not_aliased (nodes.[i]@h2).flink (nodes.[j]@h2).flink) =
     (if i > 0 then get_all_nodes_contained h1 h (i-1) else ());
-    (if j > 0 then get_all_nodes_contained h1 h (j-1) else ()) in
+    (if j > 0 then get_all_nodes_contained h1 h (j-1) else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
   FStar.Classical.forall_intro_2 dont_alias1;
   let dont_alias2 (i:nat{i < Seq.length (reveal y.nodes)})
                   (j:nat{j < Seq.length (reveal y.nodes)}) : Lemma (
@@ -397,7 +398,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlis
       i < j ==>
           not_aliased (nodes.[i]@h2).blink (nodes.[j]@h2).blink) =
     (if i > 0 then get_all_nodes_contained h1 h (i-1) else ());
-    (if j > 0 then get_all_nodes_contained h1 h (j-1) else ()) in
+    (if j > 0 then get_all_nodes_contained h1 h (j-1) else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
   FStar.Classical.forall_intro_2 dont_alias2;
   y
 
