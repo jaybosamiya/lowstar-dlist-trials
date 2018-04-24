@@ -1,0 +1,61 @@
+# My notes on _almost_ everything I ran to try and understand why it
+# works with --detail_errors but doesn't work without
+
+mkdir without-detail-errors/
+mkdir with-detail-errors/
+fstar --admit_except '(DListRef.dlisthead_update_head, 2)' DListRef.fst --log_queries --z3rlimit_factor 100 # The 100 is waaaay more than sufficient to prevent timeout
+mv *.smt2 without-detail-errors/
+fstar --admit_except '(DListRef.dlisthead_update_head, 2)' DListRef.fst --log_queries --z3rlimit_factor 100 --detail_errors
+mv *.smt2 with-detail-errors/
+
+z3 without-detail-errors/queries-DListRef.smt2 | grep -B1 'false'
+# Failing labels:
+#   label_314
+#   label_310
+
+cd with-detail-errors/
+rgrep -L '@disable_label_label_310'
+# queries-DListRef-62.smt2
+# queries-DListRef.smt2
+rgrep -L '@disable_label_label_314'
+# queries-DListRef.smt2
+# queries-DListRef-58.smt2
+cd ..
+
+# Thus, the interesting files are:
+#    queries-DListRef-62.smt2
+#    queries-DListRef-58.smt2
+
+cd with-detail-errors/
+for i in *.smt2; do
+    z3 $i | tee ${i}.log
+done
+cd ..
+rgrep -L 'model is not available' *.log
+# Crickets.... No output...
+# So all do infact verify fine
+
+function enable-and-run() {
+    TEMPFILE=$(mktemp tmp.XXXXXXXXX.smt2)
+    cat "$1" | tr '\n' '\f' | sed 's/(assert (! (= label_'$2'\ftrue)\f:named @disable_label_label_'$2'))//' | tr '\f' '\n' > ${TEMPFILE}
+    z3 ${TEMPFILE}
+    rm ${TEMPFILE}
+}
+
+function enable-and-test() {
+    (enable-and-run "$1" $2 | grep -m 1 'model is not available' >/dev/null) && echo "$i passed" || echo "$i FAILED <--------"
+}
+
+function try-enabling-all() {
+    echo "[+] Trying all for $1"
+    for i in $(grep 'disable_label_label_' temp.smt2 | cut -c 29- | rev | cut -c 3- | rev); do
+	enable-and-test "$1" $i
+    done
+}
+
+try-enabling-all with-detail-errors/queries-DListRef-62.smt2
+try-enabling-all with-detail-errors/queries-DListRef-58.smt2
+
+# Passes for everything except
+#    with-detail-hints/queries-DListRef-62.smt2 314
+enable-and-run with-detail-errors/queries-DListRef-62.smt2 314
