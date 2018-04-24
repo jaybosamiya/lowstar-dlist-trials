@@ -51,7 +51,7 @@ function enable-and-test() {
 
 function try-enabling-all() {
     echo "[+] Trying all for $1"
-    for i in $(grep 'disable_label_label_' temp.smt2 | cut -c 29- | rev | cut -c 3- | rev); do
+    for i in $(grep 'disable_label_label_' "$1" | cut -c 29- | rev | cut -c 3- | rev); do
 	enable-and-test "$1" $i
     done
 }
