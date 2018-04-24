@@ -370,8 +370,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlis
   FStar.Classical.forall_intro all_contained;
   let flinks (i:nat{i < Seq.length (reveal y.nodes) - 1}) : Lemma (
     let nodes = reveal y.nodes in
-    (get_all_nodes_contained h1 h i;
-    nodes.[i]@h2 |> nodes.[i+1])) =
+    nodes.[i]@h2 |> nodes.[i+1]) =
     if i > 0 then get_all_nodes_contained h1 h (i-1) else () in
   FStar.Classical.forall_intro flinks;
   let blinks (i:nat{1 <= i /\ i < Seq.length (reveal y.nodes)}) : Lemma (
