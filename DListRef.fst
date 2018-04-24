@@ -345,7 +345,11 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlis
       (1 <= i ==> nodes.[i-1] <| nodes.[i]@h2) /\
       dlist_is_valid h2 nodes.[i]
   ) =
-    (if i > 0 then () else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
+    (if i > 0 then () else ()); () in
+  // The "; ()" part is a workaround to prevent it from needing --detail_errors
+  // NOTE: This was a bug. See commits:
+  //   https://github.com/FStarLang/FStar/commit/4d6f22f34e1834460caf88f8225092f259f4fcde
+  //   https://github.com/FStarLang/FStar/commit/b35d1a48a3b032ad0ac3cdb4976c227218d077b1
   FStar.Classical.forall_intro p1;
   let p2 (i:nat{i < Seq.length (reveal y.nodes)})
          (j:nat{j < Seq.length (reveal y.nodes)}) : Lemma (
@@ -354,7 +358,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlis
           (not_aliased (nodes.[i]@h2).flink (nodes.[j]@h2).flink /\
            not_aliased (nodes.[i]@h2).blink (nodes.[j]@h2).blink)) =
     (if i > 0 then () else ());
-    (if j > 0 then () else ()); () in // The "; ()" part is a workaround to prevent it from needing --detail_errors
+    (if j > 0 then () else ()); () in
   FStar.Classical.forall_intro_2 p2;
   y
 
