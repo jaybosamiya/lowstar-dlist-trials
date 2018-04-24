@@ -43,7 +43,10 @@ function enable-and-run() {
 }
 
 function enable-and-test() {
-    (enable-and-run "$1" $2 | grep -m 1 'model is not available' >/dev/null) && echo "$i passed" || echo "$i FAILED <--------"
+    VAL=$(enable-and-run "$1" $2)
+    (echo ${VAL} | grep -m 1 'model is not available' >/dev/null) && echo "$i passed" || \
+	    ((echo ${VAL} | grep -m 1 'false' >/dev/null) && echo "$i FAILED <----- via 'false'" || \
+		     echo "$i FAILED <----- not via 'false'")
 }
 
 function try-enabling-all() {
