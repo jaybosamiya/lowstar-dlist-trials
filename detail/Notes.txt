@@ -60,5 +60,8 @@ try-enabling-all with-detail-errors/queries-DListRef-62.smt2
 try-enabling-all with-detail-errors/queries-DListRef-58.smt2
 
 # Passes for everything except
-#    with-detail-hints/queries-DListRef-62.smt2 314
+#    with-detail-errors/queries-DListRef-62.smt2 314
+#    with-detail-errors/queries-DListRef-58.smt2 310
+# Both fail via "false"
 enable-and-run with-detail-errors/queries-DListRef-62.smt2 314
+enable-and-run with-detail-errors/queries-DListRef-58.smt2 310
