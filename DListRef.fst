@@ -339,7 +339,7 @@ val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
            j = i + 1 /\ 0 <= i /\ i < length (reveal b) ==> (reveal b).[i] == (reveal r).[j])
 let ghost_append_properties #t a b = ()
 
-#set-options "--max_fuel 0 --max_ifuel 0"
+#set-options "--max_fuel 0 --max_ifuel 0 --detail_errors"
 
 val dlisthead_update_head: #t:eqtype -> h:nonempty_dlisthead t -> e:gpointer (dlist t) ->
   ST (dlisthead t)
