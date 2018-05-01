@@ -1,4 +1,4 @@
-module DListLow
+module DListLowInd
 
 open FStar
 open FStar.HyperStack.ST
