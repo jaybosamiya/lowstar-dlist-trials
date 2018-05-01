@@ -3,8 +3,9 @@ module DListLowInd
 open FStar
 open FStar.HyperStack.ST
 open FStar.Ghost
-open FStar.Seq
 open Gpointers
+open FStar.Modifies
+open FStar.List.Tot
 
 unopteq
 (** Node of a doubly linked list *)
