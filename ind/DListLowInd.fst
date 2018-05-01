@@ -1,11 +1,11 @@
 module DListLowInd
 
 open FStar
+open FStar.List.Tot
 open FStar.HyperStack.ST
 open FStar.Ghost
 open Gpointers
 open FStar.Modifies
-open FStar.List.Tot
 
 unopteq
 (** Node of a doubly linked list *)
@@ -107,9 +107,9 @@ let ( !<|= ) (#t:Type) (a:gpointer (dlist t)) : ST unit
          (a@h2).blink == null)) =
   a := { !a with blink = null }
 
-unfold let (~.) (#t:Type) (a:t) : Tot (erased (list t)) = hide (List.create 1 a)
-unfold let (^+) (#t:Type) (a:t) (b:erased (list t)) : Tot (erased (list t)) = elift2 List.cons (hide a) b
-unfold let (+^) (#t:Type) (a:erased (list t)) (b:t) : Tot (erased (list t)) = elift2 List.snoc a (hide b)
+unfold let (~.) (#t:Type) (a:t) : Tot (erased (list t)) = hide ([a])
+unfold let (^+) (#t:Type) (a:t) (b:erased (list t)) : Tot (erased (list t)) = elift2 Cons (hide a) b
+unfold let (+^) (#t:Type) (a:erased (list t)) (b:t) : Tot (erased (list t)) = elift2 append a (hide [b])
 
 logic
 let all_nodes_contained (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
