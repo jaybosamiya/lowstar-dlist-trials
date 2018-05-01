@@ -6,30 +6,22 @@ module B = FStar.Buffer
 module CN = C.Nullity
 module Mod = FStar.Modifies
 
-assume val gpointer_frame : (f:Monotonic.HyperHeap.rid{ST.is_eternal_region f})
-
 type gpointer t = (p:C.Nullity.pointer t{
     B.max_length p = B.length p /\
     B.max_length p = 1 /\
-    B.idx p = 0 /\
-    ~(HS.is_mm (B.content p)) /\
-    B.frameOf p = gpointer_frame
+    B.idx p = 0
   })
 
 type gpointer_or_null t = (p:C.Nullity.pointer_or_null t{
     B.max_length p = B.length p /\
     B.max_length p <= 1 /\
-    B.idx p = 0 /\
-    ~(HS.is_mm (B.content p)) /\
-    B.frameOf p = gpointer_frame
+    B.idx p = 0
   })
 
 type gnull t = (p:C.Nullity.pointer_or_null t{
     B.max_length p = B.length p /\
     B.max_length p = 0 /\
-    B.idx p = 0 /\
-    ~(HS.is_mm (B.content p)) /\
-    B.frameOf p = gpointer_frame
+    B.idx p = 0
   })
 
 let disjoint (#t:Type) (a b: gpointer t) = B.as_addr a <> B.as_addr b
