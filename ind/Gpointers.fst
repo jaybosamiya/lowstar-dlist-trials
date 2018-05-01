@@ -32,24 +32,6 @@ type gnull t = (p:C.Nullity.pointer_or_null t{
     B.frameOf p = gpointer_frame
   })
 
-(** Allow comparing pointers *)
-val g_ptr_eq:
-  #a:Type ->
-  p:gpointer a ->
-  q:gpointer a ->
-  GTot (b:Type0{b <==> (p == q)})
-let g_ptr_eq #a p q = (p == q)
-
-(** Allow comparing pointers *)
-// inline_for_extraction
-assume val ptr_eq:
-  #a:Type ->
-  p:gpointer a ->
-  q:gpointer a ->
-  ST.ST bool
-    (requires (fun h -> B.live h p /\ B.live h q))
-    (ensures (fun h0 b h1 -> h0==h1 /\ (b <==> (g_ptr_eq p q))))
-
 let disjoint (#t:Type) (a b: gpointer t) = B.as_addr a <> B.as_addr b
 
 let is_null (p:gpointer_or_null 't) = CN.is_null p
@@ -100,7 +82,7 @@ let (^@) (a:gpointer_or_null 't{is_not_null a}) (h0:heap{h0 `contains` (non_null
 let (==$) (#t:Type) (a:gpointer_or_null t) (b:gpointer t) =
   is_not_null a /\
   (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
-   g_ptr_eq (non_null a) b)
+   (non_null a) == b)
 
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let not_aliased (#t:Type) (a:gpointer_or_null t) (b:gpointer_or_null t) : GTot Type0 =
