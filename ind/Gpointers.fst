@@ -101,3 +101,33 @@ let (==$) (#t:Type) (a:gpointer_or_null t) (b:gpointer t) =
   is_not_null a /\
   (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
    g_ptr_eq (non_null a) b)
+
+// logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
+let not_aliased (#t:Type) (a:gpointer_or_null t) (b:gpointer_or_null t) : GTot Type0 =
+  is_null a \/ is_null b \/
+  (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
+   let (b:_{is_not_null b}) = b in
+   disjoint (non_null a) (non_null b))
+
+// logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
+let not_aliased0 (#t:Type) (a:gpointer t) (b:gpointer_or_null t) : GTot Type0 =
+  is_null b \/
+  (let (b:_{is_not_null b}) = b in // workaround for not using two phase type checker
+   disjoint a (non_null b))
+
+logic
+let not_aliased00 (#t:Type) (a:gpointer t) (b:gpointer t) : GTot Type0 =
+  disjoint a b
+
+let modifies_1 (a:gpointer 'a) h0 h1 =
+  Mod.modifies (Mod.loc_buffer a) h0 h1
+let modifies_2 (a:gpointer 'a) (b:gpointer 'b) h0 h1 =
+  Mod.modifies (Mod.loc_union
+                  (Mod.loc_buffer a)
+                  (Mod.loc_buffer b)) h0 h1
+let modifies_3 (a:gpointer 'a) (b:gpointer 'b) (c:gpointer 'c) h0 h1 =
+  Mod.modifies (Mod.loc_union
+                  (Modifies.loc_union
+                     (Mod.loc_buffer a)
+                     (Mod.loc_buffer b))
+                  (Mod.loc_buffer c)) h0 h1
