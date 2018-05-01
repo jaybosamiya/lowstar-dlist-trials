@@ -114,3 +114,12 @@ unfold let (^+) (#t:Type) (a:t) (b:erased (list t)) : Tot (erased (list t)) = el
 unfold let (+^) (#t:Type) (a:erased (list t)) (b:t) : Tot (erased (list t)) = elift2 append a (hide [b])
 
 /// A "fragment" is a list of "piece"s, such that each piece is an "almost valid" dll
+
+unopteq
+type piece t = {
+  phead: gpointer_or_null (node t);
+  ptail: gpointer_or_null (node t);
+  pnodes: erased (list (gpointer (node t)));
+}
+
+type fragment t = list (piece t)
