@@ -112,3 +112,5 @@ let ( !<|= ) (#t:Type) (a:gpointer (dlist t)) : ST unit
 unfold let (~.) (#t:Type) (a:t) : Tot (erased (list t)) = hide ([a])
 unfold let (^+) (#t:Type) (a:t) (b:erased (list t)) : Tot (erased (list t)) = elift2 Cons (hide a) b
 unfold let (+^) (#t:Type) (a:erased (list t)) (b:t) : Tot (erased (list t)) = elift2 append a (hide [b])
+
+/// A "fragment" is a list of "piece"s, such that each piece is an "almost valid" dlisthead
