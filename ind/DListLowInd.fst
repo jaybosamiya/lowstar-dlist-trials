@@ -26,6 +26,8 @@ type dlisthead (t:Type0) ={
   nodes: erased (list (gpointer (dlist t)));
 }
 
+type nonempty_dlisthead t = (h:dlisthead t{is_not_null h.lhead /\ is_not_null h.ltail})
+
 (** Initialize an element of a doubly linked list *)
 val empty_entry: #t:Type -> payload:t -> dlist t
 let empty_entry #t payload =
