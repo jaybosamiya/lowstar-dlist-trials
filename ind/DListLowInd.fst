@@ -23,7 +23,7 @@ unopteq
 type dlisthead (t:Type0) ={
   lhead: gpointer_or_null (dlist t);
   ltail: gpointer_or_null (dlist t);
-  nodes: erased (seq (gpointer (dlist t)));
+  nodes: erased (list (gpointer (dlist t)));
 }
 
 (** Initialize an element of a doubly linked list *)
@@ -34,9 +34,9 @@ let empty_entry #t payload =
 (** Initialize a doubly linked list head *)
 val empty_list: #t:Type -> dlisthead t
 let empty_list #t =
-  { lhead = null ; ltail = null ; nodes = hide createEmpty }
+  { lhead = null ; ltail = null ; nodes = hide [] }
 
-unfold let (.[]) (s:seq 'a) (n:nat{n < length s}) = index s n
+unfold let (.[]) (s:list 'a) (n:nat{n < length s}) = index s n
 
 logic
 let dlist_is_valid' (#t:Type) (h0:heap) (n:dlist t) : GTot Type0 =
@@ -107,9 +107,9 @@ let ( !<|= ) (#t:Type) (a:gpointer (dlist t)) : ST unit
          (a@h2).blink == null)) =
   a := { !a with blink = null }
 
-unfold let (~.) (#t:Type) (a:t) : Tot (erased (seq t)) = hide (Seq.create 1 a)
-unfold let (^+) (#t:Type) (a:t) (b:erased (seq t)) : Tot (erased (seq t)) = elift2 Seq.cons (hide a) b
-unfold let (+^) (#t:Type) (a:erased (seq t)) (b:t) : Tot (erased (seq t)) = elift2 Seq.snoc a (hide b)
+unfold let (~.) (#t:Type) (a:t) : Tot (erased (list t)) = hide (List.create 1 a)
+unfold let (^+) (#t:Type) (a:t) (b:erased (list t)) : Tot (erased (list t)) = elift2 List.cons (hide a) b
+unfold let (+^) (#t:Type) (a:erased (list t)) (b:t) : Tot (erased (list t)) = elift2 List.snoc a (hide b)
 
 logic
 let all_nodes_contained (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
@@ -181,9 +181,9 @@ logic
 let all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
     let nodes = reveal h.nodes in
     (forall i j. {:pattern (disjoint nodes.[i] nodes.[j])}
-       (0 <= i /\ i < j /\ j < Seq.length nodes) ==>
-       (let (i:nat{i < Seq.length nodes}) = i in // workaround for not using two phase type checker
-        let (j:nat{j < Seq.length nodes}) = j in
+       (0 <= i /\ i < j /\ j < List.length nodes) ==>
+       (let (i:nat{i < List.length nodes}) = i in // workaround for not using two phase type checker
+        let (j:nat{j < List.length nodes}) = j in
         disjoint nodes.[i] nodes.[j]))
 
 unfold logic
@@ -199,17 +199,17 @@ let dlisthead_is_valid (#t:Type) (h0:heap) (h:dlisthead t) : GTot Type0 =
   elements_dont_alias h0 h
 
 let rec two_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) (i j:int) : Lemma
-  (requires (0 <= i /\ i < j /\ j < Seq.length (reveal h.nodes)) /\
+  (requires (0 <= i /\ i < j /\ j < List.length (reveal h.nodes)) /\
             dlisthead_ghostly_connections h0 h /\
             blink_valid h0 h /\
             elements_are_valid h0 h)
   (ensures
      (let nodes = reveal h.nodes in
-      let (i:nat{i < Seq.length nodes}) = i in // workaround for not using two phase type checker
-      let (j:nat{j < Seq.length nodes}) = j in
+      let (i:nat{i < List.length nodes}) = i in // workaround for not using two phase type checker
+      let (j:nat{j < List.length nodes}) = j in
       disjoint nodes.[i] nodes.[j])) =
   let nodes = reveal h.nodes in
-  if 0 <= i && i < j && j < Seq.length nodes then (
+  if 0 <= i && i < j && j < List.length nodes then (
     let b = FStar.StrongExcludedMiddle.strong_excluded_middle (disjoint nodes.[i] nodes.[j]) in
     if not b then (
       if i = 0 then (
@@ -226,12 +226,12 @@ let lemma_all_elements_distinct (#t:Type) (h0:heap) (h:dlisthead t) : Lemma
     (ensures all_elements_distinct h0 h) =
   let nodes = reveal h.nodes in
   let two_elements_distinct_helper (i j:int) : Lemma
-    ((0 <= i /\ i < j /\ j < Seq.length nodes) ==>
-       (let (i:nat{i < Seq.length nodes}) = i in // workaround for not using two phase type checker
-        let (j:nat{j < Seq.length nodes}) = j in
+    ((0 <= i /\ i < j /\ j < List.length nodes) ==>
+       (let (i:nat{i < List.length nodes}) = i in // workaround for not using two phase type checker
+        let (j:nat{j < List.length nodes}) = j in
         disjoint nodes.[i] nodes.[j]))
     =
-    if 0 <= i && i < j && j < Seq.length nodes then (
+    if 0 <= i && i < j && j < List.length nodes then (
       two_elements_distinct h0 h i j
     ) else ()
   in
@@ -248,7 +248,7 @@ let singletonlist #t e =
   { lhead = of_non_null e ; ltail = of_non_null e ; nodes = ~. e }
 
 // logic
-let contains_by_addr (#t:Type) (s:seq (gpointer t)) (x:gpointer t) : GTot Type0 =
+let contains_by_addr (#t:Type) (s:list (gpointer t)) (x:gpointer t) : GTot Type0 =
   (exists i. g_ptr_eq s.[i] x)
 
 logic
@@ -300,7 +300,7 @@ val nonempty_singleton_properties :
   h:nonempty_dlisthead t ->
   ST unit
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ g_is_singleton h))
-    (ensures (fun h0 _ h1 -> h0 == h1 /\ Seq.length (reveal h.nodes) == 1))
+    (ensures (fun h0 _ h1 -> h0 == h1 /\ List.length (reveal h.nodes) == 1))
 let nonempty_singleton_properties #t h = ()
 
 val nonempty_nonsingleton_properties :
@@ -308,10 +308,10 @@ val nonempty_nonsingleton_properties :
   h:nonempty_dlisthead t ->
   ST unit
     (requires (fun h0 -> dlisthead_is_valid h0 h /\ ~(g_is_singleton h)))
-    (ensures (fun h0 _ h1 -> h0 == h1 /\ Seq.length (reveal h.nodes) > 1))
+    (ensures (fun h0 _ h1 -> h0 == h1 /\ List.length (reveal h.nodes) > 1))
 let nonempty_nonsingleton_properties #t h = ()
 
-val ghost_append_properties: #t:Type -> a:t -> b:erased (seq t) ->
+val ghost_append_properties: #t:Type -> a:t -> b:erased (list t) ->
   Lemma (let r = a ^+ b in
          forall i j. {:pattern ((reveal b).[i] == (reveal r).[j])}
            j = i + 1 /\ 0 <= i /\ i < length (reveal b) ==> (reveal b).[i] == (reveal r).[j])
@@ -334,7 +334,7 @@ let dlisthead_update_head (#t:eqtype) (h:nonempty_dlisthead t) (e:gpointer (dlis
   // assert (
   //   let ynodes = reveal y.nodes in
   //   let hnodes = reveal h.nodes in
-  //   (forall (i:nat{2 <= i /\ i < Seq.length ynodes /\ i-1 < Seq.length hnodes}).
+  //   (forall (i:nat{2 <= i /\ i < List.length ynodes /\ i-1 < List.length hnodes}).
   //             {:pattern (ynodes.[i]@h2)}
   //      h2 `contains` ynodes.[i] /\
   //      ynodes.[i]@h2 == hnodes.[i-1]@h1)); // OBSERVE
@@ -386,8 +386,8 @@ let insertTailList #t h e =
   then dlisthead_update_tail h e
   else singletonlist e
 
-unfold let ghost_tail (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
-  hide (Seq.tail (reveal s))
+unfold let ghost_tail (#t:Type) (s:erased (list t){List.length (reveal s) > 0}) : Tot (erased (list t)) =
+  hide (List.tail (reveal s))
 
 #set-options "--z3rlimit 100"
 
@@ -416,7 +416,7 @@ let dlisthead_remove_head #t h =
 
 #reset-options
 
-unfold let ghost_unsnoc (#t:Type) (s:erased (seq t){Seq.length (reveal s) > 0}) : Tot (erased (seq t)) =
+unfold let ghost_unsnoc (#t:Type) (s:erased (list t){List.length (reveal s) > 0}) : Tot (erased (list t)) =
   let x = reveal s in
   let l = length x - 1 in
   hide (slice x 0 l)
@@ -448,38 +448,38 @@ let dlisthead_remove_tail #t h =
 
 #reset-options
 
-// let rec get_ref_index (#t:Type) (s:seq (ref t)) (x:ref t{s `contains_by_addr` x}) :
-//   GTot (i:nat{i < Seq.length s})
-//     (decreases (Seq.length s)) =
+// let rec get_ref_index (#t:Type) (s:list (ref t)) (x:ref t{s `contains_by_addr` x}) :
+//   GTot (i:nat{i < List.length s})
+//     (decreases (List.length s)) =
 //   contains_elim s x;
-//   let h, t = Seq.head s, Seq.tail s in
+//   let h, t = List.head s, List.tail s in
 //   if compare_addrs h x then 0 else (
 //     contains_cons h t x;
 //     1 + get_ref_index t x)
 
-// val lemma_get_ref_index : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_addr` x} ->
+// val lemma_get_ref_index : #t:Type -> s:list (ref t) -> x:ref t{s `contains_by_addr` x} ->
 //   Lemma (ensures (
 //     g_ptr_eq s.[get_ref_index s x] x))
-//     (decreases (Seq.length s))
+//     (decreases (List.length s))
 //     [SMTPat (g_ptr_eq s.[get_ref_index s x] x)]
 // let rec lemma_get_ref_index #t s x =
 //   contains_elim s x;
-//   let h, t = Seq.head s, Seq.tail s in
+//   let h, t = List.head s, List.tail s in
 //   if compare_addrs h x then () else (
 //     contains_cons h t x;
 //     lemma_get_ref_index t x)
 
-// val split_seq_at_element : #t:Type -> s:seq (ref t) -> x:ref t{s `contains_by_addr` x} ->
-//   GTot (v:(seq (ref t) * nat * seq (ref t)){
+// val split_list_at_element : #t:Type -> s:list (ref t) -> x:ref t{s `contains_by_addr` x} ->
+//   GTot (v:(list (ref t) * nat * list (ref t)){
 //       let l, i, r = v in
 //       indexable s i /\ (
 //       let (i:nat{i < length s}) = i in // workaround for two phase thing
 //       s == append l (cons s.[i] r) /\
 //       g_ptr_eq s.[i] x)
 //   })
-// let split_seq_at_element #t s x =
+// let split_list_at_element #t s x =
 //   let i = get_ref_index s x in
-//   let l, mr = Seq.split s i in
+//   let l, mr = List.split s i in
 //   lemma_split s i;
 //   l, i, tail mr
 
