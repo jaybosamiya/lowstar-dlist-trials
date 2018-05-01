@@ -52,8 +52,8 @@ assume val ptr_eq:
 
 let disjoint (#t:Type) (a b: gpointer t) = B.as_addr a <> B.as_addr b
 
-unfold let is_null (p:gpointer_or_null 't) = CN.is_null p
-unfold let is_not_null (p:gpointer_or_null 't) = not (CN.is_null p)
+let is_null (p:gpointer_or_null 't) = CN.is_null p
+let is_not_null (p:gpointer_or_null 't) = not (CN.is_null p)
 
 assume val null : #t:Type -> gnull t
 
@@ -61,10 +61,10 @@ let test_null #t =
   let p : gpointer_or_null t = null in
   assert (is_null p)
 
-unfold let ( := ) (a:gpointer 't) (b:'t) = B.(a.(0ul) <- b)
-unfold let ( ! ) (a:gpointer 't) = B.index a 0ul
+let ( := ) (a:gpointer 't) (b:'t) = B.(a.(0ul) <- b)
+let ( ! ) (a:gpointer 't) = B.index a 0ul
 
-unfold let recall (#t:Type) (p: gpointer_or_null t) = B.recall p
+let recall (#t:Type) (p: gpointer_or_null t) = B.recall p
 
 val non_null:
   #t:Type ->
@@ -94,8 +94,8 @@ let lemma_of_non_null #t a = ()
 let heap = HS.mem
 let contains = B.live
 
-unfold let (@) (a:gpointer 't) (h0:heap{h0 `contains` a}) = B.get h0 a 0
-unfold let (^@) (a:gpointer_or_null 't{is_not_null a}) (h0:heap{h0 `contains` (non_null a)}) = (non_null a) @ h0
+let (@) (a:gpointer 't) (h0:heap{h0 `contains` a}) = B.get h0 a 0
+let (^@) (a:gpointer_or_null 't{is_not_null a}) (h0:heap{h0 `contains` (non_null a)}) = (non_null a) @ h0
 
 let (==$) (#t:Type) (a:gpointer_or_null t) (b:gpointer t) =
   is_not_null a /\
