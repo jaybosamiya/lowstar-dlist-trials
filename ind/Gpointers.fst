@@ -68,8 +68,12 @@ let lemma_of_non_null #t a = ()
 let heap = HS.mem
 let contains = B.live
 
-let (@) (a:gpointer 't) (h0:heap{h0 `contains` a}) = B.get h0 a 0
-let (^@) (a:gpointer_or_null 't{is_not_null a}) (h0:heap{h0 `contains` (non_null a)}) = (non_null a) @ h0
+(** Dereference a gpointer. NOTE: To get a sane result, also need to
+    prove that the pointer is on the heap. *)
+let (@) (a:gpointer 't) (h0:heap) = B.get h0 a 0
+(** Dereference a non-null gpointer_or_null. NOTE: To get a sane
+    result, also need to prove that the pointer is on the heap. *)
+let (^@) (a:gpointer_or_null 't{is_not_null a}) (h0:heap) = (non_null a) @ h0
 
 let (==$) (#t:Type) (a:gpointer_or_null t) (b:gpointer t) =
   is_not_null a /\
