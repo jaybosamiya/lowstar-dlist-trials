@@ -1,11 +1,12 @@
 module DListLowInd
 
 open FStar
+open Utils
 open FStar.List.Tot
 open FStar.HyperStack.ST
 open FStar.Ghost
 open Gpointers
-open FStar.Modifies
+module Mod = FStar.Modifies
 
 unopteq
 (** Node of a doubly linked list *)
