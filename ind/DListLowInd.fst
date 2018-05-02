@@ -113,11 +113,13 @@ let rec nodelist_contained (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
   nodelist_contained_b h0 nl
 
 let dll_contained (#t:Type) (h0:heap) (d:dll t) : GTot Type0 =
-  (* Containment for head and tail is given via ghostly connections *)
+  h0 `contains` d.lhead /\
+  h0 `contains` d.ltail /\
   nodelist_contained h0 (reveal d.nodes)
 
 let piece_contained (#t:Type) (h0:heap) (p:piece t) : GTot Type0 =
-  (* Containment for phead and ptail is given via ghostly connections *)
+  h0 `contains` p.phead /\
+  h0 `contains` p.ptail /\
   nodelist_contained h0 (reveal p.pnodes)
 
 /// Footprints
