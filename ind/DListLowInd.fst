@@ -91,6 +91,9 @@ let node_contained_f (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
   h0 `contains` n.flink
 let node_contained_b (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
   h0 `contains` n.blink
+let node_contained (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
+  node_contained_f h0 n /\
+  node_contained_b h0 n
 
 let rec nodelist_contained0 (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
   match nl with
@@ -104,6 +107,10 @@ let rec nodelist_contained_b (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
   match nl with
   | [] -> True
   | n :: ns -> node_contained_b h0 (n@h0) /\ nodelist_contained_b h0 ns
+let rec nodelist_contained (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
+  nodelist_contained0 h0 nl /\
+  nodelist_contained_f h0 nl /\
+  nodelist_contained_b h0 nl
 
 (* dll containment is given by its ghostly connections *)
 
