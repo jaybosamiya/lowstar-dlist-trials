@@ -228,6 +228,24 @@ let dll_aa (#t:Type) (d:dll t) : GTot Type0 =
 let piece_aa (#t:Type) (p:piece t) : GTot Type0 =
   nodelist_aa (reveal p.pnodes)
 
+let rec fragment_aa0 (#t:Type) (f:fragment t) : GTot Type0 =
+  match f with
+  | [] -> True
+  | p :: ps -> piece_aa p /\ fragment_aa0 ps
+let rec fragment_aa_r (#t:Type) (f:fragment t) : GTot Type0 =
+  match f with
+  | [] -> True
+  | p :: ps -> Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 ps) /\
+             fragment_aa_r ps
+let rec fragment_aa_l (#t:Type) (f:fragment t) : GTot Type0 (decreases (length f)) =
+  match f with
+  | [] -> True
+  | _ -> let ps, p = unsnoc f in
+    Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 ps) /\
+    fragment_aa_l ps
+let fragment_aa (#t:Type) (f:fragment t) : GTot Type0 =
+  fragment_aa0 f /\ fragment_aa_l f /\ fragment_aa_r f
+
 /// Connectivity properties
 
 let ( |> ) (#t:Type) (a:node t) (b:gpointer (node t)) : GTot Type0 =
