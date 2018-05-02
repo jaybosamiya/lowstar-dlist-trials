@@ -276,8 +276,38 @@ let rec fragment_conn (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
   | p :: ps -> nodelist_conn h0 (reveal p.pnodes) /\ fragment_conn h0 ps
 
 /// Validity properties
+///
+/// These are just a combination of
+/// + Ghostly connections
+/// + Containment properties
+/// + Anti aliasing properties
+/// + Connectivity properties
 
-(* TODO *)
+let node_valid (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
+  node_contained h0 n
+
+let nodelist_valid (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
+  nodelist_contained h0 nl /\
+  nodelist_aa nl /\
+  nodelist_conn h0 nl
+
+let dll_valid (#t:Type) (h0:heap) (d:dll t) : GTot Type0 =
+  dll_ghostly_connections d /\
+  dll_contained h0 d /\
+  dll_aa d /\
+  dll_conn h0 d
+
+let piece_valid (#t:Type) (h0:heap) (p:piece t) : GTot Type0 =
+  piece_ghostly_connections p /\
+  piece_contained h0 p /\
+  piece_aa p /\
+  piece_conn h0 p
+
+let fragment_valid (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
+  fragment_ghostly_connections f /\
+  fragment_contained h0 f /\
+  fragment_aa f /\
+  fragment_conn h0 f
 
 /// Useful operations on nodes
 
