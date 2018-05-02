@@ -82,6 +82,11 @@ let piece_ghostly_connections (#t:Type) (p:piece t) : GTot Type0 =
   | _ -> p.phead ==$ hd nodes /\
         p.ptail ==$ last nodes
 
+let rec fragment_ghostly_connections (#t:Type) (f:fragment t) : GTot Type0 =
+  match f with
+  | [] -> True
+  | p :: ps -> piece_ghostly_connections p /\ fragment_ghostly_connections ps
+
 /// Containment properties
 ///
 /// WARNING: [@] and [^@] require containment to reasonably talk about
@@ -121,6 +126,11 @@ let piece_contained (#t:Type) (h0:heap) (p:piece t) : GTot Type0 =
   h0 `contains` p.phead /\
   h0 `contains` p.ptail /\
   nodelist_contained h0 (reveal p.pnodes)
+
+let rec fragment_contained (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
+  match f with
+  | [] -> True
+  | p :: ps -> piece_contained h0 p /\ fragment_contained h0 ps
 
 /// Footprints
 
