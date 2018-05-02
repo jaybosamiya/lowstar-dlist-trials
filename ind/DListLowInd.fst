@@ -188,6 +188,19 @@ let piece_fp_b (#t:Type) (h0:heap) (p:piece t) : GTot Mod.loc =
     (Mod.loc_union (Mod.loc_buffer (p.phead@h0).blink) (Mod.loc_buffer (p.ptail@h0).blink))
     (nodelist_fp_b h0 (reveal p.pnodes))
 
+let rec fragment_fp0 (#t:Type) (f:fragment t) : GTot Mod.loc =
+  match f with
+  | [] -> Mod.loc_none
+  | p :: ps -> Mod.loc_union (piece_fp0 p) (fragment_fp0 ps)
+let rec fragment_fp_f (#t:Type) (h0:heap) (f:fragment t) : GTot Mod.loc =
+  match f with
+  | [] -> Mod.loc_none
+  | p :: ps -> Mod.loc_union (piece_fp_f h0 p) (fragment_fp_f h0 ps)
+let rec fragment_fp_b (#t:Type) (h0:heap) (f:fragment t) : GTot Mod.loc =
+  match f with
+  | [] -> Mod.loc_none
+  | p :: ps -> Mod.loc_union (piece_fp_b h0 p) (fragment_fp_b h0 ps)
+
 /// Anti aliasing properties
 
 let node_aa (#t:Type) (n:node t) : GTot Type0 =
