@@ -311,13 +311,6 @@ let fragment_valid (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
 
 /// Useful operations on nodes
 
-logic
-let node_anti_alias (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
-  not_aliased n.flink n.blink
-
-let node_is_valid (#t:Type) (h0:heap) (n:gpointer (node t)) : GTot Type0 =
-  h0 `contains` n /\ node_anti_alias h0 (n@h0)
-
 irreducible
 let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
     (requires (fun h0 ->
