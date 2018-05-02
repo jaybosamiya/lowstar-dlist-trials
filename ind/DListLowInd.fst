@@ -67,7 +67,20 @@ let empty_list #t =
 
 /// Ghostly connections
 
-(* TODO *)
+let dll_ghostly_connections (#t:Type) (d:dll t) : GTot Type0 =
+  let nodes = reveal d.nodes in
+  match length nodes with
+  | 0 -> is_null d.lhead /\ is_null d.ltail
+  | _ -> is_not_null d.lhead /\ is_not_null d.ltail /\
+         d.lhead ==$ hd nodes /\
+         d.ltail ==$ last nodes
+
+let piece_ghostly_connections (#t:Type) (p:piece t) : GTot Type0 =
+  let nodes = reveal p.pnodes in
+  match length nodes with
+  | 0 -> False
+  | _ -> p.phead ==$ hd nodes /\
+        p.ptail ==$ last nodes
 
 /// Containment properties
 
