@@ -19,12 +19,14 @@ type node (t:Type0) = {
   p: t;
 }
 
+type nodelist t = list (gpointer (node t))
+
 unopteq
 (** Doubly linked list head *)
 type dll (t:Type0) ={
   lhead: gpointer_or_null (node t);
   ltail: gpointer_or_null (node t);
-  nodes: erased (list (gpointer (node t)));
+  nodes: erased (nodelist t);
 }
 
 type nonempty_dll t = (h:dll t{is_not_null h.lhead /\ is_not_null h.ltail})
@@ -113,9 +115,6 @@ unfold let (^+) (#t:Type) (a:t) (b:erased (list t)) : Tot (erased (list t)) = el
 unfold let (+^) (#t:Type) (a:erased (list t)) (b:t) : Tot (erased (list t)) = elift2 append a (hide [b])
 
 /// A "fragment" is a list of "piece"s, such that each piece is an "almost valid" dll
-
-
-type nodelist t = list (gpointer (node t))
 
 unopteq
 type piece t = {
