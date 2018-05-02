@@ -65,9 +65,33 @@ val empty_list: #t:Type -> dll t
 let empty_list #t =
   { lhead = null ; ltail = null ; nodes = hide [] }
 
-/// Containment properties
+/// Ghostly connections
 
 (* TODO *)
+
+/// Containment properties
+
+let node_contained_f (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
+  h0 `contains` n.flink
+let node_contained_b (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
+  h0 `contains` n.blink
+
+let rec nodelist_contained (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
+  match nl with
+  | [] -> True
+  | n :: ns -> h0 `contains` n /\ nodelist_contained h0 ns
+let rec nodelist_contained_f (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
+  match nl with
+  | [] -> True
+  | n :: ns -> node_contained_f h0 (n@h0) /\ nodelist_contained_f h0 ns
+let rec nodelist_contained_b (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
+  match nl with
+  | [] -> True
+  | n :: ns -> node_contained_b h0 (n@h0) /\ nodelist_contained_b h0 ns
+
+(* dll containment is given by its ghostly connections *)
+
+(* piece containment is given by its ghostly connections *)
 
 /// Anti aliasing properties
 
