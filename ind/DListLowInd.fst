@@ -264,6 +264,12 @@ let rec nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 (decrease
       n1 <| n2@h0 /\
       nodelist_conn h0 rest
 
+let dll_conn (#t:Type) (h0:heap) (d:dll t) : GTot Type0 =
+  nodelist_conn h0 (reveal d.nodes)
+
+let piece_conn (#t:Type) (h0:heap) (p:piece t) : GTot Type0 =
+  nodelist_conn h0 (reveal p.pnodes)
+
 let rec fragment_conn (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
   match f with
   | [] -> True
