@@ -28,7 +28,7 @@ type node (t:Type0) = {
   p: t;
 }
 
-abstract
+private
 type nodelist t = list (gpointer (node t))
 
 unopteq
@@ -41,7 +41,7 @@ type dll (t:Type0) ={
 
 type nonempty_dll t = (h:dll t{is_not_null h.lhead /\ is_not_null h.ltail})
 
-unopteq abstract
+unopteq private
 (** An "almost valid" dll *)
 type piece t = {
   phead: gpointer (node t);
@@ -49,7 +49,7 @@ type piece t = {
   pnodes: erased (nodelist t);
 }
 
-abstract
+private
 (** An intermediate for when linked lists are being formed or destroyed *)
 type fragment t = list (piece t)
 
