@@ -316,13 +316,13 @@ let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
          h0 `contains` a /\ h0 `contains` b /\
          node_contained_b h0 (a@h0) /\
          not_aliased00 a b))
-    (ensures (fun h1 _ h2 ->
-         modifies_1 a h1 h2 /\
-         node_valid h2 (a@h2) /\
-         (a@h1).p == (a@h2).p /\
-         (a@h1).blink == (a@h2).blink /\
-         b@h1 == b@h2 /\
-         (a@h2) |> b)) =
+    (ensures (fun h0 _ h1 ->
+         modifies_1 a h0 h1 /\
+         node_valid h1 (a@h1) /\
+         (a@h0).p == (a@h1).p /\
+         (a@h0).blink == (a@h1).blink /\
+         b@h0 == b@h1 /\
+         (a@h1) |> b)) =
   a := { !a with flink = of_non_null b }
 
 let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
@@ -330,32 +330,32 @@ let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
          h0 `contains` a /\ h0 `contains` b /\
          node_contained_f h0 (b@h0) /\
          not_aliased00 a b))
-    (ensures (fun h1 _ h2 ->
-         modifies_1 b h1 h2 /\
-         node_valid h2 (b@h2) /\
-         a@h1 == a@h2 /\
-         (b@h1).p == (b@h2).p /\
-         (b@h1).flink == (b@h2).flink /\
-         a <| (b@h2))) =
+    (ensures (fun h0 _ h1 ->
+         modifies_1 b h0 h1 /\
+         node_valid h1 (b@h1) /\
+         a@h0 == a@h1 /\
+         (b@h0).p == (b@h1).p /\
+         (b@h0).flink == (b@h1).flink /\
+         a <| (b@h1))) =
   b := { !b with blink = of_non_null a }
 
 let ( !=|> ) (#t:Type) (a:gpointer (node t)) : ST unit
     (requires (fun h0 -> h0 `contains` a /\ node_contained_b h0 (a@h0)))
-    (ensures (fun h1 _ h2 ->
-         modifies_1 a h1 h2 /\
-         node_valid h2 (a@h2) /\
-         (a@h1).p == (a@h2).p /\
-         (a@h1).blink == (a@h2).blink /\
-         (a@h2).flink == null)) =
+    (ensures (fun h0 _ h1 ->
+         modifies_1 a h0 h1 /\
+         node_valid h1 (a@h1) /\
+         (a@h0).p == (a@h1).p /\
+         (a@h0).blink == (a@h1).blink /\
+         (a@h1).flink == null)) =
   a := { !a with flink = null }
 
 irreducible
 let ( !<|= ) (#t:Type) (a:gpointer (node t)) : ST unit
     (requires (fun h0 -> h0 `contains` a /\ node_contained_f h0 (a@h0)))
-    (ensures (fun h1 _ h2 ->
-         modifies_1 a h1 h2 /\
-         node_valid h2 (a@h2) /\
-         (a@h1).p == (a@h2).p /\
-         (a@h1).flink == (a@h2).flink /\
-         (a@h2).blink == null)) =
+    (ensures (fun h0 _ h1 ->
+         modifies_1 a h0 h1 /\
+         node_valid h1 (a@h1) /\
+         (a@h0).p == (a@h1).p /\
+         (a@h0).flink == (a@h1).flink /\
+         (a@h1).blink == null)) =
   a := { !a with blink = null }
