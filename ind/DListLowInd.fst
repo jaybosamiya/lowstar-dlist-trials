@@ -114,11 +114,14 @@ unfold let (+^) (#t:Type) (a:erased (list t)) (b:t) : Tot (erased (list t)) = el
 
 /// A "fragment" is a list of "piece"s, such that each piece is an "almost valid" dll
 
+
+type nodelist t = list (gpointer (node t))
+
 unopteq
 type piece t = {
-  phead: gpointer_or_null (node t);
-  ptail: gpointer_or_null (node t);
-  pnodes: erased (list (gpointer (node t)));
+  phead: gpointer (node t);
+  ptail: gpointer (node t);
+  pnodes: erased (nodelist t);
 }
 
 type fragment t = list (piece t)
