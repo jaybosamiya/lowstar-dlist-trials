@@ -8,6 +8,15 @@ open FStar.Ghost
 open Gpointers
 module Mod = FStar.Modifies
 
+/// Convenience operators
+
+unfold let (.[]) (s:list 'a) (n:nat{n < length s}) = index s n
+unfold let (~.) (#t:Type) (a:t) : Tot (erased (list t)) = hide ([a])
+unfold let (^+) (#t:Type) (a:t) (b:erased (list t)) : Tot (erased (list t)) = elift2 Cons (hide a) b
+unfold let (+^) (#t:Type) (a:erased (list t)) (b:t) : Tot (erased (list t)) = elift2 append a (hide [b])
+
+/// All the data structures
+
 unopteq
 (** Node of a doubly linked list *)
 type node (t:Type0) = {
@@ -19,6 +28,7 @@ type node (t:Type0) = {
   p: t;
 }
 
+abstract
 type nodelist t = list (gpointer (node t))
 
 unopteq
@@ -31,9 +41,23 @@ type dll (t:Type0) ={
 
 type nonempty_dll t = (h:dll t{is_not_null h.lhead /\ is_not_null h.ltail})
 
+unopteq abstract
+(** An "almost valid" dll *)
+type piece t = {
+  phead: gpointer (node t);
+  ptail: gpointer (node t);
+  pnodes: erased (nodelist t);
+}
+
+abstract
+(** An intermediate for when linked lists are being formed or destroyed *)
+type fragment t = list (piece t)
+
+/// Some useful empty initializers
+
 (** Initialize an element of a doubly linked list *)
-val empty_entry: #t:Type -> payload:t -> node t
-let empty_entry #t payload =
+val empty_node: #t:Type -> payload:t -> node t
+let empty_node #t payload =
   { flink = null ; blink = null ; p = payload }
 
 (** Initialize a doubly linked list head *)
@@ -41,7 +65,19 @@ val empty_list: #t:Type -> dll t
 let empty_list #t =
   { lhead = null ; ltail = null ; nodes = hide [] }
 
-unfold let (.[]) (s:list 'a) (n:nat{n < length s}) = index s n
+/// Containment properties
+
+(* TODO *)
+
+/// Anti aliasing properties
+
+(* TODO *)
+
+/// Validity properties
+
+(* TODO *)
+
+/// Useful operations on nodes
 
 logic
 let node_anti_alias (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
@@ -110,21 +146,6 @@ let ( !<|= ) (#t:Type) (a:gpointer (node t)) : ST unit
          (a@h2).blink == null)) =
   a := { !a with blink = null }
 
-unfold let (~.) (#t:Type) (a:t) : Tot (erased (list t)) = hide ([a])
-unfold let (^+) (#t:Type) (a:t) (b:erased (list t)) : Tot (erased (list t)) = elift2 Cons (hide a) b
-unfold let (+^) (#t:Type) (a:erased (list t)) (b:t) : Tot (erased (list t)) = elift2 append a (hide [b])
-
-/// A "fragment" is a list of "piece"s, such that each piece is an "almost valid" dll
-
-unopteq
-type piece t = {
-  phead: gpointer (node t);
-  ptail: gpointer (node t);
-  pnodes: erased (nodelist t);
-}
-
-type fragment t = list (piece t)
-
 let rec nodelist_valid (#t:Type) (h0:heap) (nl:nodelist t) =
   match nl with
   | [] -> True
@@ -163,8 +184,6 @@ let rec nodelist_footprint_blink (#t:Type) (h0:heap) (nl:nodelist t{nodelist_val
     Mod.loc_union
       (Mod.loc_buffer (a@h0).blink)
       (nodelist_footprint_blink h0 as)
-
-/// TODO: Maybe decouple "contains" and "@"????
 
 let rec nodelist_anti_alias_r (#t:Type) (h0:heap) (nl:nodelist t) =
   match nl with
