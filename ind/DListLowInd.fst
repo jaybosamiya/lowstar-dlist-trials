@@ -42,13 +42,11 @@ let empty_list #t =
 unfold let (.[]) (s:list 'a) (n:nat{n < length s}) = index s n
 
 logic
-let node_is_valid' (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
+let node_anti_alias (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
   not_aliased n.flink n.blink
 
-// logic
 let node_is_valid (#t:Type) (h0:heap) (n:gpointer (node t)) : GTot Type0 =
-  h0 `contains` n /\
-  node_is_valid' h0 (n@h0)
+  h0 `contains` n /\ node_anti_alias h0 (n@h0)
 
 logic
 let ( |> ) (#t:Type) (a:node t) (b:gpointer (node t)) : GTot Type0 =
