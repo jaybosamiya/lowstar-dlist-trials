@@ -89,10 +89,10 @@ let node_contained_f (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
 let node_contained_b (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
   h0 `contains` n.blink
 
-let rec nodelist_contained (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
+let rec nodelist_contained0 (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
   match nl with
   | [] -> True
-  | n :: ns -> h0 `contains` n /\ nodelist_contained h0 ns
+  | n :: ns -> h0 `contains` n /\ nodelist_contained0 h0 ns
 let rec nodelist_contained_f (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
   match nl with
   | [] -> True
