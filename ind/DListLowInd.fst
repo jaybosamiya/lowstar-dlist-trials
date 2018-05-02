@@ -189,6 +189,29 @@ let dll_aa (#t:Type) (d:dll t) : GTot Type0 =
 let piece_aa (#t:Type) (p:piece t) : GTot Type0 =
   nodelist_aa (reveal p.pnodes)
 
+/// Connectivity properties
+
+let ( |> ) (#t:Type) (a:node t) (b:gpointer (node t)) : GTot Type0 =
+  a.flink ==$ b
+
+let ( <| ) (#t:Type) (a:gpointer (node t)) (b: node t) : GTot Type0 =
+  b.blink ==$ a
+
+let rec nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 (decreases (length nl)) =
+  match nl with
+  | [] -> True
+  | n1 :: rest -> match rest with
+    | [] -> True
+    | n2 :: ns ->
+      n1@h0 |> n2 /\
+      n1 <| n2@h0 /\
+      nodelist_conn h0 rest
+
+let rec fragment_conn (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
+  match f with
+  | [] -> True
+  | p :: ps -> nodelist_conn h0 (reveal p.pnodes) /\ fragment_conn h0 ps
+
 /// Validity properties
 
 (* TODO *)
@@ -201,14 +224,6 @@ let node_anti_alias (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
 
 let node_is_valid (#t:Type) (h0:heap) (n:gpointer (node t)) : GTot Type0 =
   h0 `contains` n /\ node_anti_alias h0 (n@h0)
-
-logic
-let ( |> ) (#t:Type) (a:node t) (b:gpointer (node t)) : GTot Type0 =
-  a.flink ==$ b
-
-logic
-let ( <| ) (#t:Type) (a:gpointer (node t)) (b: node t) : GTot Type0 =
-  b.blink ==$ a
 
 irreducible
 let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
