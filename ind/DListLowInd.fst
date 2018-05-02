@@ -311,12 +311,11 @@ let fragment_valid (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
 
 /// Useful operations on nodes
 
-irreducible
 let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
-         not_aliased00 a b /\
-         not_aliased0 b (a@h0).blink))
+         node_contained_b h0 (a@h0) /\
+         not_aliased00 a b))
     (ensures (fun h1 _ h2 ->
          modifies_1 a h1 h2 /\
          node_valid h2 (a@h2) /\
@@ -326,12 +325,11 @@ let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
          (a@h2) |> b)) =
   a := { !a with flink = of_non_null b }
 
-irreducible
 let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
-         not_aliased00 a b /\
-         not_aliased0 a (b@h0).flink))
+         node_contained_f h0 (b@h0) /\
+         not_aliased00 a b))
     (ensures (fun h1 _ h2 ->
          modifies_1 b h1 h2 /\
          node_valid h2 (b@h2) /\
@@ -341,9 +339,8 @@ let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
          a <| (b@h2))) =
   b := { !b with blink = of_non_null a }
 
-irreducible
 let ( !=|> ) (#t:Type) (a:gpointer (node t)) : ST unit
-    (requires (fun h0 -> h0 `contains` a))
+    (requires (fun h0 -> h0 `contains` a /\ node_contained_b h0 (a@h0)))
     (ensures (fun h1 _ h2 ->
          modifies_1 a h1 h2 /\
          node_valid h2 (a@h2) /\
@@ -354,7 +351,7 @@ let ( !=|> ) (#t:Type) (a:gpointer (node t)) : ST unit
 
 irreducible
 let ( !<|= ) (#t:Type) (a:gpointer (node t)) : ST unit
-    (requires (fun h0 -> h0 `contains` a))
+    (requires (fun h0 -> h0 `contains` a /\ node_contained_f h0 (a@h0)))
     (ensures (fun h1 _ h2 ->
          modifies_1 a h1 h2 /\
          node_valid h2 (a@h2) /\
