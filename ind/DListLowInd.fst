@@ -167,7 +167,27 @@ let piece_fp_b (#t:Type) (h0:heap) (p:piece t) : GTot Mod.loc =
 
 /// Anti aliasing properties
 
-(* TODO *)
+let node_aa (#t:Type) (n:node t) : GTot Type0 =
+  Mod.loc_disjoint (node_fp_f n) (node_fp_b n)
+
+let nodelist_aa_r (#t:Type) (nl:nodelist t) : GTot Type0 =
+  match nl with
+  | [] -> True
+  | n :: ns -> Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl)
+let nodelist_aa_l (#t:Type) (nl:nodelist t) : GTot Type0 =
+  match nl with
+  | [] -> True
+  | _ ->
+    let ns, n = unsnoc nl in
+    Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl)
+let nodelist_aa (#t:Type) (nl:nodelist t) : GTot Type0 =
+  nodelist_aa_l nl /\ nodelist_aa_r nl
+
+let dll_aa (#t:Type) (d:dll t) : GTot Type0 =
+  nodelist_aa (reveal d.nodes)
+
+let piece_aa (#t:Type) (p:piece t) : GTot Type0 =
+  nodelist_aa (reveal p.pnodes)
 
 /// Validity properties
 
