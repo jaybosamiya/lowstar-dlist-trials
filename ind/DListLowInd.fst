@@ -83,6 +83,9 @@ let piece_ghostly_connections (#t:Type) (p:piece t) : GTot Type0 =
         p.ptail ==$ last nodes
 
 /// Containment properties
+///
+/// WARNING: [@] and [^@] require containment to reasonably talk about
+/// what they do.
 
 let node_contained_f (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
   h0 `contains` n.flink
