@@ -206,16 +206,19 @@ let rec fragment_fp_b (#t:Type) (h0:heap) (f:fragment t) : GTot Mod.loc =
 let node_aa (#t:Type) (n:node t) : GTot Type0 =
   Mod.loc_disjoint (node_fp_f n) (node_fp_b n)
 
-let nodelist_aa_r (#t:Type) (nl:nodelist t) : GTot Type0 =
+let rec nodelist_aa_r (#t:Type) (nl:nodelist t) : GTot Type0 =
   match nl with
   | [] -> True
-  | n :: ns -> Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl)
-let nodelist_aa_l (#t:Type) (nl:nodelist t) : GTot Type0 =
+  | n :: ns ->
+    Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl) /\
+    nodelist_aa_r ns
+let rec nodelist_aa_l (#t:Type) (nl:nodelist t) : GTot Type0 (decreases (length nl)) =
   match nl with
   | [] -> True
   | _ ->
     let ns, n = unsnoc nl in
-    Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl)
+    Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl) /\
+    nodelist_aa_l ns
 let nodelist_aa (#t:Type) (nl:nodelist t) : GTot Type0 =
   nodelist_aa_l nl /\ nodelist_aa_r nl
 
