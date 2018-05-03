@@ -20,8 +20,9 @@ let rec lemma_splitAt (#t:Type) (n:nat) (l:list t) :
     | [] -> ()
     | x :: xs -> lemma_splitAt (n-1) xs
 
-let rec lemma_index_splitAt (#t:Type) (i:nat) (l:list t{i < length l}) :
+let rec lemma_index_splitAt (#t:Type) (i:nat) (l:list t) :
   Lemma
+    (requires (i < length l))
     (ensures (let a, b = splitAt i l in
               lemma_splitAt i l;
               hd b == index l i)) =
