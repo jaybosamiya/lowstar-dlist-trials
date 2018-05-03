@@ -30,7 +30,7 @@ let split3 (#t:Type) (l:list t{length l <> 0}) (i:nat{i < length l}) :
   r:(list t * t * list t){
     let a, b, c = r in
     (l == append a (b :: c)) /\
-    (length a = i)} =
+    (length a = i) /\ (length c = (length l - i) - 1)} =
   let a, as = splitAt i l in
   lemma_splitAt i l;
   let b :: c = as in
