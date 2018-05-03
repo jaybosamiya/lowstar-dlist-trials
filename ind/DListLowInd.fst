@@ -361,3 +361,36 @@ let ( !<|= ) (#t:Type) (a:gpointer (node t)) : ST unit
          (a@h0).flink == (a@h1).flink /\
          (a@h1).blink == null)) =
   a := { !a with blink = null }
+
+/// Extraction lemmas: these allow one to use one of the properties
+/// above, which are defined inductively, to get the property at one
+/// of the latter elements of the list.
+
+let rec extract_nodelist_contained (#t:Type) (h0:heap) (nl:nodelist t) (i:nat{i < length nl}) :
+  Lemma
+    (requires (nodelist_contained h0 nl))
+    (ensures (h0 `contains` nl.[i] /\ node_contained h0 (nl.[i]@h0))) =
+  match i with
+  | 0 -> ()
+  | _ -> extract_nodelist_contained h0 (tl nl) (i - 1)
+
+let rec extract_fragment_contained (#t:Type) (h0:heap) (f:fragment t) (i:nat{i < length f}) :
+  Lemma
+    (requires (fragment_contained h0 f))
+    (ensures (piece_contained h0 f.[i])) =
+  match i with
+  | 0 -> ()
+  | _ -> extract_fragment_contained h0 (tl f) (i - 1)
+
+let rec extract_nodelist_aa_r (#t:Type) (nl:nodelist t) (i:nat{i < length nl}) :
+  Lemma
+    (requires (nodelist_aa_r nl))
+    (ensures (
+        let left, n, right = split3 nl i in
+        Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 right))) =
+  match i with
+  | 0 -> ()
+  | _ -> extract_nodelist_aa_r (tl nl) (i - 1)
+
+(* TODO *)
+
