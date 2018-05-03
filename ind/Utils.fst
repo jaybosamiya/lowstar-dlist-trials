@@ -35,3 +35,15 @@ let split3 (#t:Type) (l:list t{length l <> 0}) (i:nat{i < length l}) :
   lemma_splitAt i l;
   let b :: c = as in
   a, b, c
+
+let rec lemma_unsnoc_split3 (#t:Type) (l:list t{length l <> 0}) (i:nat{i < length l}) :
+  Lemma
+    (requires (i <> length l - 1))
+    (ensures (
+        let a, b, c = split3 l i in
+        let xs, x = unsnoc l in
+        let ys, y = unsnoc c in
+        append a (b :: ys) == xs)) =
+  match i with
+  | 0 -> ()
+  | _ -> lemma_unsnoc_split3 (tl l) (i-1)
