@@ -20,6 +20,14 @@ let rec lemma_splitAt (#t:Type) (n:nat) (l:list t) :
     | [] -> ()
     | x :: xs -> lemma_splitAt (n-1) xs
 
+let rec lemma_index_splitAt (#t:Type) (i:nat) (l:list t{i < length l}) :
+  Lemma
+    (ensures (let a, b = splitAt i l in
+              lemma_splitAt i l;
+              hd b == index l i)) =
+  let x :: xs = l in
+  if i = 0 then () else lemma_index_splitAt (i - 1) (tl l)
+
 let unsnoc (#t:Type) (l:list t{length l <> 0}) : (r:(list t * t){l == snoc (fst r) (snd r)}) =
   let l', a = splitAt (length l - 1) l in
   lemma_splitAt (length l - 1) l;
