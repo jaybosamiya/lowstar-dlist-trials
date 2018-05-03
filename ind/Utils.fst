@@ -26,7 +26,7 @@ let unsnoc (#t:Type) (l:list t{length l <> 0}) : (r:(list t * t){l == snoc (fst 
   assert (length a > 0);
   l', hd a
 
-let split3 (#t:Type) (l:list t{length l <> 0}) (i:nat{i < length l}) :
+let split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
   r:(list t * t * list t){
     let a, b, c = r in
     (l == append a (b :: c)) /\
@@ -36,7 +36,7 @@ let split3 (#t:Type) (l:list t{length l <> 0}) (i:nat{i < length l}) :
   let b :: c = as in
   a, b, c
 
-let rec lemma_unsnoc_split3 (#t:Type) (l:list t{length l <> 0}) (i:nat{i < length l}) :
+let rec lemma_unsnoc_split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
   Lemma
     (requires (i <> length l - 1))
     (ensures (
