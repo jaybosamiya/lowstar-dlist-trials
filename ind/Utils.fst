@@ -10,7 +10,7 @@ let snoc (#t:Type) (a:list t) (b:t) : (c:list t{length c = length a + 1}) =
   append a [b]
 
 let rec lemma_splitAt (#t:Type) (n:nat) (l:list t) :
-  Lemma (requires n < length l)
+  Lemma (requires n <= length l)
     (ensures (let a, b = splitAt n l in
               length a = n /\ length b = length l - n /\ append a b == l)) =
   match n with
