@@ -47,6 +47,32 @@ let split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
   let b :: c = as in
   a, b, c
 
+let lemma_split3_leftprefix (#t:Type) (l1:list t) (l2:list t) (i:nat{i < length l1 /\ i < length l2}) :
+  Lemma
+    (requires (fst (splitAt (i+1) l1) == fst (splitAt (i+1) l2)))
+    (ensures (
+        let a1, b1, c1 = split3 l1 i in
+        let a2, b2, c2 = split3 l2 i in
+        a1 == a2 /\ b1 == b2)) =
+  let a1, b1, c1 = split3 l1 i in
+  let a2, b2, c2 = split3 l2 i in
+  append_l_cons b1 c1 a1;
+  append_l_cons b2 c2 a2;
+  // assert ((a1 @ [b1]) @ c1 == l1);
+  // assert ((a2 @ [b2]) @ c2 == l2);
+  let x1, y1 = splitAt (i+1) l1 in
+  let x2, y2 = splitAt (i+1) l2 in
+  lemma_splitAt (i+1) l1;
+  lemma_splitAt (i+1) l2;
+  // assert (x1 @ y1 == (a1 @ [b1]) @ c1);
+  // assert (x2 @ y2 == (a2 @ [b2]) @ c2);
+  append_length_inv_head x1 y1 (append a1 [b1]) c1;
+  append_length_inv_head x2 y2 (append a2 [b2]) c2;
+  // assert (a1 @ [b1] == a2 @ [b2]);
+  append_length_inv_tail a1 [b1] a2 [b2];
+  // assert (a1 == a2 /\ b1 == b2);
+  ()
+
 let rec lemma_unsnoc_split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
   Lemma
     (requires (i <> length l - 1))
