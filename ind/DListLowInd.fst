@@ -210,14 +210,14 @@ let rec nodelist_aa_r (#t:Type) (nl:nodelist t) : GTot Type0 =
   match nl with
   | [] -> True
   | n :: ns ->
-    Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl) /\
+    Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 ns) /\
     nodelist_aa_r ns
 let rec nodelist_aa_l (#t:Type) (nl:nodelist t) : GTot Type0 (decreases (length nl)) =
   match nl with
   | [] -> True
   | _ ->
     let ns, n = unsnoc nl in
-    Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl) /\
+    Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 ns) /\
     nodelist_aa_l ns
 let nodelist_aa (#t:Type) (nl:nodelist t) : GTot Type0 =
   nodelist_aa_l nl /\ nodelist_aa_r nl
