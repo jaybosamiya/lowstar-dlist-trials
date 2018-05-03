@@ -27,7 +27,10 @@ let unsnoc (#t:Type) (l:list t{length l <> 0}) : (r:(list t * t){l == snoc (fst 
   l', hd a
 
 let split3 (#t:Type) (l:list t{length l <> 0}) (i:nat{i < length l}) :
-  r:(list t * t * list t){l == append (Mktuple3?._1 r) (Mktuple3?._2 r :: Mktuple3?._3 r)} =
+  r:(list t * t * list t){
+    let a, b, c = r in
+    (l == append a (b :: c)) /\
+    (length a = i)} =
   let a, as = splitAt i l in
   lemma_splitAt i l;
   let b :: c = as in
