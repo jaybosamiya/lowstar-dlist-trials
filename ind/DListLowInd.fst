@@ -392,5 +392,23 @@ let rec extract_nodelist_aa_r (#t:Type) (nl:nodelist t) (i:nat{i < length nl}) :
   | 0 -> ()
   | _ -> extract_nodelist_aa_r (tl nl) (i - 1)
 
-(* TODO *)
+let rec extract_nodelist_aa_l (#t:Type) (nl:nodelist t) (i:nat{i < length nl}) :
+  Lemma
+    (requires (nodelist_aa_l nl))
+    (ensures (
+        let left, n, right = split3 nl i in
+        Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 left)))
+    (decreases (length nl)) =
+  match nl with
+  | [] -> ()
+  | _ ->
+    if i = length nl - 1 then () else (
+      let a, b = unsnoc nl in
+      let left, n, right = split3 nl i in
+      lemma_unsnoc_split3 nl i;
+      // assert (append (left) (n :: (fst (unsnoc right))) == a);
+      extract_nodelist_aa_l a i;
+      lemma_split3_unsnoc nl i
+    )
 
+(* TODO *)
