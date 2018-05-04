@@ -4,6 +4,7 @@ module Utils
 
 (** For lists *)
 open FStar.List.Tot
+open FStar.List.Pure
 
 let snoc (#t:Type) (a:list t) (b:t) : (c:list t{length c = length a + 1}) =
   append_length a [b];
