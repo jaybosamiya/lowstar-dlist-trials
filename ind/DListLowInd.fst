@@ -530,3 +530,30 @@ let tot_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
   | [p] -> tot_piece_to_dll h0 p
 
 (* The conversions piece<->fragment are trivial *)
+
+/// Fragment merging to a dll
+
+let rec fragment_defragmentable (#t:Type) (h0:heap) (f:fragment t{fragment_valid h0 f}) :
+  GTot Type0 (decreases (length f)) =
+  match f with
+  | [] -> True
+  | p1 :: rest -> match rest with
+    | [] -> True
+    | p2 :: ps ->
+      let a, b = last (reveal p1.pnodes), hd (reveal p2.pnodes) in
+      (a@h0 |> b) /\
+      (a <| b@h0) /\
+      (assert (rest == tl f); // OBSERVE
+         fragment_defragmentable h0 rest)
+
+let tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
+    fragment_defragmentable h0 f
+  }) :
+  Tot (d:dll t{dll_valid h0 d}) =
+  match f with
+  | [] -> empty_list
+  | [p] -> tot_piece_to_dll h0 p
+  | _ ->
+    let p1, p2 = hd f, last f in
+    admit ();
+    empty_list
