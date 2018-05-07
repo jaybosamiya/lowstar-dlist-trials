@@ -554,6 +554,65 @@ let tot_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
 
 (* The conversions piece<->fragment are trivial *)
 
+/// Properties maintained when appending nodelists
+
+let rec nodelist_append_contained (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
+  Lemma
+    (requires (nodelist_contained h0 nl1 /\ nodelist_contained h0 nl2))
+    (ensures (nodelist_contained h0 (append nl1 nl2))) =
+  match nl1 with
+  | [] -> ()
+  | _ :: nl1' -> nodelist_append_contained h0 nl1' nl2
+
+unfold let loc_equiv (a b:Mod.loc) = Mod.loc_includes a b /\ Mod.loc_includes b a
+
+let loc_equiv_trans (a b c:Mod.loc) :
+  Lemma
+    (requires (loc_equiv a b /\ loc_equiv b c))
+    (ensures (loc_equiv a c))
+    [SMTPat (loc_equiv a b);
+     SMTPat (loc_equiv b c);
+     SMTPat (loc_equiv a c)] =
+  Mod.loc_includes_trans a b c;
+  Mod.loc_includes_trans c b a
+
+let rec nodelist_append_fp0 (#t:Type) (nl1 nl2:nodelist t) :
+  Lemma
+    (ensures (
+        loc_equiv
+          (nodelist_fp0 (append nl1 nl2))
+          (Mod.loc_union (nodelist_fp0 nl1) (nodelist_fp0 nl2))))
+    [SMTPat (nodelist_fp0 (append nl1 nl2))] =
+  match nl1 with
+  | [] -> ()
+  | n :: nl1' ->
+    nodelist_append_fp0 nl1' nl2;
+    // assert (loc_equiv
+    //           (nodelist_fp0 (append nl1' nl2))
+    //           (Mod.loc_union (nodelist_fp0 nl1') (nodelist_fp0 nl2)));
+    // assert (loc_equiv
+    //          (nodelist_fp0 nl1)
+    //          (Mod.loc_union (Mod.loc_buffer n) (nodelist_fp0 nl1')));
+    // assert (loc_equiv
+    //           (Mod.loc_union (Mod.loc_union (Mod.loc_buffer n) (nodelist_fp0 nl1')) (nodelist_fp0 nl2))
+    //           (Mod.loc_union (Mod.loc_buffer n) (Mod.loc_union (nodelist_fp0 nl1') (nodelist_fp0 nl2))));
+    // assert (loc_equiv
+    //           (Mod.loc_union (nodelist_fp0 nl1) (nodelist_fp0 nl2))
+    //           (Mod.loc_union (Mod.loc_buffer n) (Mod.loc_union (nodelist_fp0 nl1') (nodelist_fp0 nl2))));
+    // assert (loc_equiv
+    //           (Mod.loc_union (Mod.loc_buffer n) (Mod.loc_union (nodelist_fp0 nl1') (nodelist_fp0 nl2)))
+    //           (Mod.loc_union (Mod.loc_buffer n) (nodelist_fp0 (append nl1' nl2))));
+    loc_equiv_trans
+      (Mod.loc_union (nodelist_fp0 nl1) (nodelist_fp0 nl2))
+      (Mod.loc_union (Mod.loc_buffer n) (Mod.loc_union (nodelist_fp0 nl1') (nodelist_fp0 nl2)))
+      (Mod.loc_union (Mod.loc_buffer n) (nodelist_fp0 (append nl1' nl2)));
+    // assert (loc_equiv
+    //           (Mod.loc_union (nodelist_fp0 nl1) (nodelist_fp0 nl2))
+    //           (Mod.loc_union (Mod.loc_buffer n) (nodelist_fp0 (append nl1' nl2))));
+    ()
+
+
+(* TODO *)
 /// Fragment merging to a dll
 
 let rec fragment_defragmentable (#t:Type) (h0:heap) (f:fragment t{fragment_valid h0 f}) :
