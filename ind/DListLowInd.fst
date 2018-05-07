@@ -442,4 +442,15 @@ let rec extract_fragment_aa_l (#t:Type) (f:fragment t) (i:nat{i < length f}) :
     lemma_split3_unsnoc f i
   )
 
+let rec extract_nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) (i:nat{i < length nl - 1}) :
+  Lemma
+    (requires (nodelist_conn h0 nl))
+    (ensures (
+        (nl.[i]@h0 |> nl.[i+1]) /\
+        (nl.[i] <| nl.[i+1]@h0)))
+    (decreases (length nl)) =
+  match i with
+  | 0 -> ()
+  | _ -> extract_nodelist_conn h0 (tl nl) (i - 1)
+
 (* TODO *)
