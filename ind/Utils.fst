@@ -114,3 +114,12 @@ let rec lemma_split3_unsnoc (#t:Type) (l:list t) (i:nat{i < length l}) :
   lemma_splitAt_shorten_left xs l (length xs) (i+1);
   // assert (fst (splitAt (i+1) xs) == fst (splitAt (i+1) l));
   lemma_split3_leftprefix l xs i
+
+let rec lemma_last_append (#t:Type) (l1 l2:list t) :
+  Lemma
+    (requires (length l2 > 0))
+    (ensures (last (l1 @ l2) == last l2))
+    [SMTPat (last (l1 @ l2))] =
+  match l1 with
+  | [] -> ()
+  | _ :: l1' -> lemma_last_append l1' l2
