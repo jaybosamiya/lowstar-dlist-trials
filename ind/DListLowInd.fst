@@ -1,8 +1,8 @@
 module DListLowInd
 
 open FStar
-open Utils
 open FStar.List.Tot
+open Utils
 open FStar.HyperStack.ST
 open FStar.Ghost
 open Gpointers
