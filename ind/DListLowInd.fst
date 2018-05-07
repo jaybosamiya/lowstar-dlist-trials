@@ -461,6 +461,45 @@ let rec extract_fragment_conn (#t:Type) (h0:heap) (f:fragment t) (i:nat{i < leng
   | 0 -> ()
   | _ -> extract_fragment_conn h0 (tl f) (i - 1)
 
+/// Validity is maintained upon breaking the lists, via (hd :: tl)
+
+let rec nodelist_remains_aa_l (#t:Type) (nl:nodelist t) :
+  Lemma
+    (requires (nodelist_aa_l nl /\ length nl > 0))
+    (ensures (nodelist_aa_l (tl nl)))
+    (decreases (length nl))
+    [SMTPat (nodelist_aa_l (tl nl))] =
+  match nl with
+  | [n] -> ()
+  | _ ->
+    let ns, n = unsnoc nl in
+    let ns', n' = unsnoc (tl nl) in
+    // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 ns));
+    // assert (n' == n);
+    // assert (ns' == tl ns);
+    // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 ns'));
+    nodelist_remains_aa_l ns
+
+let rec fragment_remains_aa_l (#t:Type) (f:fragment t) :
+  Lemma
+    (requires (fragment_aa_l f /\ length f > 0))
+    (ensures (fragment_aa_l (tl f)))
+    (decreases (length f))
+    [SMTPat (fragment_aa_l (tl f))] =
+  match f with
+  | [p] -> ()
+  | _ ->
+    let ps, p = unsnoc f in
+    let ps', p' = unsnoc (tl f) in
+    // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 ps));
+    // assert (p' == p);
+    // assert (ps' == tl ps);
+    // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 ps'));
+    fragment_remains_aa_l ps
+
+(* Rest of the validity predicates are held trivially due to their
+   direction of definition *)
+
 /// Total conversions between fragments, pieces, and dlls
 
 let tot_dll_to_piece (#t:Type) (h0:heap) (d:nonempty_dll t{dll_valid h0 d}) :
