@@ -501,6 +501,19 @@ let rec fragment_remains_aa_l (#t:Type) (f:fragment t) :
 (* Rest of the validity predicates are held trivially due to their
    direction of definition *)
 
+/// Properties maintained upon breaking the list, via unsnoc
+
+let rec unsnoc_nodelist_fp0 (#t:Type) (nl:nodelist t) :
+  Lemma
+    (requires (length nl > 0))
+    (ensures (Mod.loc_includes (nodelist_fp0 nl) (nodelist_fp0 (fst (unsnoc nl)))))
+    [SMTPat (nodelist_fp0 (fst (unsnoc nl)))] =
+  match nl with
+  | [_] -> ()
+  | n :: ns -> unsnoc_nodelist_fp0 ns
+
+(* TODO *)
+
 /// Total conversions between fragments, pieces, and dlls
 
 let tot_dll_to_piece (#t:Type) (h0:heap) (d:nonempty_dll t{dll_valid h0 d}) :
