@@ -460,3 +460,34 @@ let rec extract_fragment_conn (#t:Type) (h0:heap) (f:fragment t) (i:nat{i < leng
   match i with
   | 0 -> ()
   | _ -> extract_fragment_conn h0 (tl f) (i - 1)
+
+/// Total conversions between fragments, pieces, and dlls
+
+let tot_dll_to_piece (#t:Type) (h0:heap) (d:nonempty_dll t{dll_valid h0 d}) :
+  Tot (p:piece t{piece_valid h0 p}) =
+  { phead = d.lhead ; ptail = d.ltail ; pnodes = d.nodes }
+
+let tot_dll_to_fragment (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d}) :
+  Tot (f:fragment t{fragment_valid h0 f}) =
+  if is_not_null d.lhead && is_not_null d.ltail then [tot_dll_to_piece h0 d] else []
+
+let tot_piece_to_dll (#t:Type) (h0:heap) (p:piece t{
+    piece_valid h0 p /\
+    (p.phead@h0).blink == null /\
+    (p.ptail@h0).flink == null}) :
+  Tot (d:dll t{dll_valid h0 d}) =
+  { lhead = p.phead ; ltail = p.ptail ; nodes = p.pnodes }
+
+let tot_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
+    fragment_valid h0 f /\
+    (length f <= 1) /\
+    (length f = 1 ==> (
+        (((hd f).phead@h0).blink == null) /\
+        (((hd f).ptail@h0).flink == null)))
+  }) :
+  Tot (d:dll t{dll_valid h0 d}) =
+  match f with
+  | [] -> empty_list
+  | [p] -> tot_piece_to_dll h0 p
+
+(* The conversions piece<->fragment are trivial *)
