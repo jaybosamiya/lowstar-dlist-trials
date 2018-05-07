@@ -453,4 +453,10 @@ let rec extract_nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) (i:nat{i < len
   | 0 -> ()
   | _ -> extract_nodelist_conn h0 (tl nl) (i - 1)
 
-(* TODO *)
+let rec extract_fragment_conn (#t:Type) (h0:heap) (f:fragment t) (i:nat{i < length f}) :
+  Lemma
+    (requires (fragment_conn h0 f))
+    (ensures (nodelist_conn h0 (reveal (f.[i]).pnodes))) =
+  match i with
+  | 0 -> ()
+  | _ -> extract_fragment_conn h0 (tl f) (i - 1)
