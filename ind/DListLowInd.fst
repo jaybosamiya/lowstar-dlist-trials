@@ -611,8 +611,48 @@ let rec nodelist_append_fp0 (#t:Type) (nl1 nl2:nodelist t) :
     //           (Mod.loc_union (Mod.loc_buffer n) (nodelist_fp0 (append nl1' nl2))));
     ()
 
+let rec nodelist_append_aa_l (#t:Type) (nl1 nl2:nodelist t) :
+  Lemma
+    (requires (nodelist_aa_l nl1 /\ nodelist_aa_l nl2 /\
+               Mod.loc_disjoint (nodelist_fp0 nl1) (nodelist_fp0 nl2)))
+    (ensures (nodelist_aa_l (append nl1 nl2)))
+    (decreases (length nl2)) =
+  match nl2 with
+  | [] -> ()
+  | _ ->
+    let nl2', n = unsnoc nl2 in
+    // assert (nodelist_aa_l nl2');
+    // assert (Mod.loc_includes (nodelist_fp0 nl2) (nodelist_fp0 nl2'));
+    // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl2'));
+    // assert (Mod.loc_includes (nodelist_fp0 nl2) (Mod.loc_buffer n));
+    // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl1));
+    assume (nodelist_fp0 (append nl1 nl2') == Mod.loc_union (nodelist_fp0 nl1) (nodelist_fp0 nl2'));
+    nodelist_append_aa_l nl1 nl2';
+    assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 (append nl1 nl2')));
+    admit ();
+    ()
 
 (* TODO *)
+
+/// Piece merging
+
+let piece_merge (#t:Type) (h0:heap)
+    (p1:piece t{piece_valid h0 p1})
+    (p2:piece t{piece_valid h0 p2}) :
+  Pure (p:piece t{piece_valid h0 p})
+    (requires (let a, b = last (reveal p1.pnodes), hd (reveal p2.pnodes) in
+               (a@h0 |> b) /\
+               (a <| b@h0)))
+    (ensures (fun _ -> True)) =
+  let p = { phead = p1.phead ; ptail = p2.ptail ; pnodes = p1.pnodes ^@^ p2.pnodes } in
+  nodelist_append_contained h0 (reveal p1.pnodes) (reveal p2.pnodes);
+  assume (nodelist_aa_l (reveal p.pnodes));
+  assume (nodelist_aa_r (reveal p.pnodes));
+  assume (piece_conn h0 p);
+  p
+
+(* TODO *)
+
 /// Fragment merging to a dll
 
 let rec fragment_defragmentable (#t:Type) (h0:heap) (f:fragment t{fragment_valid h0 f}) :
