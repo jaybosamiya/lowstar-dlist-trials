@@ -503,14 +503,23 @@ let rec fragment_remains_aa_l (#t:Type) (f:fragment t) :
 
 /// Properties maintained upon breaking the list, via unsnoc
 
-let rec unsnoc_nodelist_fp0 (#t:Type) (nl:nodelist t) :
+let rec fst_unsnoc_nodelist_fp0 (#t:Type) (nl:nodelist t) :
   Lemma
     (requires (length nl > 0))
     (ensures (Mod.loc_includes (nodelist_fp0 nl) (nodelist_fp0 (fst (unsnoc nl)))))
     [SMTPat (nodelist_fp0 (fst (unsnoc nl)))] =
   match nl with
   | [_] -> ()
-  | n :: ns -> unsnoc_nodelist_fp0 ns
+  | n :: ns -> fst_unsnoc_nodelist_fp0 ns
+
+let rec snd_unsnoc_nodelist_fp0 (#t:Type) (nl:nodelist t) :
+  Lemma
+    (requires (length nl > 0))
+    (ensures (Mod.loc_includes (nodelist_fp0 nl) (Mod.loc_buffer (snd (unsnoc nl)))))
+    [SMTPat (Mod.loc_includes (nodelist_fp0 nl) (Mod.loc_buffer (snd (unsnoc nl))))] =
+  match nl with
+  | [_] -> ()
+  | n :: ns -> snd_unsnoc_nodelist_fp0 ns
 
 (* TODO *)
 
