@@ -14,6 +14,7 @@ unfold let (.[]) (s:list 'a) (n:nat{n < length s}) = index s n
 unfold let (~.) (#t:Type) (a:t) : Tot (erased (list t)) = hide ([a])
 unfold let (^+) (#t:Type) (a:t) (b:erased (list t)) : Tot (erased (list t)) = elift2 Cons (hide a) b
 unfold let (+^) (#t:Type) (a:erased (list t)) (b:t) : Tot (erased (list t)) = elift2 append a (hide [b])
+unfold let (^@^) (#t:Type) (a:erased (list t)) (b:erased (list t)) : Tot (erased (list t)) = elift2 append a b
 
 /// All the data structures
 
