@@ -408,4 +408,38 @@ let rec extract_nodelist_aa_l (#t:Type) (nl:nodelist t) (i:nat{i < length nl}) :
     lemma_split3_unsnoc nl i
   )
 
+let rec extract_fragment_aa0 (#t:Type) (f:fragment t) (i:nat{i < length f}) :
+  Lemma
+    (requires (fragment_aa0 f))
+    (ensures (piece_aa f.[i])) =
+  match i with
+  | 0 -> ()
+  | _ -> extract_fragment_aa0 (tl f) (i - 1)
+
+let rec extract_fragment_aa_r (#t:Type) (f:fragment t) (i:nat{i < length f}) :
+  Lemma
+    (requires (fragment_aa_r f))
+    (ensures (
+        let left, p, right = split3 f i in
+        Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 right))) =
+  match i with
+  | 0 -> ()
+  | _ -> extract_fragment_aa_r (tl f) (i - 1)
+
+let rec extract_fragment_aa_l (#t:Type) (f:fragment t) (i:nat{i < length f}) :
+  Lemma
+    (requires (fragment_aa_l f))
+    (ensures (
+        let left, p, right = split3 f i in
+        Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 left)))
+    (decreases (length f)) =
+  if i = length f - 1 then () else (
+    let a, b = unsnoc f in
+    let left, p, right = split3 f i in
+    lemma_unsnoc_split3 f i;
+    // assert (append (left) (n :: (fst (unsnoc right))) == a);
+    extract_fragment_aa_l a i;
+    lemma_split3_unsnoc f i
+  )
+
 (* TODO *)
