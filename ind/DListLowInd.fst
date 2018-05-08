@@ -643,6 +643,14 @@ let rec nodelist_append_aa_r (#t:Type) (nl1 nl2:nodelist t) :
   | [] -> ()
   | _ -> nodelist_append_aa_r (tl nl1) nl2
 
+let nodelist_append_aa (#t:Type) (nl1 nl2:nodelist t) :
+  Lemma
+    (requires (nodelist_aa nl1 /\ nodelist_aa nl2 /\
+               Mod.loc_disjoint (nodelist_fp0 nl1) (nodelist_fp0 nl2)))
+    (ensures (nodelist_aa (append nl1 nl2)))
+    [SMTPat (nodelist_aa (append nl1 nl2))] =
+  nodelist_append_aa_l nl1 nl2; nodelist_append_aa_r nl1 nl2
+
 (* TODO *)
 
 /// Piece merging
