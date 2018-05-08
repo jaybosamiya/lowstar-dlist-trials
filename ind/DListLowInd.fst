@@ -352,7 +352,6 @@ let ( !=|> ) (#t:Type) (a:gpointer (node t)) : ST unit
          (a@h1).flink == null)) =
   a := { !a with flink = null }
 
-irreducible
 let ( !<|= ) (#t:Type) (a:gpointer (node t)) : ST unit
     (requires (fun h0 -> h0 `contains` a /\ node_contained_f h0 (a@h0)))
     (ensures (fun h0 _ h1 ->
