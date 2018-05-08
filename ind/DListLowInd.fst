@@ -506,7 +506,7 @@ let rec fst_unsnoc_nodelist_fp0 (#t:Type) (nl:nodelist t) :
   Lemma
     (requires (length nl > 0))
     (ensures (Mod.loc_includes (nodelist_fp0 nl) (nodelist_fp0 (fst (unsnoc nl)))))
-    [SMTPat (nodelist_fp0 (fst (unsnoc nl)))] =
+    [SMTPat (Mod.loc_includes (nodelist_fp0 nl) (nodelist_fp0 (fst (unsnoc nl))))] =
   match nl with
   | [_] -> ()
   | n :: ns -> fst_unsnoc_nodelist_fp0 ns
