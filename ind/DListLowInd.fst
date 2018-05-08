@@ -647,8 +647,7 @@ let nodelist_append_aa (#t:Type) (nl1 nl2:nodelist t) :
   Lemma
     (requires (nodelist_aa nl1 /\ nodelist_aa nl2 /\
                Mod.loc_disjoint (nodelist_fp0 nl1) (nodelist_fp0 nl2)))
-    (ensures (nodelist_aa (append nl1 nl2)))
-    [SMTPat (nodelist_aa (append nl1 nl2))] =
+    (ensures (nodelist_aa (append nl1 nl2))) =
   nodelist_append_aa_l nl1 nl2; nodelist_append_aa_r nl1 nl2
 
 let rec nodelist_append_conn (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
@@ -672,6 +671,7 @@ let nodelist_append_valid (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
                (last nl1) <| (hd nl2)@h0))
     (ensures (nodelist_valid h0 (append nl1 nl2))) =
   nodelist_append_contained h0 nl1 nl2;
+  nodelist_append_aa nl1 nl2;
   nodelist_append_conn h0 nl1 nl2
 
 /// Piece merging
