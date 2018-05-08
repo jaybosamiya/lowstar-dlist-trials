@@ -128,3 +128,12 @@ let rec lemma_last_append (#t:Type) (l1 l2:list t) :
   match l1 with
   | [] -> ()
   | _ :: l1' -> lemma_last_append l1' l2
+
+let rec lemma_unsnoc_append (#t:Type) (l1 l2:list t) :
+  Lemma
+    (requires (length l2 > 0)) // the [length l2 = 0] is trivial
+    (ensures (fst (unsnoc (l1 @ l2)) == l1 @ (fst (unsnoc l2))))
+    [SMTPat (fst (unsnoc (l1 @ l2)))] =
+  match l1 with
+  | [] -> ()
+  | _ :: l1' -> lemma_unsnoc_append l1' l2
