@@ -664,6 +664,16 @@ let rec nodelist_append_conn (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
   | [_] -> ()
   | _ -> nodelist_append_conn h0 (tl nl1) nl2
 
+let nodelist_append_valid (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
+  Lemma
+    (requires (nodelist_valid h0 nl1 /\ nodelist_valid h0 nl2 /\
+               Mod.loc_disjoint (nodelist_fp0 nl1) (nodelist_fp0 nl2) /\
+               length nl1 > 0 /\ length nl2 > 0 /\ // For "= 0", it is trivially held
+               (last nl1)@h0 |> (hd nl2) /\
+               (last nl1) <| (hd nl2)@h0))
+    (ensures (nodelist_valid h0 (append nl1 nl2))) =
+  nodelist_append_contained h0 nl1 nl2
+
 /// Piece merging
 
 let piece_merge (#t:Type) (h0:heap)
