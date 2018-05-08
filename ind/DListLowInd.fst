@@ -630,8 +630,8 @@ let rec nodelist_append_aa_l (#t:Type) (nl1 nl2:nodelist t) :
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 (append nl1 nl2')));
     lemma_unsnoc_append nl1 nl2;
     // assert (append nl1 nl2' == fst (unsnoc (append nl1 nl2)));
+    // assert (n == snd (unsnoc (append nl1 nl2)));
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 (fst (unsnoc (append nl1 nl2)))));
-    admit ();
     ()
 
 (* TODO *)
