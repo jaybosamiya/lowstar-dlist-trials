@@ -123,8 +123,7 @@ let rec lemma_split3_unsnoc (#t:Type) (l:list t) (i:nat{i < length l}) :
 let rec lemma_last_append (#t:Type) (l1 l2:list t) :
   Lemma
     (requires (length l2 > 0))
-    (ensures (last (l1 @ l2) == last l2))
-    [SMTPat (last (l1 @ l2))] =
+    (ensures (last (l1 @ l2) == last l2)) =
   match l1 with
   | [] -> ()
   | _ :: l1' -> lemma_last_append l1' l2
@@ -132,8 +131,7 @@ let rec lemma_last_append (#t:Type) (l1 l2:list t) :
 let rec lemma_unsnoc_append (#t:Type) (l1 l2:list t) :
   Lemma
     (requires (length l2 > 0)) // the [length l2 = 0] is trivial
-    (ensures (fst (unsnoc (l1 @ l2)) == l1 @ (fst (unsnoc l2))))
-    [SMTPat (fst (unsnoc (l1 @ l2)))] =
+    (ensures (fst (unsnoc (l1 @ l2)) == l1 @ (fst (unsnoc l2)))) =
   match l1 with
   | [] -> ()
   | _ :: l1' -> lemma_unsnoc_append l1' l2
