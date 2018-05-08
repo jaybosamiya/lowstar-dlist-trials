@@ -131,7 +131,10 @@ let rec lemma_last_append (#t:Type) (l1 l2:list t) :
 let rec lemma_unsnoc_append (#t:Type) (l1 l2:list t) :
   Lemma
     (requires (length l2 > 0)) // the [length l2 = 0] is trivial
-    (ensures (fst (unsnoc (l1 @ l2)) == l1 @ (fst (unsnoc l2)))) =
+    (ensures (
+        let as, a = unsnoc (l1 @ l2) in
+        let bs, b = unsnoc l2 in
+        as == l1 @ bs /\ a == b)) =
   match l1 with
   | [] -> ()
   | _ :: l1' -> lemma_unsnoc_append l1' l2
