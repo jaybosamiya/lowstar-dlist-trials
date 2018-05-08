@@ -580,8 +580,7 @@ let rec nodelist_append_fp0 (#t:Type) (nl1 nl2:nodelist t) :
     (ensures (
         loc_equiv
           (nodelist_fp0 (append nl1 nl2))
-          (Mod.loc_union (nodelist_fp0 nl1) (nodelist_fp0 nl2))))
-    [SMTPat (nodelist_fp0 (append nl1 nl2))] =
+          (Mod.loc_union (nodelist_fp0 nl1) (nodelist_fp0 nl2)))) =
   match nl1 with
   | [] -> ()
   | n :: nl1' ->
@@ -620,6 +619,7 @@ let rec nodelist_append_aa_l (#t:Type) (nl1 nl2:nodelist t) :
   | [] -> ()
   | _ ->
     let nl2', n = unsnoc nl2 in
+    nodelist_append_fp0 nl1 nl2';
     // assert (nodelist_aa_l nl2');
     // assert (Mod.loc_includes (nodelist_fp0 nl2) (nodelist_fp0 nl2'));
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl2'));
@@ -641,7 +641,9 @@ let rec nodelist_append_aa_r (#t:Type) (nl1 nl2:nodelist t) :
     (ensures (nodelist_aa_r (append nl1 nl2))) =
   match nl1 with
   | [] -> ()
-  | _ -> nodelist_append_aa_r (tl nl1) nl2
+  | _ ->
+    nodelist_append_fp0 (tl nl1) nl2;
+    nodelist_append_aa_r (tl nl1) nl2
 
 let nodelist_append_aa (#t:Type) (nl1 nl2:nodelist t) :
   Lemma
