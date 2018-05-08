@@ -634,6 +634,15 @@ let rec nodelist_append_aa_l (#t:Type) (nl1 nl2:nodelist t) :
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 (fst (unsnoc (append nl1 nl2)))));
     ()
 
+let rec nodelist_append_aa_r (#t:Type) (nl1 nl2:nodelist t) :
+  Lemma
+    (requires (nodelist_aa_r nl1 /\ nodelist_aa_r nl2 /\
+               Mod.loc_disjoint (nodelist_fp0 nl1) (nodelist_fp0 nl2)))
+    (ensures (nodelist_aa_r (append nl1 nl2))) =
+  match nl1 with
+  | [] -> ()
+  | _ -> nodelist_append_aa_r (tl nl1) nl2
+
 (* TODO *)
 
 /// Piece merging
