@@ -707,14 +707,27 @@ let rec fragment_defragmentable (#t:Type) (h0:heap) (f:fragment t{fragment_valid
       (assert (rest == tl f); // OBSERVE
          fragment_defragmentable h0 rest)
 
-let tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
-    fragment_defragmentable h0 f
+let rec tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
+    fragment_valid h0 f /\
+    fragment_defragmentable h0 f /\
+    (length f > 0 ==>
+     (((hd f).phead@h0).blink == null) /\
+     (((last f).ptail@h0).flink == null))
   }) :
-  Tot (d:dll t{dll_valid h0 d}) =
+  Tot (d:dll t{dll_valid h0 d})
+  (decreases (length f)) =
   match f with
   | [] -> empty_list
   | [p] -> tot_piece_to_dll h0 p
-  | _ ->
-    let p1, p2 = hd f, last f in
-    admit ();
-    empty_list
+  | p1 :: p2 :: ps ->
+    let p = piece_merge h0 p1 p2 in
+    let f' = p :: ps in
+    fragment_remains_aa_l f;
+    fragment_remains_aa_l (tl f);
+    // assert (fragment_valid h0 ps);
+    assume (fragment_valid h0 f');
+    // assert (fragment_defragmentable h0 f');
+    // assert (length f' > 0);
+    // assert (((hd f').phead@h0).blink == null);
+    // assert (((last f').ptail@h0).flink == null);
+    tot_defragmentable_fragment_to_dll h0 f'
