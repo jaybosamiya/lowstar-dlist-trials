@@ -681,19 +681,16 @@ let nodelist_append_valid (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
 let piece_merge (#t:Type) (h0:heap)
     (p1:piece t{piece_valid h0 p1})
     (p2:piece t{piece_valid h0 p2}) :
-  Pure (p:piece t{piece_valid h0 p})
+  Pure (piece t)
     (requires (let a, b = last (reveal p1.pnodes), hd (reveal p2.pnodes) in
                (a@h0 |> b) /\
-               (a <| b@h0)))
-    (ensures (fun _ -> True)) =
+               (a <| b@h0) /\
+               Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p2)))
+    (ensures (fun p -> piece_valid h0 p)) =
   let p = { phead = p1.phead ; ptail = p2.ptail ; pnodes = p1.pnodes ^@^ p2.pnodes } in
-  nodelist_append_contained h0 (reveal p1.pnodes) (reveal p2.pnodes);
-  assume (nodelist_aa_l (reveal p.pnodes));
-  assume (nodelist_aa_r (reveal p.pnodes));
-  assume (piece_conn h0 p);
+  lemma_last_append (reveal p1.pnodes) (reveal p2.pnodes);
+  nodelist_append_valid h0 (reveal p1.pnodes) (reveal p2.pnodes);
   p
-
-(* TODO *)
 
 /// Fragment merging to a dll
 
