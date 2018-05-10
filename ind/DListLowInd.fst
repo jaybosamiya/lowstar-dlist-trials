@@ -702,6 +702,15 @@ let loc_includes_union_r_inv (a b c:Mod.loc) :
   Mod.loc_includes_trans a (Mod.loc_union b c) b;
   Mod.loc_includes_trans a (Mod.loc_union b c) c
 
+let rec extract_fragment_fp0 (#t:Type) (f:fragment t) (i:nat{i < length f}) :
+  Lemma
+    (ensures (Mod.loc_includes
+                (fragment_fp0 f)
+                (piece_fp0 f.[i]))) =
+  match i with
+  | 0 -> ()
+  | _ -> extract_fragment_fp0 (tl f) (i - 1)
+
 let rec fragment_append_aa_l (#t:Type) (f1 f2:fragment t) :
   Lemma
     (requires (fragment_aa_l f1 /\ fragment_aa_l f2 /\
@@ -721,7 +730,11 @@ let rec fragment_append_aa_l (#t:Type) (f1 f2:fragment t) :
     lemma_unsnoc_append f1 f2;
     // assert (append f1 f2' == fst (unsnoc (append f1 f2)));
     // assert (p == snd (unsnoc (append f1 f2)));
-    assume (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 (append f1 f2')));
+    extract_fragment_fp0 f2 (length f2 - 1);
+    unsnoc_is_last f2;
+    // assert (p == f2.[length f2 - 1]);
+    // assert (Mod.loc_includes (fragment_fp0 f2) (piece_fp0 p));
+    // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 (append f1 f2')));
     ()
 
 /// Piece merging
