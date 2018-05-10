@@ -146,3 +146,20 @@ let rec unsnoc_is_last (#t:Type) (l:list t) :
   match l with
   | [_] -> ()
   | _ -> unsnoc_is_last (tl l)
+
+let rec split_using (#t:Type) (l:list t) (x:t) :
+  Ghost (list t * list t)
+    (requires (x `memP` l))
+    (ensures (fun (l1, l2) ->
+         length l2 > 0 /\
+         ~(x `memP` l1) /\ (hd l2 == x) /\
+         append l1 l2 == l)) =
+  match l with
+  | [_] -> [], l
+  | a :: as ->
+    if FStar.StrongExcludedMiddle.strong_excluded_middle (a == x) then (
+      [], l
+    ) else (
+      let l1', l2' = split_using as x in
+      a :: l1', l2'
+    )
