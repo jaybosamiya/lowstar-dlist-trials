@@ -803,6 +803,11 @@ let rec fragment_defragmentable (#t:Type) (h0:heap) (f:fragment t{fragment_valid
       (assert (rest == tl f); // OBSERVE
          fragment_defragmentable h0 rest)
 
+let single_piece_fragment_valid (#t:Type) (h0:heap) (p:piece t) :
+  Lemma
+    (requires (piece_valid h0 p))
+    (ensures (fragment_valid h0 [p])) = ()
+
 let rec tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     fragment_valid h0 f /\
     fragment_defragmentable h0 f /\
@@ -821,7 +826,10 @@ let rec tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     fragment_remains_aa_l f;
     fragment_remains_aa_l (tl f);
     // assert (fragment_valid h0 ps);
-    assume (fragment_aa [p]);
+    // assert (piece_aa p);
+    // assert (piece_valid h0 p);
+    single_piece_fragment_valid h0 p;
+    // assert (fragment_aa [p]);
     // assert (fragment_aa ps);
     assume (Mod.loc_disjoint (fragment_fp0 [p]) (fragment_fp0 ps));
     fragment_append_aa [p] ps;
