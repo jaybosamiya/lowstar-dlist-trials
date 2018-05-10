@@ -676,6 +676,54 @@ let nodelist_append_valid (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
   nodelist_append_aa nl1 nl2;
   nodelist_append_conn h0 nl1 nl2
 
+/// Properties maintained when appending fragments
+
+(* TODO *)
+
+let rec fragment_append_fp0 (#t:Type) (f1 f2:fragment t) :
+  Lemma
+    (ensures (
+        loc_equiv
+          (fragment_fp0 (append f1 f2))
+          (Mod.loc_union (fragment_fp0 f1) (fragment_fp0 f2)))) =
+  match f1 with
+  | [] -> ()
+  | p :: f1' ->
+    fragment_append_fp0 f1' f2;
+    loc_equiv_trans
+      (Mod.loc_union (fragment_fp0 f1) (fragment_fp0 f2))
+      (Mod.loc_union (piece_fp0 p) (Mod.loc_union (fragment_fp0 f1') (fragment_fp0 f2)))
+      (Mod.loc_union (piece_fp0 p) (fragment_fp0 (append f1' f2)))
+
+let loc_includes_union_r_inv (a b c:Mod.loc) :
+  Lemma
+    (requires (Mod.loc_includes a (Mod.loc_union b c)))
+    (ensures (Mod.loc_includes a b /\ Mod.loc_includes a c)) =
+  Mod.loc_includes_trans a (Mod.loc_union b c) b;
+  Mod.loc_includes_trans a (Mod.loc_union b c) c
+
+let rec fragment_append_aa_l (#t:Type) (f1 f2:fragment t) :
+  Lemma
+    (requires (fragment_aa_l f1 /\ fragment_aa_l f2 /\
+               Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
+    (ensures (fragment_aa_l (append f1 f2)))
+    (decreases (length f2)) =
+  match f2 with
+  | [] -> ()
+  | _ ->
+    let f2', p = unsnoc f2 in
+    fragment_append_fp0 f1 f2';
+    fragment_append_fp0 f2' [p];
+    loc_includes_union_r_inv (fragment_fp0 f2) (fragment_fp0 f2') (fragment_fp0 [p]);
+    // assert (Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2'));
+    fragment_append_aa_l f1 f2';
+    // assert (fragment_aa_l (append f1 f2'));
+    lemma_unsnoc_append f1 f2;
+    // assert (append f1 f2' == fst (unsnoc (append f1 f2)));
+    // assert (p == snd (unsnoc (append f1 f2)));
+    assume (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 (append f1 f2')));
+    ()
+
 /// Piece merging
 
 let piece_merge (#t:Type) (h0:heap)
