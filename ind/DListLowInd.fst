@@ -797,6 +797,56 @@ let piece_merge (#t:Type) (h0:heap)
   nodelist_append_valid h0 (reveal p1.pnodes) (reveal p2.pnodes);
   p
 
+let piece_merge_fp0 (#t:Type) (h0:heap)
+    (p1:piece t{piece_valid h0 p1})
+    (p2:piece t{piece_valid h0 p2}) :
+  Lemma
+    (requires (let a, b = last (reveal p1.pnodes), hd (reveal p2.pnodes) in
+               (a@h0 |> b) /\
+               (a <| b@h0) /\
+               Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p2)))
+    (ensures (loc_equiv
+                (piece_fp0 (piece_merge h0 p1 p2))
+                (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2)))) =
+  let p = piece_merge h0 p1 p2 in
+  let n1, n2, n = reveal p1.pnodes, reveal p2.pnodes, reveal p.pnodes in
+  nodelist_append_fp0 n1 n2;
+  // assert (loc_equiv (nodelist_fp0 n) (Mod.loc_union (nodelist_fp0 n1) (nodelist_fp0 n2)));
+  // assert (hd n1 == p1.phead);
+  // assert (Mod.loc_includes (nodelist_fp0 n1) (Mod.loc_buffer p1.phead));
+  // assert (Mod.loc_includes (nodelist_fp0 n) (Mod.loc_buffer p.phead));
+  // assert (last n2 == p2.ptail);
+  extract_nodelist_fp0 n2 (length n2 - 1);
+  unsnoc_is_last n2;
+  // assert (Mod.loc_includes (nodelist_fp0 n2) (Mod.loc_buffer p2.ptail));
+  extract_nodelist_fp0 n (length n - 1);
+  unsnoc_is_last n;
+  // assert (Mod.loc_includes (nodelist_fp0 n) (Mod.loc_buffer p.ptail));
+  loc_includes_union_r_inv (nodelist_fp0 n) (nodelist_fp0 n1) (nodelist_fp0 n2);
+  // assert (Mod.loc_includes (nodelist_fp0 n) (nodelist_fp0 n1));
+  // assert (Mod.loc_includes (nodelist_fp0 n) (nodelist_fp0 n2));
+  //
+  // assert (loc_equiv (nodelist_fp0 n) (piece_fp0 p));
+  extract_nodelist_fp0 n1 (length n1 - 1);
+  unsnoc_is_last n1;
+  // assert (loc_equiv (nodelist_fp0 n1) (piece_fp0 p1));
+  // assert (loc_equiv (nodelist_fp0 n2) (piece_fp0 p2));
+  //
+  // assert (Mod.loc_includes (nodelist_fp0 n) (Mod.loc_union (nodelist_fp0 n1) (nodelist_fp0 n2)));
+  Mod.loc_includes_trans (nodelist_fp0 n) (piece_fp0 p)
+    (Mod.loc_union (nodelist_fp0 n1) (nodelist_fp0 n2));
+  Mod.loc_includes_trans (nodelist_fp0 n)
+    (Mod.loc_union (nodelist_fp0 n1) (nodelist_fp0 n2))
+    (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2));
+  // assert (Mod.loc_includes (piece_fp0 p) (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2)));
+  //
+  // assert (Mod.loc_includes (Mod.loc_union (nodelist_fp0 n1) (nodelist_fp0 n2)) (nodelist_fp0 n));
+  loc_equiv_trans (nodelist_fp0 n) (piece_fp0 p)
+    (Mod.loc_union (nodelist_fp0 n1) (nodelist_fp0 n2));
+  loc_equiv_trans (nodelist_fp0 n)
+    (Mod.loc_union (nodelist_fp0 n1) (nodelist_fp0 n2))
+    (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2))
+
 /// Fragment merging to a dll
 
 let rec fragment_defragmentable (#t:Type) (h0:heap) (f:fragment t{fragment_valid h0 f}) :
