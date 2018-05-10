@@ -821,8 +821,10 @@ let rec tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     fragment_remains_aa_l f;
     fragment_remains_aa_l (tl f);
     // assert (fragment_valid h0 ps);
-    assume (fragment_aa_l f');
-    assume (fragment_aa_r f');
+    assume (fragment_aa [p]);
+    // assert (fragment_aa ps);
+    assume (Mod.loc_disjoint (fragment_fp0 [p]) (fragment_fp0 ps));
+    fragment_append_aa [p] ps;
     // assert (fragment_valid h0 f');
     // assert (fragment_defragmentable h0 f');
     // assert (length f' > 0);
