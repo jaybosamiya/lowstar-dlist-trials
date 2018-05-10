@@ -382,6 +382,15 @@ let rec extract_fragment_contained (#t:Type) (h0:heap) (f:fragment t) (i:nat{i <
   | 0 -> ()
   | _ -> extract_fragment_contained h0 (tl f) (i - 1)
 
+let rec extract_nodelist_fp0 (#t:Type) (nl:nodelist t) (i:nat{i < length nl}) :
+  Lemma
+    (ensures (Mod.loc_includes
+                (nodelist_fp0 nl)
+                (Mod.loc_buffer nl.[i]))) =
+  match i with
+  | 0 -> ()
+  | _ -> extract_nodelist_fp0 (tl nl) (i - 1)
+
 let rec extract_fragment_fp0 (#t:Type) (f:fragment t) (i:nat{i < length f}) :
   Lemma
     (ensures (Mod.loc_includes
