@@ -382,6 +382,15 @@ let rec extract_fragment_contained (#t:Type) (h0:heap) (f:fragment t) (i:nat{i <
   | 0 -> ()
   | _ -> extract_fragment_contained h0 (tl f) (i - 1)
 
+let rec extract_fragment_fp0 (#t:Type) (f:fragment t) (i:nat{i < length f}) :
+  Lemma
+    (ensures (Mod.loc_includes
+                (fragment_fp0 f)
+                (piece_fp0 f.[i]))) =
+  match i with
+  | 0 -> ()
+  | _ -> extract_fragment_fp0 (tl f) (i - 1)
+
 let rec extract_nodelist_aa_r (#t:Type) (nl:nodelist t) (i:nat{i < length nl}) :
   Lemma
     (requires (nodelist_aa_r nl))
@@ -702,14 +711,7 @@ let loc_includes_union_r_inv (a b c:Mod.loc) :
   Mod.loc_includes_trans a (Mod.loc_union b c) b;
   Mod.loc_includes_trans a (Mod.loc_union b c) c
 
-let rec extract_fragment_fp0 (#t:Type) (f:fragment t) (i:nat{i < length f}) :
-  Lemma
-    (ensures (Mod.loc_includes
-                (fragment_fp0 f)
-                (piece_fp0 f.[i]))) =
-  match i with
-  | 0 -> ()
-  | _ -> extract_fragment_fp0 (tl f) (i - 1)
+#set-options "--z3rlimit 10"
 
 let rec fragment_append_aa_l (#t:Type) (f1 f2:fragment t) :
   Lemma
@@ -736,6 +738,8 @@ let rec fragment_append_aa_l (#t:Type) (f1 f2:fragment t) :
     // assert (Mod.loc_includes (fragment_fp0 f2) (piece_fp0 p));
     // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 (append f1 f2')));
     ()
+
+#reset-options
 
 /// Piece merging
 
