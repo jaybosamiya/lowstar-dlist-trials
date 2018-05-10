@@ -138,3 +138,11 @@ let rec lemma_unsnoc_append (#t:Type) (l1 l2:list t) :
   match l1 with
   | [] -> ()
   | _ :: l1' -> lemma_unsnoc_append l1' l2
+
+let rec unsnoc_is_last (#t:Type) (l:list t) :
+  Lemma
+    (requires (length l > 0))
+    (ensures (snd (unsnoc l) == last l /\ snd (unsnoc l) == index l (length l - 1))) =
+  match l with
+  | [_] -> ()
+  | _ -> unsnoc_is_last (tl l)
