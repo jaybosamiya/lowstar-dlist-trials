@@ -704,6 +704,15 @@ let rec fragment_append_fp0 (#t:Type) (f1 f2:fragment t) :
       (Mod.loc_union (piece_fp0 p) (Mod.loc_union (fragment_fp0 f1') (fragment_fp0 f2)))
       (Mod.loc_union (piece_fp0 p) (fragment_fp0 (append f1' f2)))
 
+let rec fragment_append_aa0 (#t:Type) (f1 f2:fragment t) :
+  Lemma
+    (requires (fragment_aa0 f1 /\ fragment_aa0 f2 /\
+               Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
+    (ensures (fragment_aa0 (append f1 f2))) =
+  match f1 with
+  | [] -> ()
+  | _ -> fragment_append_aa0 (tl f1) f2
+
 let loc_includes_union_r_inv (a b c:Mod.loc) :
   Lemma
     (requires (Mod.loc_includes a (Mod.loc_union b c)))
@@ -751,6 +760,15 @@ let rec fragment_append_aa_r (#t:Type) (f1 f2:fragment t) :
   | _ ->
     fragment_append_fp0 (tl f1) f2;
     fragment_append_aa_r (tl f1) f2
+
+let rec fragment_append_aa (#t:Type) (f1 f2:fragment t) :
+  Lemma
+    (requires (fragment_aa f1 /\ fragment_aa f2 /\
+               Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
+    (ensures (fragment_aa (append f1 f2))) =
+  fragment_append_aa0 f1 f2;
+  fragment_append_aa_l f1 f2;
+  fragment_append_aa_r f1 f2
 
 (* TODO *)
 
