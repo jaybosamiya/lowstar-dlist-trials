@@ -741,6 +741,19 @@ let rec fragment_append_aa_l (#t:Type) (f1 f2:fragment t) :
 
 #reset-options
 
+let rec fragment_append_aa_r (#t:Type) (f1 f2:fragment t) :
+  Lemma
+    (requires (fragment_aa_r f1 /\ fragment_aa_r f2 /\
+               Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
+    (ensures (fragment_aa_r (append f1 f2))) =
+  match f1 with
+  | [] -> ()
+  | _ ->
+    fragment_append_fp0 (tl f1) f2;
+    fragment_append_aa_r (tl f1) f2
+
+(* TODO *)
+
 /// Piece merging
 
 let piece_merge (#t:Type) (h0:heap)
