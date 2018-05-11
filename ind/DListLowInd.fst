@@ -1040,7 +1040,8 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     // assert (piece_contained h1 (hd f));
     // assert (fragment_contained h1 f);
     // assert (fragment_aa f);
-    assume (fragment_conn h1 f);
+    assume (nodelist_conn h1 (reveal (f.[0]).pnodes));
+    // assert (fragment_conn h1 f);
     // assert (fragment_valid h1 f);
     fragment_append_valid h1 [p] f;
     // assert (fragment_valid h1 f');
