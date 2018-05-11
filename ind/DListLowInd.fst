@@ -954,6 +954,16 @@ let singleton_dll (#t:Type) (n:gpointer (node t)) :
   !<|= n;
   tot_node_to_dll (ST.get ()) n
 
+/// Creating a piece from a single node.
+
+let tot_node_to_piece (#t:Type) (h0:heap) (n:gpointer (node t)) :
+  Pure (piece t)
+    (requires (
+        (node_valid h0 (n@h0)) /\
+        (h0 `contains` n)))
+    (ensures (fun p -> piece_valid h0 p)) =
+  { phead = n ; ptail = n ; pnodes = ~. n }
+
 /// Testing is a node is within a dll or not
 
 let node_not_in_dll (#t:Type) (h0:heap) (n:gpointer (node t)) (d:dll t) =
