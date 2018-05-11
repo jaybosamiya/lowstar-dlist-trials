@@ -972,3 +972,45 @@ let node_not_in_dll (#t:Type) (h0:heap) (n:gpointer (node t)) (d:dll t) =
   let m2 = Mod.loc_union (dll_fp0 d) (Mod.loc_union
                                         (dll_fp_f h0 d) (dll_fp_b h0 d)) in
   Mod.loc_disjoint m1 m2
+
+/// Now for the actual ST operations that will be exposed :)
+
+#set-options "--z3rlimit 10"
+
+let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
+  ST (dll t)
+    (requires (fun h0 ->
+         (dll_valid h0 d) /\
+         (node_valid h0 (n@h0)) /\
+         (h0 `contains` n) /\
+         (node_not_in_dll h0 n d)))
+    (ensures (fun h0 y h1 ->
+         (* TODO: Write about what is modified *)
+         dll_valid h1 d)) =
+  if is_null d.lhead then (
+    singleton_dll n
+  ) else (
+    let h = d.lhead in
+    //
+    let h0 = ST.get () in
+    !<|= n;
+    n =|> h;
+    n <|= h;
+    let h1 = ST.get () in
+    //
+    let f = tot_dll_to_fragment h0 d in
+    let p = tot_node_to_piece h0 n in
+    let f' = append [p] f in
+    assume (fragment_valid h1 f');
+    // assert (fragment_defragmentable h1 f');
+    // assert (length f' > 0);
+    // assert (is_null ((hd f').phead@h1).blink);
+    assume (is_null ((last f').ptail@h1).flink);
+    let y = tot_defragmentable_fragment_to_dll h1 f' in
+    assert (dll_valid h1 y);
+    admit (); // WOW F*! Why the hell can you not prove this in the
+              // "ensures" if you can prove it here?!?!?!?!?!??!?!?
+    y
+  )
+
+(* TODO *)
