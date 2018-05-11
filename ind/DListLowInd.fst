@@ -1031,7 +1031,10 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     let f = tot_dll_to_fragment h0 d in
     let p = tot_node_to_piece h0 n in
     let f' = append [p] f in
-    assume (fragment_valid h1 f');
+    // assert (fragment_valid h1 [p]);
+    assume (fragment_valid h1 f);
+    fragment_append_valid h1 [p] f;
+    // assert (fragment_valid h1 f');
     // assert (fragment_defragmentable h1 f');
     // assert (length f' > 0);
     // assert (is_null ((hd f').phead@h1).blink);
