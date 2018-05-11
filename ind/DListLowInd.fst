@@ -929,3 +929,27 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
         n1@h0 |> n2 /\ n1 <| n2@h0))
     (ensures (fun f -> fragment_valid h0 f)) =
   admit () (* TODO *)
+
+/// Creating a dll from a single node. Pure and ST forms of this.
+
+let tot_node_to_dll (#t:Type) (h0:heap) (n:gpointer (node t)) :
+  Pure (dll t)
+    (requires (
+        (node_valid h0 (n@h0)) /\
+        (h0 `contains` n) /\
+        ((is_null (n@h0).flink)) /\
+        (is_null (n@h0).blink)))
+    (ensures (fun d -> dll_valid h0 d)) =
+  { lhead = n ; ltail = n ; nodes = ~. n }
+
+let singleton_dll (#t:Type) (n:gpointer (node t)) :
+  ST (dll t)
+    (requires (fun h0 ->
+        (node_valid h0 (n@h0)) /\
+        (h0 `contains` n)))
+    (ensures (fun h0 d h1 ->
+         modifies_1 n h0 h1 /\
+         dll_valid h1 d)) =
+  !=|> n;
+  !<|= n;
+  tot_node_to_dll (ST.get ()) n
