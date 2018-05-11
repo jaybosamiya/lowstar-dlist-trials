@@ -319,7 +319,7 @@ let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
          node_contained_b h0 (a@h0) /\
-         not_aliased00 a b))
+         not_aliased a b))
     (ensures (fun h0 _ h1 ->
          modifies_1 a h0 h1 /\
          h1 `contains` a /\
@@ -334,7 +334,7 @@ let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
          node_contained_f h0 (b@h0) /\
-         not_aliased00 a b))
+         not_aliased a b))
     (ensures (fun h0 _ h1 ->
          modifies_1 b h0 h1 /\
          h1 `contains` b /\
