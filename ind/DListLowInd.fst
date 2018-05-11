@@ -322,6 +322,7 @@ let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
          not_aliased00 a b))
     (ensures (fun h0 _ h1 ->
          modifies_1 a h0 h1 /\
+         h1 `contains` a /\
          node_valid h1 (a@h1) /\
          (a@h0).p == (a@h1).p /\
          (a@h0).blink == (a@h1).blink /\
@@ -336,6 +337,7 @@ let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
          not_aliased00 a b))
     (ensures (fun h0 _ h1 ->
          modifies_1 b h0 h1 /\
+         h1 `contains` b /\
          node_valid h1 (b@h1) /\
          a@h0 == a@h1 /\
          (b@h0).p == (b@h1).p /\
@@ -347,6 +349,7 @@ let ( !=|> ) (#t:Type) (a:gpointer (node t)) : ST unit
     (requires (fun h0 -> h0 `contains` a /\ node_contained_b h0 (a@h0)))
     (ensures (fun h0 _ h1 ->
          modifies_1 a h0 h1 /\
+         h1 `contains` a /\
          node_valid h1 (a@h1) /\
          (a@h0).p == (a@h1).p /\
          (a@h0).blink == (a@h1).blink /\
@@ -357,6 +360,7 @@ let ( !<|= ) (#t:Type) (a:gpointer (node t)) : ST unit
     (requires (fun h0 -> h0 `contains` a /\ node_contained_f h0 (a@h0)))
     (ensures (fun h0 _ h1 ->
          modifies_1 a h0 h1 /\
+         h1 `contains` a /\
          node_valid h1 (a@h1) /\
          (a@h0).p == (a@h1).p /\
          (a@h0).flink == (a@h1).flink /\
