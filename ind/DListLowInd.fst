@@ -705,7 +705,21 @@ let nodelist_append_valid (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
 
 /// Properties maintained when appending fragments
 
-(* TODO *)
+let rec fragment_append_ghostly_connections (#t:Type) (f1 f2:fragment t) :
+  Lemma
+    (requires (fragment_ghostly_connections f1 /\ fragment_ghostly_connections f2))
+    (ensures (fragment_ghostly_connections (append f1 f2))) =
+  match f1 with
+  | [] -> ()
+  | _ -> fragment_append_ghostly_connections (tl f1) f2
+
+let rec fragment_append_contained (#t:Type) (h0:heap) (f1 f2:fragment t) :
+  Lemma
+    (requires (fragment_contained h0 f1 /\ fragment_contained h0 f2))
+    (ensures (fragment_contained h0 (append f1 f2))) =
+  match f1 with
+  | [] -> ()
+  | _ -> fragment_append_contained h0 (tl f1) f2
 
 let rec fragment_append_fp0 (#t:Type) (f1 f2:fragment t) :
   Lemma
@@ -788,7 +802,23 @@ let rec fragment_append_aa (#t:Type) (f1 f2:fragment t) :
   fragment_append_aa_l f1 f2;
   fragment_append_aa_r f1 f2
 
-(* TODO *)
+let rec fragment_append_conn (#t:Type) (h0:heap) (f1 f2:fragment t) :
+  Lemma
+    (requires (fragment_conn h0 f1 /\ fragment_conn h0 f2))
+    (ensures (fragment_conn h0 (append f1 f2))) =
+  match f1 with
+  | [] -> ()
+  | _ -> fragment_append_conn h0 (tl f1) f2
+
+let rec fragment_append_valid (#t:Type) (h0:heap) (f1 f2:fragment t) :
+  Lemma
+    (requires (fragment_valid h0 f1 /\ fragment_valid h0 f2 /\
+               Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
+    (ensures (fragment_valid h0 (append f1 f2))) =
+  fragment_append_ghostly_connections f1 f2;
+  fragment_append_contained h0 f1 f2;
+  fragment_append_aa f1 f2;
+  fragment_append_conn h0 f1 f2
 
 /// Piece merging
 
