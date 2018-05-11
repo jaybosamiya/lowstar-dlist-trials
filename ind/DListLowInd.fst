@@ -954,3 +954,11 @@ let singleton_dll (#t:Type) (n:gpointer (node t)) :
   !<|= n;
   tot_node_to_dll (ST.get ()) n
 
+/// Testing is a node is within a dll or not
+
+let node_not_in_dll (#t:Type) (h0:heap) (n:gpointer (node t)) (d:dll t) =
+  let m1 = Mod.loc_union (Mod.loc_buffer n)
+      (Mod.loc_union (node_fp_b (n@h0)) (node_fp_f (n@h0))) in
+  let m2 = Mod.loc_union (dll_fp0 d) (Mod.loc_union
+                                        (dll_fp_f h0 d) (dll_fp_b h0 d)) in
+  Mod.loc_disjoint m1 m2
