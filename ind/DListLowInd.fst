@@ -910,3 +910,17 @@ let rec tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     // assert (((hd f').phead@h0).blink == null);
     // assert (((last f').ptail@h0).flink == null);
     tot_defragmentable_fragment_to_dll h0 f'
+
+/// Tot dll to fragment, with splitting
+
+let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
+    (n1 n2:gpointer (node t)) :
+  Pure (fragment t)
+    (requires (
+        node_valid h0 (n1@h0) /\
+        node_valid h0 (n2@h0) /\
+        n1 `memP` reveal d.nodes /\
+        n2 `memP` reveal d.nodes /\
+        n1@h0 |> n2 /\ n1 <| n2@h0))
+    (ensures (fun f -> fragment_valid h0 f)) =
+  admit () (* TODO *)
