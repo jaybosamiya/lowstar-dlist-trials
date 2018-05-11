@@ -267,8 +267,8 @@ let rec nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 (decrease
 
 let dll_conn (#t:Type) (h0:heap) (d:dll t) : GTot Type0 =
   nodelist_conn h0 (reveal d.nodes) /\
-  (is_not_null d.lhead ==> (d.lhead@h0).blink == null) /\
-  (is_not_null d.ltail ==> (d.ltail@h0).flink == null)
+  (is_not_null d.lhead ==> is_null (d.lhead@h0).blink) /\
+  (is_not_null d.ltail ==> is_null (d.ltail@h0).flink)
 
 let piece_conn (#t:Type) (h0:heap) (p:piece t) : GTot Type0 =
   nodelist_conn h0 (reveal p.pnodes)
@@ -349,7 +349,7 @@ let ( !=|> ) (#t:Type) (a:gpointer (node t)) : ST unit
          node_valid h1 (a@h1) /\
          (a@h0).p == (a@h1).p /\
          (a@h0).blink == (a@h1).blink /\
-         (a@h1).flink == null)) =
+         is_null (a@h1).flink)) =
   a := { !a with flink = null }
 
 let ( !<|= ) (#t:Type) (a:gpointer (node t)) : ST unit
@@ -359,7 +359,7 @@ let ( !<|= ) (#t:Type) (a:gpointer (node t)) : ST unit
          node_valid h1 (a@h1) /\
          (a@h0).p == (a@h1).p /\
          (a@h0).flink == (a@h1).flink /\
-         (a@h1).blink == null)) =
+         is_null (a@h1).blink)) =
   a := { !a with blink = null }
 
 /// Extraction lemmas: these allow one to use one of the properties
@@ -552,8 +552,8 @@ let tot_dll_to_fragment (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d}) :
 
 let tot_piece_to_dll (#t:Type) (h0:heap) (p:piece t{
     piece_valid h0 p /\
-    (p.phead@h0).blink == null /\
-    (p.ptail@h0).flink == null}) :
+    is_null (p.phead@h0).blink /\
+    is_null (p.ptail@h0).flink}) :
   Tot (d:dll t{dll_valid h0 d}) =
   { lhead = p.phead ; ltail = p.ptail ; nodes = p.pnodes }
 
@@ -561,8 +561,8 @@ let tot_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     fragment_valid h0 f /\
     (length f <= 1) /\
     (length f = 1 ==> (
-        (((hd f).phead@h0).blink == null) /\
-        (((hd f).ptail@h0).flink == null)))
+        (is_null ((hd f).phead@h0).blink) /\
+        (is_null ((hd f).ptail@h0).flink)))
   }) :
   Tot (d:dll t{dll_valid h0 d}) =
   match f with
@@ -875,8 +875,8 @@ let rec tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     fragment_valid h0 f /\
     fragment_defragmentable h0 f /\
     (length f > 0 ==>
-     (((hd f).phead@h0).blink == null) /\
-     (((last f).ptail@h0).flink == null))
+     (is_null ((hd f).phead@h0).blink) /\
+     (is_null ((last f).ptail@h0).flink))
   }) :
   Tot (d:dll t{dll_valid h0 d})
   (decreases (length f)) =
