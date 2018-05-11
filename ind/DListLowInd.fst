@@ -627,6 +627,8 @@ let rec nodelist_append_fp0 (#t:Type) (nl1 nl2:nodelist t) :
     //           (Mod.loc_union (Mod.loc_buffer n) (nodelist_fp0 (append nl1' nl2))));
     ()
 
+#set-options "--z3rlimit 10"
+
 let rec nodelist_append_aa_l (#t:Type) (nl1 nl2:nodelist t) :
   Lemma
     (requires (nodelist_aa_l nl1 /\ nodelist_aa_l nl2 /\
@@ -651,6 +653,8 @@ let rec nodelist_append_aa_l (#t:Type) (nl1 nl2:nodelist t) :
     // assert (n == snd (unsnoc (append nl1 nl2)));
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 (fst (unsnoc (append nl1 nl2)))));
     ()
+
+#reset-options
 
 let rec nodelist_append_aa_r (#t:Type) (nl1 nl2:nodelist t) :
   Lemma
