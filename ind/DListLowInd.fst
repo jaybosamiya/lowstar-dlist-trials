@@ -1032,7 +1032,16 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     let p = tot_node_to_piece h0 n in
     let f' = append [p] f in
     // assert (fragment_valid h1 [p]);
-    assume (fragment_valid h1 f);
+    // assert (fragment_ghostly_connections f);
+    // assert (length f = 1);
+    // assert (h1 `contains` (hd f).phead);
+    assume (h1 `contains` (hd f).ptail);
+    assume (nodelist_contained h1 (reveal (hd f).pnodes));
+    // assert (piece_contained h1 (hd f));
+    // assert (fragment_contained h1 f);
+    // assert (fragment_aa f);
+    assume (fragment_conn h1 f);
+    // assert (fragment_valid h1 f);
     fragment_append_valid h1 [p] f;
     // assert (fragment_valid h1 f');
     // assert (fragment_defragmentable h1 f');
