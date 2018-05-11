@@ -954,11 +954,3 @@ let singleton_dll (#t:Type) (n:gpointer (node t)) :
   !<|= n;
   tot_node_to_dll (ST.get ()) n
 
-/// Checking if a dll is a singleton
-
-let is_singleton (#t:Type) (d:nonempty_dll t) :
-  ST bool
-    (requires (fun h0 -> dll_valid h0 d))
-    (ensures (fun h0 y h1 -> h0 == h1 /\ y <==> length (reveal d.nodes) = 1)) =
-  let h = !d.lhead in
-  is_null h.flink
