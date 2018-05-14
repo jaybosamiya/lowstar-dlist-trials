@@ -1066,9 +1066,8 @@ let piece_remains_valid_b (#t:Type) (h0 h1:heap) (p:piece t) :
     // assert (p.ptail == nodes.[length nodes - 1]);
     // assert (p.ptail@h0 == p.ptail@h1);
     // assert (h1 `contains` p.ptail);
-    assume (nodelist_contained h1 (reveal p.pnodes));
-    assume (nodelist_conn h1 (tl (reveal p.pnodes)));
-    ()
+    // assert (Mod.loc_disjoint (Mod.loc_buffer p.phead) (nodelist_fp0 (tl nodes)));
+    nodelist_remains_valid h0 h1 (Mod.loc_buffer p.phead) (tl nodes)
   ) else ()
 
 (* TODO *)
