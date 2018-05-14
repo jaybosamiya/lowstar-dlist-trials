@@ -1120,12 +1120,12 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     nodelist_remains_valid h0 h0' (Mod.loc_buffer n) (reveal (hd f).pnodes);
     // assert (piece_valid h0' (hd f));
     piece_remains_valid_b h0' h1 (hd f);
-    assume (h1 `contains` (hd f).ptail);
-    assume (nodelist_contained h1 (reveal (hd f).pnodes));
+    // assert (h1 `contains` (hd f).ptail);
+    // assert (nodelist_contained h1 (reveal (hd f).pnodes));
     // assert (piece_contained h1 (hd f));
     // assert (fragment_contained h1 f);
     // assert (fragment_aa f);
-    assume (nodelist_conn h1 (reveal (f.[0]).pnodes));
+    // assert (nodelist_conn h1 (reveal (f.[0]).pnodes));
     // assert (fragment_conn h1 f);
     // assert (fragment_valid h1 f);
     fragment_append_valid h1 [p] f;
