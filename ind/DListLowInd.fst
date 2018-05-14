@@ -549,47 +549,51 @@ let rec snd_unsnoc_nodelist_fp0 (#t:Type) (nl:nodelist t) :
 
 let rec nodelist_includes_r_fp0 (#t:Type) (nl:nodelist t) (i j:nat) :
   Lemma
-    (requires (i < j /\ j < length nl))
+    (requires (i <= j /\ j < length nl))
     (ensures (
         let _, a = splitAt i nl in
         let _, b = splitAt j nl in
         Mod.loc_includes (nodelist_fp0 a) (nodelist_fp0 b)))
     (decreases (j - i)) =
-  let _, a = splitAt i nl in lemma_splitAt i nl;
-  let _, b = splitAt j nl in lemma_splitAt j nl;
-  if i = j - 1 then (
-    List.Pure.Properties.splitAt_assoc i 1 nl;
-    // assert (tl a == b);
-    ()
-  ) else (
-    nodelist_includes_r_fp0 nl i (j - 1);
-    nodelist_includes_r_fp0 nl (j - 1) j;
-    let _, c = splitAt (j - 1) nl in lemma_splitAt (j - 1) nl;
-    Mod.loc_includes_trans (nodelist_fp0 a) (nodelist_fp0 c) (nodelist_fp0 b)
+  if i = j then () else (
+    let _, a = splitAt i nl in lemma_splitAt i nl;
+    let _, b = splitAt j nl in lemma_splitAt j nl;
+    if i = j - 1 then (
+      List.Pure.Properties.splitAt_assoc i 1 nl;
+      // assert (tl a == b);
+      ()
+    ) else (
+      nodelist_includes_r_fp0 nl i (j - 1);
+      nodelist_includes_r_fp0 nl (j - 1) j;
+      let _, c = splitAt (j - 1) nl in lemma_splitAt (j - 1) nl;
+      Mod.loc_includes_trans (nodelist_fp0 a) (nodelist_fp0 c) (nodelist_fp0 b)
+    )
   )
 
 let rec nodelist_includes_l_fp0 (#t:Type) (nl:nodelist t) (i j:nat) :
   Lemma
-    (requires (i < j /\ j < length nl))
+    (requires (i <= j /\ j < length nl))
     (ensures (
        let a, _ = splitAt i nl in
        let b, _ = splitAt j nl in
        Mod.loc_includes (nodelist_fp0 b) (nodelist_fp0 a)))
     (decreases (j - i)) =
-  let a, a' = splitAt i nl in lemma_splitAt i nl;
-  let b, b' = splitAt j nl in lemma_splitAt j nl;
-  if i = j - 1 then (
-    List.Pure.Properties.splitAt_assoc i 1 nl;
-    // assert (b == append a [hd a']);
-    lemma_unsnoc_append a [hd a'];
-    // assert (snd (unsnoc b) == hd a');
-    // assert (fst (unsnoc b) == a);
-    fst_unsnoc_nodelist_fp0 b
-  ) else (
-    nodelist_includes_l_fp0 nl i (j - 1);
-    nodelist_includes_l_fp0 nl (j - 1) j;
-    let c, c' = splitAt (j - 1) nl in lemma_splitAt (j - 1) nl;
-    Mod.loc_includes_trans (nodelist_fp0 b) (nodelist_fp0 c) (nodelist_fp0 a)
+  if i = j then () else (
+    let a, a' = splitAt i nl in lemma_splitAt i nl;
+    let b, b' = splitAt j nl in lemma_splitAt j nl;
+    if i = j - 1 then (
+      List.Pure.Properties.splitAt_assoc i 1 nl;
+      // assert (b == append a [hd a']);
+      lemma_unsnoc_append a [hd a'];
+      // assert (snd (unsnoc b) == hd a');
+      // assert (fst (unsnoc b) == a);
+      fst_unsnoc_nodelist_fp0 b
+    ) else (
+      nodelist_includes_l_fp0 nl i (j - 1);
+      nodelist_includes_l_fp0 nl (j - 1) j;
+      let c, c' = splitAt (j - 1) nl in lemma_splitAt (j - 1) nl;
+      Mod.loc_includes_trans (nodelist_fp0 b) (nodelist_fp0 c) (nodelist_fp0 a)
+    )
   )
 
 (* TODO *)
