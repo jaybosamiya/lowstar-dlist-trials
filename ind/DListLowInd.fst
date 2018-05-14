@@ -1061,7 +1061,7 @@ let piece_remains_valid_b (#t:Type) (h0 h1:heap) (p:piece t) :
         (Mod.modifies (Mod.loc_buffer p.phead) h0 h1) /\
         (h1 `contains` p.phead) /\
         (p.phead@h0).flink == (p.phead@h1).flink))
-    (ensures (piece_valid h1 p)) =
+    (ensures (piece_valid h1 p) /\ (p.ptail@h0).flink == (p.ptail@h1).flink) =
   let nodes = reveal p.pnodes in
   if length nodes > 1 then (
     nodelist_includes_r_fp0 nodes 1 (length nodes - 1);
