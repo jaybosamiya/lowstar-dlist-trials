@@ -106,18 +106,8 @@ let rec nodelist_contained0 (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
   match nl with
   | [] -> True
   | n :: ns -> h0 `contains` n /\ nodelist_contained0 h0 ns
-let rec nodelist_contained_f (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
-  match nl with
-  | [] -> True
-  | n :: ns -> node_contained_f h0 (n@h0) /\ nodelist_contained_f h0 ns
-let rec nodelist_contained_b (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
-  match nl with
-  | [] -> True
-  | n :: ns -> node_contained_b h0 (n@h0) /\ nodelist_contained_b h0 ns
 let rec nodelist_contained (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
-  nodelist_contained0 h0 nl /\
-  nodelist_contained_f h0 nl /\
-  nodelist_contained_b h0 nl
+  nodelist_contained0 h0 nl
 
 let dll_contained (#t:Type) (h0:heap) (d:dll t) : GTot Type0 =
   h0 `contains` d.lhead /\
@@ -374,7 +364,7 @@ let ( !<|= ) (#t:Type) (a:gpointer (node t)) : ST unit
 let rec extract_nodelist_contained (#t:Type) (h0:heap) (nl:nodelist t) (i:nat{i < length nl}) :
   Lemma
     (requires (nodelist_contained h0 nl))
-    (ensures (h0 `contains` nl.[i] /\ node_contained h0 (nl.[i]@h0))) =
+    (ensures (h0 `contains` nl.[i])) =
   match i with
   | 0 -> ()
   | _ -> extract_nodelist_contained h0 (tl nl) (i - 1)
