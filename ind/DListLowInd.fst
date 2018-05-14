@@ -1035,7 +1035,7 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
          (node_not_in_dll h0 n d)))
     (ensures (fun h0 y h1 ->
          (* TODO: Write about what is modified *)
-         dll_valid h1 d)) =
+         dll_valid h1 y)) =
   if is_null d.lhead then (
     singleton_dll n
   ) else (
