@@ -1040,6 +1040,17 @@ let tot_node_to_piece (#t:Type) (h0:heap) (n:gpointer (node t)) :
 /// When outward facing pointers of ends of pieces are modified, they
 /// still remain valid
 
+let rec nodelist_remains_valid (#t:Type) (h0 h1:heap) (loc:Mod.loc) (nl:nodelist t) :
+  Lemma
+    (requires (
+        (nodelist_valid h0 nl) /\
+        (Mod.modifies loc h0 h1) /\
+        (Mod.loc_disjoint loc (nodelist_fp0 nl))))
+    (ensures (nodelist_valid h1 nl)) =
+  match nl with
+  | [] -> ()
+  | _ -> nodelist_remains_valid h0 h1 loc (tl nl)
+
 let piece_remains_valid_b (#t:Type) (h0 h1:heap) (p:piece t) :
   Lemma
     (requires (
