@@ -1037,8 +1037,8 @@ let tot_node_to_piece (#t:Type) (h0:heap) (n:gpointer (node t)) :
     (ensures (fun p -> piece_valid h0 p)) =
   { phead = n ; ptail = n ; pnodes = ~. n }
 
-/// When outward facing pointers of ends of pieces are modified, they
-/// still remain valid
+/// When something unrelated to a nodelist is changed, the nodelist
+/// itself shall remain valid
 
 let rec nodelist_remains_valid (#t:Type) (h0 h1:heap) (loc:Mod.loc) (nl:nodelist t) :
   Lemma
@@ -1050,6 +1050,9 @@ let rec nodelist_remains_valid (#t:Type) (h0 h1:heap) (loc:Mod.loc) (nl:nodelist
   match nl with
   | [] -> ()
   | _ -> nodelist_remains_valid h0 h1 loc (tl nl)
+
+/// When outward facing pointers of ends of pieces are modified, they
+/// still remain valid
 
 let piece_remains_valid_b (#t:Type) (h0 h1:heap) (p:piece t) :
   Lemma
