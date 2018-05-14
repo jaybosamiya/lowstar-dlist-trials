@@ -1058,20 +1058,7 @@ let piece_remains_valid_b (#t:Type) (h0 h1:heap) (p:piece t) :
     assume (nodelist_contained h1 (reveal p.pnodes));
     assume (nodelist_conn h1 (tl (reveal p.pnodes)));
     ()
-  ) else (
-    // assert (h1 `contains` p.ptail);
-    // assert (nodes == [p.phead]);
-    // assert (nodelist_contained0 h1 (reveal p.pnodes));
-    // assert (nodelist_contained_f h0 (reveal p.pnodes));
-    // assert (node_contained_f h0 (p.phead@h0));
-    // assert (node_contained_f h0 (p.phead@h1));
-    assume (node_contained_f h1 (p.phead@h1));
-    // assert (nodelist_contained_f h1 (reveal p.pnodes));
-    assume (node_contained_b h1 (p.phead@h1));
-    // assert (nodelist_contained_b h1 (reveal p.pnodes));
-    // assert (nodelist_conn h1 (tl (reveal p.pnodes)));
-    ()
-  )
+  ) else ()
 
 (* TODO *)
 
