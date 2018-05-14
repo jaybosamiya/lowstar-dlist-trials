@@ -994,6 +994,25 @@ let tot_node_to_piece (#t:Type) (h0:heap) (n:gpointer (node t)) :
     (ensures (fun p -> piece_valid h0 p)) =
   { phead = n ; ptail = n ; pnodes = ~. n }
 
+/// When outward facing pointers of ends of pieces are modified, they
+/// still remain valid
+
+let piece_remains_valid_b (#t:Type) (h0 h1:heap) (p:piece t) :
+  Lemma
+    (requires (
+        (piece_valid h0 p) /\
+        (Mod.modifies (Mod.loc_buffer p.phead) h0 h1) /\
+        (h1 `contains` p.phead) /\
+        (p.phead@h0).flink == (p.phead@h1).flink))
+    (ensures (piece_valid h1 p)) =
+  assume (h1 `contains` p.ptail);
+  assume (nodelist_contained h1 (reveal p.pnodes));
+  assume (nodelist_conn h1 (tl (reveal p.pnodes)));
+  // assert (nodelist_conn h1 (reveal p.pnodes)); // it is able to prove at current point
+  ()
+
+(* TODO *)
+
 /// Testing is a node is within a dll or not
 
 let node_not_in_dll (#t:Type) (h0:heap) (n:gpointer (node t)) (d:dll t) =
@@ -1025,6 +1044,7 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     let h0 = ST.get () in
     !<|= n;
     n =|> h;
+    let h0' = ST.get () in
     n <|= h;
     let h1 = ST.get () in
     //
@@ -1035,6 +1055,8 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     // assert (fragment_ghostly_connections f);
     // assert (length f = 1);
     // assert (h1 `contains` (hd f).phead);
+    assume (piece_valid h0' (hd f));
+    piece_remains_valid_b h0' h1 (hd f);
     assume (h1 `contains` (hd f).ptail);
     assume (nodelist_contained h1 (reveal (hd f).pnodes));
     // assert (piece_contained h1 (hd f));
