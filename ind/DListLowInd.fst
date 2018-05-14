@@ -1058,11 +1058,22 @@ let piece_remains_valid_b (#t:Type) (h0 h1:heap) (p:piece t) :
         (h1 `contains` p.phead) /\
         (p.phead@h0).flink == (p.phead@h1).flink))
     (ensures (piece_valid h1 p)) =
-  assume (h1 `contains` p.ptail);
-  assume (nodelist_contained h1 (reveal p.pnodes));
-  assume (nodelist_conn h1 (tl (reveal p.pnodes)));
-  // assert (nodelist_conn h1 (reveal p.pnodes)); // it is able to prove at current point
-  ()
+  let nodes = reveal p.pnodes in
+  if length nodes > 1 then (
+    nodelist_includes_r_fp0 nodes 1 (length nodes - 1);
+    unsnoc_is_last nodes;
+    // assert (p.ptail == nodes.[length nodes - 1]);
+    // assert (p.ptail@h0 == p.ptail@h1);
+    // assert (h1 `contains` p.ptail);
+    assume (nodelist_contained h1 (reveal p.pnodes));
+    assume (nodelist_conn h1 (tl (reveal p.pnodes)));
+    ()
+  ) else (
+    // assert (h1 `contains` p.ptail);
+    assume (nodelist_contained h1 (reveal p.pnodes));
+    // assert (nodelist_conn h1 (tl (reveal p.pnodes)));
+    ()
+  )
 
 (* TODO *)
 
