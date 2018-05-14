@@ -1117,7 +1117,8 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     // assert (fragment_ghostly_connections f);
     // assert (length f = 1);
     // assert (h1 `contains` (hd f).phead);
-    assume (piece_valid h0' (hd f));
+    nodelist_remains_valid h0 h0' (Mod.loc_buffer n) (reveal (hd f).pnodes);
+    // assert (piece_valid h0' (hd f));
     piece_remains_valid_b h0' h1 (hd f);
     assume (h1 `contains` (hd f).ptail);
     assume (nodelist_contained h1 (reveal (hd f).pnodes));
