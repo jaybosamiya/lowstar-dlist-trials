@@ -1188,6 +1188,8 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     y
   )
 
+#set-options "--z3rlimit 20"
+
 let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
@@ -1222,7 +1224,6 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     y
   )
-
 
 (* TODO *)
 
