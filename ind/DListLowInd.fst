@@ -305,7 +305,7 @@ let fragment_valid (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
 
 /// Useful operations on nodes
 
-let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
+let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
          node_contained_b h0 (a@h0) /\
@@ -320,7 +320,7 @@ let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
          (a@h1) |> b)) =
   a := { !a with flink = of_non_null b }
 
-let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
+let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
          node_contained_f h0 (b@h0) /\
@@ -335,7 +335,7 @@ let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : ST unit
          a <| (b@h1))) =
   b := { !b with blink = of_non_null a }
 
-let ( !=|> ) (#t:Type) (a:gpointer (node t)) : ST unit
+let ( !=|> ) (#t:Type) (a:gpointer (node t)) : StackInline unit
     (requires (fun h0 -> h0 `contains` a /\ node_contained_b h0 (a@h0)))
     (ensures (fun h0 _ h1 ->
          modifies_1 a h0 h1 /\
@@ -346,7 +346,7 @@ let ( !=|> ) (#t:Type) (a:gpointer (node t)) : ST unit
          is_null (a@h1).flink)) =
   a := { !a with flink = null }
 
-let ( !<|= ) (#t:Type) (a:gpointer (node t)) : ST unit
+let ( !<|= ) (#t:Type) (a:gpointer (node t)) : StackInline unit
     (requires (fun h0 -> h0 `contains` a /\ node_contained_f h0 (a@h0)))
     (ensures (fun h0 _ h1 ->
          modifies_1 a h0 h1 /\
@@ -1016,7 +1016,7 @@ let tot_node_to_dll (#t:Type) (h0:heap) (n:gpointer (node t)) :
   { lhead = n ; ltail = n ; nodes = ~. n }
 
 let singleton_dll (#t:Type) (n:gpointer (node t)) :
-  ST (dll t)
+  StackInline (dll t)
     (requires (fun h0 ->
         (node_valid h0 (n@h0)) /\
         (h0 `contains` n)))
@@ -1100,7 +1100,7 @@ let node_not_in_dll (#t:Type) (h0:heap) (n:gpointer (node t)) (d:dll t) =
 #set-options "--z3rlimit 10"
 
 let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
-  ST (dll t)
+  StackInline (dll t)
     (requires (fun h0 ->
          (dll_valid h0 d) /\
          (node_valid h0 (n@h0)) /\
@@ -1149,8 +1149,8 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     // assert (is_null ((last f').ptail@h1).flink);
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     assert (dll_valid h1 y);
-    admit (); // WOW F*! Why the hell can you not prove this in the
-              // "ensures" if you can prove it here?!?!?!?!?!??!?!?
+    // admit (); // Instead of StackInline, if we use ST everywhere in
+    //           // this file, it is unable to prove things
     y
   )
 
