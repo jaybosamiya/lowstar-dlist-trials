@@ -1037,6 +1037,28 @@ let tot_node_to_piece (#t:Type) (h0:heap) (n:gpointer (node t)) :
     (ensures (fun p -> piece_valid h0 p)) =
   { phead = n ; ptail = n ; pnodes = ~. n }
 
+/// If a dll is valid, then both the forward and backward links of
+/// each of the nodes are contained in the heap
+
+let lemma_dll_links_contained (#t:Type) (h0:heap) (d:dll t) (i:nat) :
+  Lemma
+    (requires (
+        (dll_valid h0 d) /\
+        (i < length (reveal d.nodes))))
+    (ensures (
+        let nodes = reveal d.nodes in
+        (h0 `contains` (nodes.[i]@h0).flink) /\
+        (h0 `contains` (nodes.[i]@h0).blink))) =
+  let nl = reveal d.nodes in
+  match nl with
+  | [_] -> ()
+  | _ ->
+    (if i = 0 then () else extract_nodelist_conn h0 nl (i-1));
+    (if i = length nl - 1 then () else extract_nodelist_conn h0 nl i);
+    (if i = 0 then () else extract_nodelist_contained h0 nl (i - 1));
+    (if i = length nl - 1 then () else extract_nodelist_contained h0 nl (i + 1));
+    unsnoc_is_last nl
+
 /// When something unrelated to a XYZ is changed, the XYZ itself shall
 /// remain valid
 
