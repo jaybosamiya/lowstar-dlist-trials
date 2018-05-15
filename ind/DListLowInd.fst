@@ -1084,6 +1084,19 @@ let piece_remains_valid_b (#t:Type) (h0 h1:heap) (p:piece t) :
     nodelist_remains_valid h0 h1 (Mod.loc_buffer p.phead) (tl nodes)
   ) else ()
 
+let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
+  Lemma
+    (requires (
+        (piece_valid h0 p) /\
+        (Mod.modifies (Mod.loc_buffer p.ptail) h0 h1) /\
+        (h1 `contains` p.ptail) /\
+        (p.ptail@h0).blink == (p.ptail@h1).blink))
+    (ensures (piece_valid h1 p) /\ (p.phead@h0).blink == (p.phead@h1).blink) =
+  let nodes = reveal p.pnodes in
+  if length nodes > 1 then (
+    admit ()
+  ) else ()
+
 (* TODO *)
 
 /// Testing is a node is within a dll or not
@@ -1152,6 +1165,39 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     //           // this file, it is unable to prove things
     y
   )
+
+let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
+  StackInline (dll t)
+    (requires (fun h0 ->
+         (dll_valid h0 d) /\
+         (node_valid h0 (n@h0)) /\
+         (h0 `contains` n) /\
+         (node_not_in_dll h0 n d)))
+    (ensures (fun h0 y h1 ->
+         (* TODO: Write about what is modified *)
+         dll_valid h1 y)) =
+  if is_null d.lhead then (
+    singleton_dll n
+  ) else (
+    let t = d.ltail in
+    //
+    let h0 = ST.get () in
+    !=|> n;
+    t <|= n;
+    let h0' = ST.get () in assume (node_contained_b h0' (t@h0'));
+    t =|> n;
+    let h1 = ST.get () in
+    //
+    let f = tot_dll_to_fragment h0 d in
+    let p = tot_node_to_piece h0 n in
+    let f' = append f [p] in
+    piece_remains_valid h0 h0' (Mod.loc_buffer n) (hd f);
+    piece_remains_valid_f h0' h1 (hd f);
+    fragment_append_valid h1 f [p];
+    let y = tot_defragmentable_fragment_to_dll h1 f' in
+    y
+  )
+
 
 (* TODO *)
 
