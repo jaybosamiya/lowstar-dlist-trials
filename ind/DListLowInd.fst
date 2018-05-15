@@ -1148,7 +1148,6 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     // assert (is_null ((last f').ptail@h0').flink);
     // assert (is_null ((last f').ptail@h1).flink);
     let y = tot_defragmentable_fragment_to_dll h1 f' in
-    assert (dll_valid h1 y);
     // admit (); // Instead of StackInline, if we use ST everywhere in
     //           // this file, it is unable to prove things
     y
