@@ -1206,7 +1206,10 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
     let h0 = ST.get () in
     !=|> n;
     t <|= n;
-    let h0' = ST.get () in assume (node_contained_b h0' (t@h0'));
+    let h0' = ST.get () in
+    lemma_dll_links_contained h0 d (length (reveal d.nodes) - 1);
+    unsnoc_is_last (reveal d.nodes);
+    assert (Mod.loc_disjoint (Mod.loc_buffer (t@h0).blink) (Mod.loc_buffer n)); // OBSERVE
     t =|> n;
     let h1 = ST.get () in
     //
