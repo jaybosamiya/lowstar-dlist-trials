@@ -163,3 +163,11 @@ let rec split_using (#t:Type) (l:list t) (x:t) :
       let l1', l2' = split_using as x in
       a :: l1', l2'
     )
+
+let rec index_fst_unsnoc (#t:Type) (l:list t) (i:nat) :
+  Lemma
+    (requires (length l > 0 /\ i < length l - 1))
+    (ensures (index (fst (unsnoc l)) i == index l i)) =
+  match i with
+  | 0 -> ()
+  | _ -> index_fst_unsnoc (tl l) (i - 1)
