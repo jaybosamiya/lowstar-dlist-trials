@@ -1153,8 +1153,18 @@ let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
     unsnoc_is_last nodes;
     // assert (Mod.loc_disjoint (Mod.loc_buffer p.ptail) (nodelist_fp0 (fst (unsnoc nodes))));
     nodelist_remains_valid h0 h1 (Mod.loc_buffer p.ptail) (fst (unsnoc nodes));
-    assume (piece_contained h1 p);
-    assume (piece_conn h1 p);
+    // assert (nodelist_contained h1 (fst (unsnoc nodes)));
+    // assert (h1 `contains` (snd (unsnoc nodes)));
+    nodelist_append_contained h1 (fst (unsnoc nodes)) [snd (unsnoc nodes)];
+    // assert (nodelist_contained h1 (reveal p.pnodes));
+    // assert (piece_contained h1 p);
+    extract_nodelist_conn h0 nodes (length nodes - 2);
+    let nl1, nl2 = fst (unsnoc nodes), [snd (unsnoc nodes)] in
+    assume ((last nl1)@h1 |> (hd nl2));
+    assume ((last nl1) <| (hd nl2)@h1);
+    nodelist_append_conn h1 (fst (unsnoc nodes)) [snd (unsnoc nodes)];
+    // assert (nodelist_conn h1 (reveal p.pnodes));
+    // assert (piece_conn h1 p);
     // assert ((p.phead@h0).blink == (p.phead@h1).blink);
     ()
   ) else ()
