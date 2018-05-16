@@ -1148,7 +1148,8 @@ let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
     (ensures (piece_valid h1 p) /\ (p.phead@h0).blink == (p.phead@h1).blink) =
   let nodes = reveal p.pnodes in
   if length nodes > 1 then (
-    assume (nodelist_valid h0 (fst (unsnoc nodes)));
+    fst_unsnoc_nodelist_valid h0 nodes;
+    // assert (nodelist_valid h0 (fst (unsnoc nodes)));
     unsnoc_is_last nodes;
     // assert (Mod.loc_disjoint (Mod.loc_buffer p.ptail) (nodelist_fp0 (fst (unsnoc nodes))));
     nodelist_remains_valid h0 h1 (Mod.loc_buffer p.ptail) (fst (unsnoc nodes));
