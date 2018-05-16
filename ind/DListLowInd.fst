@@ -1159,9 +1159,8 @@ let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
     // assert (nodelist_contained h1 (reveal p.pnodes));
     // assert (piece_contained h1 p);
     extract_nodelist_conn h0 nodes (length nodes - 2);
-    let nl1, nl2 = fst (unsnoc nodes), [snd (unsnoc nodes)] in
-    assume ((last nl1)@h1 |> (hd nl2));
-    assume ((last nl1) <| (hd nl2)@h1);
+    assume ((last (fst (unsnoc nodes)))@h1 |> (hd [snd (unsnoc nodes)]));
+    assume ((last (fst (unsnoc nodes))) <| (hd [snd (unsnoc nodes)])@h1);
     nodelist_append_conn h1 (fst (unsnoc nodes)) [snd (unsnoc nodes)];
     // assert (nodelist_conn h1 (reveal p.pnodes));
     // assert (piece_conn h1 p);
