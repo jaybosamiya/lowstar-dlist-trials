@@ -533,6 +533,38 @@ let rec snd_unsnoc_nodelist_fp0 (#t:Type) (nl:nodelist t) :
   | [_] -> ()
   | n :: ns -> snd_unsnoc_nodelist_fp0 ns
 
+let rec fst_unsnoc_nodelist_contained (#t:Type) (h0:heap) (nl:nodelist t) :
+  Lemma
+    (requires (nodelist_contained h0 nl /\ length nl > 0))
+    (ensures (nodelist_contained h0 (fst (unsnoc nl)))) =
+  match nl with
+  | [_] -> ()
+  | _ -> fst_unsnoc_nodelist_contained h0 (tl nl)
+
+let rec fst_unsnoc_nodelist_aa (#t:Type) (nl:nodelist t) :
+  Lemma
+    (requires (nodelist_aa nl /\ length nl > 0))
+    (ensures (nodelist_aa (fst (unsnoc nl)))) =
+  match nl with
+  | [_] -> ()
+  | _ -> fst_unsnoc_nodelist_aa (tl nl)
+
+let rec fst_unsnoc_nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) :
+  Lemma
+    (requires (nodelist_conn h0 nl /\ length nl > 0))
+    (ensures (nodelist_conn h0 (fst (unsnoc nl)))) =
+  match nl with
+  | [_] -> ()
+  | _ -> fst_unsnoc_nodelist_conn h0 (tl nl)
+
+let fst_unsnoc_nodelist_valid (#t:Type) (h0:heap) (nl:nodelist t) :
+  Lemma
+    (requires (nodelist_valid h0 nl /\ length nl > 0))
+    (ensures (nodelist_valid h0 (fst (unsnoc nl)))) =
+  fst_unsnoc_nodelist_contained h0 nl;
+  fst_unsnoc_nodelist_aa nl;
+  fst_unsnoc_nodelist_conn h0 nl
+
 (* TODO *)
 
 /// Footprints are included, even upon breaking nodelist even further
