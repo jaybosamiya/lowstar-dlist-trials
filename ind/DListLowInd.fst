@@ -1113,7 +1113,7 @@ let nodelist_split_valid (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
 
 /// Tot dll to fragment, with splitting
 
-#set-options "--z3rlimit 10 --initial_fuel 8 --initial_ifuel 1"
+#set-options "--z3rlimit 20 --initial_fuel 8 --initial_ifuel 1"
 
 let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
     (n1 n2:gpointer (node t)) :
@@ -1132,8 +1132,15 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
   let p2 = { phead = n2 ; ptail = d.ltail ; pnodes = l2 } in
   let f = [p1 ; p2] in
   nodelist_split_valid h0 (reveal l1) (reveal l2);
-  assume (piece_ghostly_connections p1);
-  assume (piece_ghostly_connections p2);
+  unsnoc_is_last (reveal l1);
+  unsnoc_is_last (reveal l2);
+  unsnoc_is_last (reveal d.nodes);
+  // assert (piece_ghostly_connections p1);
+  // assert ( n2 ==$ hd (reveal l2) );
+  lemma_last_append (reveal l1) (reveal l2);
+  // assert ( last (reveal l2) == last (append (reveal l1) (reveal l2)) );
+  // assert ( d.ltail ==$ last (reveal l2) );
+  // assert (piece_ghostly_connections p2);
   // assert (fragment_ghostly_connections f);
   // assert (nodelist_contained h0 (reveal p1.pnodes));
   // assert (nodelist_contained h0 (reveal p2.pnodes));
