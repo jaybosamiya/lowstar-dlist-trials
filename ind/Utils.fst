@@ -180,3 +180,10 @@ let rec index_fst_unsnoc (#t:Type) (l:list t) (i:nat) :
   match i with
   | 0 -> ()
   | _ -> index_fst_unsnoc (tl l) (i - 1)
+
+let rec lemma_splitAt_append (#t:Type) (l1 l2:list t) :
+  Lemma
+    (ensures (splitAt (length l1) (append l1 l2) == (l1, l2))) =
+  match l1 with
+  | [] -> ()
+  | _ -> lemma_splitAt_append (tl l1) l2
