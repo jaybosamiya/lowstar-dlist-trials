@@ -1111,6 +1111,15 @@ let nodelist_split_valid (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
   nodelist_split_aa nl1 nl2;
   nodelist_split_conn h0 nl1 nl2
 
+/// Useful lemma to convert from piece_fp0 to nodelist_fp0 and
+/// vice-versa
+
+let piece_fp0_is_nodelist_fp0 (#t:Type) (p:piece t) : Lemma
+  (requires (piece_ghostly_connections p))
+  (ensures
+     (loc_equiv (piece_fp0 p) (nodelist_fp0 (reveal p.pnodes)))) =
+  unsnoc_is_last (reveal p.pnodes)
+
 /// Tot dll to fragment, with splitting
 
 #set-options "--z3rlimit 20 --initial_fuel 8 --initial_ifuel 1"
@@ -1147,7 +1156,9 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
   // assert (fragment_contained h0 f);
   // assert (nodelist_aa (reveal p1.pnodes));
   // assert (nodelist_aa (reveal p2.pnodes));
-  assume (Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p2));
+  piece_fp0_is_nodelist_fp0 p1;
+  piece_fp0_is_nodelist_fp0 p2;
+  // assert (Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p2));
   // assert (fragment_aa f);
   // assert (nodelist_conn h0 (reveal p1.pnodes));
   // assert (nodelist_conn h0 (reveal p2.pnodes));
