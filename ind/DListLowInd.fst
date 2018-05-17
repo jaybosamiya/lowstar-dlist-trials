@@ -1183,8 +1183,6 @@ let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
     ()
   ) else ()
 
-(* TODO *)
-
 #reset-options
 
 /// Testing is a node is within a dll or not
