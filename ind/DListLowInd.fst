@@ -1267,7 +1267,7 @@ let piece_remains_valid (#t:Type) (h0 h1:heap) (loc:Mod.loc) (p:piece t) :
 /// When outward facing pointers of ends of pieces are modified, they
 /// still remain valid
 
-#set-options "--z3rlimit 10"
+#set-options "--z3rlimit 20"
 
 let piece_remains_valid_b (#t:Type) (h0 h1:heap) (p:piece t) :
   Lemma
