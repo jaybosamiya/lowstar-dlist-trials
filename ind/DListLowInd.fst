@@ -981,6 +981,8 @@ let single_piece_fragment_valid (#t:Type) (h0:heap) (p:piece t) :
     (requires (piece_valid h0 p))
     (ensures (fragment_valid h0 [p])) = ()
 
+#set-options "--initial_ifuel 2"
+
 let rec tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     fragment_valid h0 f /\
     fragment_defragmentable h0 f /\
@@ -1020,6 +1022,8 @@ let rec tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     // assert (((hd f').phead@h0).blink == null);
     // assert (((last f').ptail@h0).flink == null);
     tot_defragmentable_fragment_to_dll h0 f'
+
+#reset-options
 
 /// Properties of nodelists maintained upon splitting nodelists
 
