@@ -1105,18 +1105,19 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
   let p1 = { phead = d.lhead ; ptail = n1 ; pnodes = l1 } in
   let p2 = { phead = n2 ; ptail = d.ltail ; pnodes = l2 } in
   let f = [p1 ; p2] in
+  nodelist_split_valid h0 (reveal l1) (reveal l2);
   assume (piece_ghostly_connections p1);
   assume (piece_ghostly_connections p2);
   // assert (fragment_ghostly_connections f);
-  assume (nodelist_contained h0 (reveal p1.pnodes));
-  assume (nodelist_contained h0 (reveal p2.pnodes));
+  // assert (nodelist_contained h0 (reveal p1.pnodes));
+  // assert (nodelist_contained h0 (reveal p2.pnodes));
   // assert (fragment_contained h0 f);
-  assume (nodelist_aa (reveal p1.pnodes));
-  assume (nodelist_aa (reveal p2.pnodes));
+  // assert (nodelist_aa (reveal p1.pnodes));
+  // assert (nodelist_aa (reveal p2.pnodes));
   assume (Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p2));
   // assert (fragment_aa f);
-  assume (nodelist_conn h0 (reveal p1.pnodes));
-  assume (nodelist_conn h0 (reveal p2.pnodes));
+  // assert (nodelist_conn h0 (reveal p1.pnodes));
+  // assert (nodelist_conn h0 (reveal p2.pnodes));
   // assert (fragment_conn h0 f);
   f
 
