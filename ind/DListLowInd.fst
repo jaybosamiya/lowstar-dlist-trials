@@ -1033,7 +1033,14 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
         n2 `memP` reveal d.nodes /\
         n1@h0 |> n2 /\ n1 <| n2@h0))
     (ensures (fun f -> fragment_valid h0 f)) =
-  admit () (* TODO *)
+  let split_nodes = elift2_p split_using d.nodes (hide n2) in
+  lemma_split_using (reveal d.nodes) n2;
+  let l1, l2 = (elift1 fst split_nodes), (elift1 snd split_nodes) in
+  let p1 = { phead = d.lhead ; ptail = n1 ; pnodes = l1 } in
+  let p2 = { phead = n2 ; ptail = d.ltail ; pnodes = l2 } in
+  let f = [p1 ; p2] in
+  assume (fragment_valid h0 f);
+  f
 
 /// Creating a dll from a single node. Pure and ST forms of this.
 
