@@ -187,3 +187,14 @@ let rec lemma_splitAt_append (#t:Type) (l1 l2:list t) :
   match l1 with
   | [] -> ()
   | _ -> lemma_splitAt_append (tl l1) l2
+
+let rec index_of (#t:Type) (l:list t) (x:t{x `memP` l}) :
+  GTot (i:nat{i < length l /\ index l i == x}) =
+  match l with
+  | [_] -> 0
+  | a :: as ->
+    if FStar.StrongExcludedMiddle.strong_excluded_middle (a == x) then (
+      0
+    ) else (
+      1 + index_of as x
+    )
