@@ -1045,11 +1045,11 @@ let rec nodelist_split_fp0 (#t:Type) (nl1 nl2:nodelist t) :
       // assert (length nl2 > 0);
       nodelist_split_fp0 (tl nl1) nl2;
       append_length nl1 nl2;
-      // assert (snd (splitAt 1 (append nl1 nl2)) == tl (append nl1 nl2));
-      // assert (snd (splitAt 1 (append nl1 nl2)) == append (tl nl1) nl2);
-      // nodelist_includes_r_fp0 (append nl1 nl2) 1 (length nl1); // <------------ fix this?
-      // nodelist_includes_l_fp0 (tl (append nl1 nl2)) 0 (length nl1 - 1); // <--------------- fix this?
-      assume (Mod.loc_includes (nodelist_fp0 (tl (append nl1 nl2))) (nodelist_fp0 nl2));
+      nodelist_includes_r_fp0 (tl (append nl1 nl2)) 0 (length nl1 - 1);
+      // assert (snd (splitAt 0 (tl (append nl1 nl2))) == tl (append nl1 nl2));
+      // assert (snd (splitAt (length nl1 - 1) (tl (append nl1 nl2))) == snd (splitAt (length nl1) (append nl1 nl2)));
+      assume (snd (splitAt (length nl1) (append nl1 nl2)) == nl2);
+      // assert (Mod.loc_includes (nodelist_fp0 (tl (append nl1 nl2))) (nodelist_fp0 nl2));
       // assert (Mod.loc_disjoint (Mod.loc_buffer (hd nl1)) (nodelist_fp0 (tl (append nl1 nl2))));
       // assert (Mod.loc_disjoint (Mod.loc_buffer (hd nl1)) (nodelist_fp0 nl2));
       // assert (Mod.loc_disjoint (nodelist_fp0 (tl nl1)) (nodelist_fp0 nl2));
