@@ -1071,7 +1071,18 @@ let rec nodelist_split_aa_l (#t:Type) (nl1 nl2:nodelist t) :
   | [] -> ()
   | _ ->
     let nl2', n = unsnoc nl2 in
-    admit ()
+    lemma_unsnoc_append nl1 nl2;
+    // assert (nodelist_aa_l (append nl1 nl2));
+    // assert (nodelist_aa_l (append nl1 nl2'));
+    nodelist_split_aa_l nl1 nl2';
+    // assert (nodelist_aa_l nl2');
+    // assert (n == snd (unsnoc (append nl1 nl2)));
+    // assert (n == snd (unsnoc nl2));
+    nodelist_append_fp0 nl1 nl2';
+    // assert (Mod.loc_includes (nodelist_fp0 (append nl1 nl2')) (nodelist_fp0 nl2'));
+    // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl2'));
+    // assert (nodelist_aa_l nl2);
+    ()
 
 let rec nodelist_split_aa_r (#t:Type) (nl1 nl2:nodelist t) :
   Lemma
