@@ -1036,9 +1036,26 @@ let rec nodelist_split_fp0 (#t:Type) (nl1 nl2:nodelist t) :
     (requires (nodelist_aa_r (append nl1 nl2)))
     (ensures (Mod.loc_disjoint (nodelist_fp0 nl1) (nodelist_fp0 nl2))) =
   match nl1 with
-  | [] -> ()
-  | _ :: nl1' ->
-    admit ()
+  | [] | [_] -> ()
+  | _ ->
+    match nl2 with
+    | [] -> ()
+    | _ ->
+      // assert (length nl1 > 1);
+      // assert (length nl2 > 0);
+      nodelist_split_fp0 (tl nl1) nl2;
+      append_length nl1 nl2;
+      // assert (snd (splitAt 1 (append nl1 nl2)) == tl (append nl1 nl2));
+      // assert (snd (splitAt 1 (append nl1 nl2)) == append (tl nl1) nl2);
+      // nodelist_includes_r_fp0 (append nl1 nl2) 1 (length nl1); // <------------ fix this?
+      // nodelist_includes_l_fp0 (tl (append nl1 nl2)) 0 (length nl1 - 1); // <--------------- fix this?
+      assume (Mod.loc_includes (nodelist_fp0 (tl (append nl1 nl2))) (nodelist_fp0 nl2));
+      // assert (Mod.loc_disjoint (Mod.loc_buffer (hd nl1)) (nodelist_fp0 (tl (append nl1 nl2))));
+      // assert (Mod.loc_disjoint (Mod.loc_buffer (hd nl1)) (nodelist_fp0 nl2));
+      // assert (Mod.loc_disjoint (nodelist_fp0 (tl nl1)) (nodelist_fp0 nl2));
+      Mod.loc_disjoint_union_r (nodelist_fp0 nl2) (Mod.loc_buffer (hd nl1)) (nodelist_fp0 (tl nl1));
+      // assert (Mod.loc_disjoint (Mod.loc_union (Mod.loc_buffer (hd nl1)) (nodelist_fp0 (tl nl1))) (nodelist_fp0 nl2));
+      ()
 
 let rec nodelist_split_aa_l (#t:Type) (nl1 nl2:nodelist t) :
   Lemma
