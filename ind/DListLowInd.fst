@@ -1021,6 +1021,70 @@ let rec tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     // assert (((last f').ptail@h0).flink == null);
     tot_defragmentable_fragment_to_dll h0 f'
 
+/// Properties of nodelists maintained upon splitting nodelists
+
+let rec nodelist_split_contained (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
+  Lemma
+    (requires (nodelist_contained h0 (append nl1 nl2)))
+    (ensures (nodelist_contained h0 nl1 /\ nodelist_contained h0 nl2)) =
+  match nl1 with
+  | [] -> ()
+  | _ :: nl1' -> nodelist_split_contained h0 nl1' nl2
+
+let nodelist_split_fp0 = nodelist_append_fp0 // since it is just an equivalence
+
+let rec nodelist_split_aa_l (#t:Type) (nl1 nl2:nodelist t) :
+  Lemma
+    (requires (nodelist_aa_l (append nl1 nl2)))
+    (ensures (nodelist_aa_l nl1 /\ nodelist_aa_l nl2 /\
+               Mod.loc_disjoint (nodelist_fp0 nl1) (nodelist_fp0 nl2)))
+    (decreases (length nl2)) =
+  match nl2 with
+  | [] -> ()
+  | _ ->
+    admit ()
+
+let rec nodelist_split_aa_r (#t:Type) (nl1 nl2:nodelist t) :
+  Lemma
+    (requires (nodelist_aa_r (append nl1 nl2)))
+    (ensures (nodelist_aa_r nl1 /\ nodelist_aa_r nl2 /\
+               Mod.loc_disjoint (nodelist_fp0 nl1) (nodelist_fp0 nl2))) =
+  match nl1 with
+  | [] -> ()
+  | _ ->
+    admit ()
+
+let nodelist_split_aa (#t:Type) (nl1 nl2:nodelist t) :
+  Lemma
+    (requires (nodelist_aa (append nl1 nl2)))
+    (ensures (nodelist_aa nl1 /\ nodelist_aa nl2 /\
+               Mod.loc_disjoint (nodelist_fp0 nl1) (nodelist_fp0 nl2))) =
+  nodelist_split_aa_l nl1 nl2; nodelist_split_aa_r nl1 nl2
+
+let rec nodelist_split_conn (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
+  Lemma
+    (requires (
+        (nodelist_conn h0 (append nl1 nl2)) /\
+        length nl1 > 0 /\ length nl2 > 0)) // For "= 0", it is trivially held
+    (ensures (nodelist_conn h0 nl1 /\ nodelist_conn h0 nl2 /\
+               (last nl1)@h0 |> (hd nl2) /\
+               (last nl1) <| (hd nl2)@h0)) =
+  match nl1 with
+  | [_] -> ()
+  | _ -> nodelist_split_conn h0 (tl nl1) nl2
+
+let nodelist_split_valid (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
+  Lemma
+    (requires (nodelist_valid h0 (append nl1 nl2) /\
+               length nl1 > 0 /\ length nl2 > 0)) // For "= 0", it is trivially held
+    (ensures (nodelist_valid h0 nl1 /\ nodelist_valid h0 nl2 /\
+              Mod.loc_disjoint (nodelist_fp0 nl1) (nodelist_fp0 nl2) /\
+               (last nl1)@h0 |> (hd nl2) /\
+               (last nl1) <| (hd nl2)@h0)) =
+  nodelist_split_contained h0 nl1 nl2;
+  nodelist_split_aa nl1 nl2;
+  nodelist_split_conn h0 nl1 nl2
+
 /// Tot dll to fragment, with splitting
 
 #set-options "--z3rlimit 10 --initial_fuel 8 --initial_ifuel 1"
