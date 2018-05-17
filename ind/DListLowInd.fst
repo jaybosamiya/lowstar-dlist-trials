@@ -1023,6 +1023,8 @@ let rec tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
 
 /// Tot dll to fragment, with splitting
 
+#set-options "--z3rlimit 10 --initial_fuel 8 --initial_ifuel 1"
+
 let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
     (n1 n2:gpointer (node t)) :
   Pure (fragment t)
@@ -1039,8 +1041,22 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
   let p1 = { phead = d.lhead ; ptail = n1 ; pnodes = l1 } in
   let p2 = { phead = n2 ; ptail = d.ltail ; pnodes = l2 } in
   let f = [p1 ; p2] in
-  assume (fragment_valid h0 f);
+  assume (piece_ghostly_connections p1);
+  assume (piece_ghostly_connections p2);
+  // assert (fragment_ghostly_connections f);
+  assume (piece_contained h0 p1);
+  assume (piece_contained h0 p2);
+  // assert (fragment_contained h0 f);
+  assume (piece_aa p1);
+  assume (piece_aa p2);
+  assume (Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p2));
+  // assert (fragment_aa f);
+  assume (nodelist_conn h0 (reveal p1.pnodes));
+  assume (nodelist_conn h0 (reveal p2.pnodes));
+  // assert (fragment_conn h0 f);
   f
+
+#reset-options
 
 /// Creating a dll from a single node. Pure and ST forms of this.
 
