@@ -1044,11 +1044,11 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
   assume (piece_ghostly_connections p1);
   assume (piece_ghostly_connections p2);
   // assert (fragment_ghostly_connections f);
-  assume (piece_contained h0 p1);
-  assume (piece_contained h0 p2);
+  assume (nodelist_contained h0 (reveal p1.pnodes));
+  assume (nodelist_contained h0 (reveal p2.pnodes));
   // assert (fragment_contained h0 f);
-  assume (piece_aa p1);
-  assume (piece_aa p2);
+  assume (nodelist_aa (reveal p1.pnodes));
+  assume (nodelist_aa (reveal p2.pnodes));
   assume (Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p2));
   // assert (fragment_aa f);
   assume (nodelist_conn h0 (reveal p1.pnodes));
