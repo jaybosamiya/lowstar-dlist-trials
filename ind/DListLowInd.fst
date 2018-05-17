@@ -1091,7 +1091,8 @@ let rec nodelist_split_aa_r (#t:Type) (nl1 nl2:nodelist t) :
   match nl1 with
   | [] -> ()
   | _ ->
-    admit ()
+    nodelist_split_aa_r (tl nl1) nl2;
+    nodelist_append_fp0 (tl nl1) nl2
 
 let nodelist_split_aa (#t:Type) (nl1 nl2:nodelist t) :
   Lemma
