@@ -1033,22 +1033,27 @@ let rec nodelist_split_contained (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
 
 let nodelist_split_fp0 = nodelist_append_fp0 // since it is just an equivalence
 
+let rec nodelist_split_aa_disjoint (#t:Type) (nl1 nl2:nodelist t) :
+  Lemma
+    (requires (nodelist_aa_r (append nl1 nl2)))
+    (ensures (Mod.loc_disjoint (nodelist_fp0 nl1) (nodelist_fp0 nl2))) =
+  admit ()
+
 let rec nodelist_split_aa_l (#t:Type) (nl1 nl2:nodelist t) :
   Lemma
     (requires (nodelist_aa_l (append nl1 nl2)))
-    (ensures (nodelist_aa_l nl1 /\ nodelist_aa_l nl2 /\
-               Mod.loc_disjoint (nodelist_fp0 nl1) (nodelist_fp0 nl2)))
+    (ensures (nodelist_aa_l nl1 /\ nodelist_aa_l nl2))
     (decreases (length nl2)) =
   match nl2 with
   | [] -> ()
   | _ ->
+    let nl2', n = unsnoc nl2 in
     admit ()
 
 let rec nodelist_split_aa_r (#t:Type) (nl1 nl2:nodelist t) :
   Lemma
     (requires (nodelist_aa_r (append nl1 nl2)))
-    (ensures (nodelist_aa_r nl1 /\ nodelist_aa_r nl2 /\
-               Mod.loc_disjoint (nodelist_fp0 nl1) (nodelist_fp0 nl2))) =
+    (ensures (nodelist_aa_r nl1 /\ nodelist_aa_r nl2)) =
   match nl1 with
   | [] -> ()
   | _ ->
@@ -1059,7 +1064,9 @@ let nodelist_split_aa (#t:Type) (nl1 nl2:nodelist t) :
     (requires (nodelist_aa (append nl1 nl2)))
     (ensures (nodelist_aa nl1 /\ nodelist_aa nl2 /\
                Mod.loc_disjoint (nodelist_fp0 nl1) (nodelist_fp0 nl2))) =
-  nodelist_split_aa_l nl1 nl2; nodelist_split_aa_r nl1 nl2
+  nodelist_split_aa_disjoint nl1 nl2;
+  nodelist_split_aa_l nl1 nl2;
+  nodelist_split_aa_r nl1 nl2
 
 let rec nodelist_split_conn (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
   Lemma
