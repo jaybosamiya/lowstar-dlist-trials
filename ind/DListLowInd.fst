@@ -1437,6 +1437,41 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
     y
   )
 
-(* TODO *)
-
 #reset-options
+
+let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node t)) :
+  StackInline (dll t)
+    (requires (fun h0 ->
+         (dll_valid h0 d) /\
+         (e `memP` reveal d.nodes) /\
+         (node_valid h0 (n@h0)) /\
+         (h0 `contains` n) /\
+         (node_not_in_dll h0 n d)))
+    (ensures (fun h0 y h1 ->
+         (* TODO: Write about what is modified *)
+         dll_valid h1 y)) =
+  let h0 = ST.get () in
+  // assert (length (reveal d.nodes) > 0);
+  lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
+  extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
+  // assert (node_valid h0 (e@h0));
+  if is_null (!e).flink then (
+    dll_insert_at_tail d n
+  ) else (
+    let e2 = (!e).flink in
+    //
+    extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e);
+    e <|= n;
+    admit ();
+    n =|> e2;
+    let h0' = ST.get () in
+    e =|> n;
+    let h0'' = ST.get () in
+    n <|= e2;
+    let h1 = ST.get () in
+    admit ();
+    //
+    admit ()
+  )
+
+(* TODO *)
