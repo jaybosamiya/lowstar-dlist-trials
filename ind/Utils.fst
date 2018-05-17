@@ -147,13 +147,8 @@ let rec unsnoc_is_last (#t:Type) (l:list t) :
   | [_] -> ()
   | _ -> unsnoc_is_last (tl l)
 
-let rec split_using (#t:Type) (l:list t) (x:t) :
-  Ghost (list t * list t)
-    (requires (x `memP` l))
-    (ensures (fun (l1, l2) ->
-         length l2 > 0 /\
-         ~(x `memP` l1) /\ (hd l2 == x) /\
-         append l1 l2 == l)) =
+let rec split_using (#t:Type) (l:list t) (x:t{x `memP` l}) :
+  GTot (list t * list t) =
   match l with
   | [_] -> [], l
   | a :: as ->
@@ -163,6 +158,20 @@ let rec split_using (#t:Type) (l:list t) (x:t) :
       let l1', l2' = split_using as x in
       a :: l1', l2'
     )
+
+let rec lemma_split_using (#t:Type) (l:list t) (x:t{x `memP` l}) :
+  Lemma
+    (ensures (
+        let l1, l2 = split_using l x in
+        (length l2 > 0) /\
+        ~(x `memP` l1) /\ (hd l2 == x) /\
+        append l1 l2 == l)) =
+  match l with
+  | [_] -> ()
+  | a :: as ->
+    if FStar.StrongExcludedMiddle.strong_excluded_middle (a == x)
+    then ()
+    else lemma_split_using (tl l) x
 
 let rec index_fst_unsnoc (#t:Type) (l:list t) (i:nat) :
   Lemma
