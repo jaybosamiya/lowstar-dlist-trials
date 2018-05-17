@@ -1048,7 +1048,8 @@ let rec nodelist_split_fp0 (#t:Type) (nl1 nl2:nodelist t) :
       nodelist_includes_r_fp0 (tl (append nl1 nl2)) 0 (length nl1 - 1);
       // assert (snd (splitAt 0 (tl (append nl1 nl2))) == tl (append nl1 nl2));
       // assert (snd (splitAt (length nl1 - 1) (tl (append nl1 nl2))) == snd (splitAt (length nl1) (append nl1 nl2)));
-      assume (snd (splitAt (length nl1) (append nl1 nl2)) == nl2);
+      lemma_splitAt_append nl1 nl2;
+      // assert (snd (splitAt (length nl1) (append nl1 nl2)) == nl2);
       // assert (Mod.loc_includes (nodelist_fp0 (tl (append nl1 nl2))) (nodelist_fp0 nl2));
       // assert (Mod.loc_disjoint (Mod.loc_buffer (hd nl1)) (nodelist_fp0 (tl (append nl1 nl2))));
       // assert (Mod.loc_disjoint (Mod.loc_buffer (hd nl1)) (nodelist_fp0 nl2));
