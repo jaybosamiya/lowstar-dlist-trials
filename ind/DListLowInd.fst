@@ -827,7 +827,7 @@ let loc_includes_union_r_inv (a b c:Mod.loc) :
   Mod.loc_includes_trans a (Mod.loc_union b c) b;
   Mod.loc_includes_trans a (Mod.loc_union b c) c
 
-#set-options "--z3rlimit 10"
+#set-options "--z3rlimit 20"
 
 let rec fragment_append_aa_l (#t:Type) (f1 f2:fragment t) :
   Lemma
