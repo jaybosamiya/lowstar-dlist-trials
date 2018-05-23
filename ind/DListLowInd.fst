@@ -1467,10 +1467,11 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     e <|= n;
     // let h' = ST.get () in assert (h' `contains` e2); assert (not_aliased n e2);
     n =|> e2;
-    admit ();
     let h0' = ST.get () in
+    assume (node_contained_b h0' (e@h0'));
     e =|> n;
     let h0'' = ST.get () in
+    assume (h0'' `contains` e2); assume (node_contained_f h0'' (e2@h0''));
     n <|= e2;
     let h1 = ST.get () in
     admit ();
