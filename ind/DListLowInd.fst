@@ -1458,17 +1458,21 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
   if is_null (!e).flink then (
     dll_insert_at_tail d n
   ) else (
+    let e1 = (!e).blink in
     let e2 = (!e).flink in
     //
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     unsnoc_is_last (reveal d.nodes);
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e + 1);
+    if is_not_null e1 then (extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1)) else ();
     e <|= n;
     // let h' = ST.get () in assert (h' `contains` e2); assert (not_aliased n e2);
     n =|> e2;
     let h0' = ST.get () in
-    assume (node_contained_b h0' (e@h0'));
+    assume (Mod.loc_disjoint (Mod.loc_buffer n) (Mod.loc_buffer e1));
+    Mod.modifies_buffer_elim e1 (Mod.loc_buffer n) h0 h0';
+    // assert (node_contained_b h0' (e@h0'));
     e =|> n;
     let h0'' = ST.get () in
     assume (h0'' `contains` e2); assume (node_contained_f h0'' (e2@h0''));
