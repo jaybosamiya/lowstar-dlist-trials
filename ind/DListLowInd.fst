@@ -1461,7 +1461,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     let e2 = (!e).flink in
     //
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e);
-    assume (reveal d.nodes `index_of` e + 1 < length (reveal d.nodes));
+    unsnoc_is_last (reveal d.nodes);
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e + 1);
     e <|= n;
