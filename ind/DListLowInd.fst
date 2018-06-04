@@ -1130,7 +1130,7 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
         n1 `memP` reveal d.nodes /\
         n2 `memP` reveal d.nodes /\
         n1@h0 |> n2 /\ n1 <| n2@h0))
-    (ensures (fun f -> fragment_valid h0 f)) =
+    (ensures (fun f -> fragment_valid h0 f /\ length f = 2)) =
   let split_nodes = elift2_p split_using d.nodes (hide n2) in
   lemma_split_using (reveal d.nodes) n2;
   let l1, l2 = (elift1 fst split_nodes), (elift1 snd split_nodes) in
