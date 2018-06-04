@@ -1439,6 +1439,8 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
 
 #reset-options
 
+#set-options "--z3rlimit 10"
+
 let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
@@ -1465,12 +1467,18 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     unsnoc_is_last (reveal d.nodes);
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e + 1);
-    if is_not_null e1 then (extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1)) else ();
+    if is_not_null e1 then (
+      extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
+      extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1)
+    ) else ();
     e <|= n;
     // let h' = ST.get () in assert (h' `contains` e2); assert (not_aliased n e2);
     n =|> e2;
     let h0' = ST.get () in
-    assume (Mod.loc_disjoint (Mod.loc_buffer n) (Mod.loc_buffer e1));
+    // assert (is_not_null e1 ==> e1 == (reveal d.nodes).[reveal d.nodes `index_of` e - 1]);
+    // assert (is_not_null e1 ==> Mod.loc_includes (nodelist_fp0 (reveal d.nodes)) (Mod.loc_buffer e1));
+    // assert (is_not_null e1 ==> Mod.loc_disjoint (Mod.loc_buffer n) (Mod.loc_buffer e1));
+    // assert (Mod.loc_disjoint (Mod.loc_buffer n) (Mod.loc_buffer e1));
     Mod.modifies_buffer_elim e1 (Mod.loc_buffer n) h0 h0';
     // assert (node_contained_b h0' (e@h0'));
     e =|> n;
