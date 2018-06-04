@@ -1493,8 +1493,8 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     // assert (Mod.loc_disjoint (Mod.loc_buffer e2) (Mod.loc_buffer e));
     // assert (Mod.modifies (Mod.loc_buffer e) h0' h0'');
     Mod.modifies_buffer_elim e2 (Mod.loc_buffer e) h0' h0'';
-    assert (h0'' `contains` e2);
-    assume (node_contained_f h0'' (e2@h0''));
+    // assert (h0'' `contains` e2);
+    // assume (node_contained_f h0'' (e2@h0''));
     n <|= e2;
     let h1 = ST.get () in
     admit ();
