@@ -1439,7 +1439,7 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
 
 #reset-options
 
-#set-options "--z3rlimit 50 --initial_fuel 2 --initial_ifuel 2 --z3refresh"
+#set-options "--z3rlimit 20 --initial_fuel 2 --initial_ifuel 2 --z3refresh"
 
 let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node t)) :
   StackInline (dll t)
