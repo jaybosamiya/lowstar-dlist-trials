@@ -198,3 +198,11 @@ let rec index_of (#t:Type) (l:list t) (x:t{x `memP` l}) :
     ) else (
       1 + index_of as x
     )
+
+let rec lemma_hd_r_split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
+  Lemma
+    (ensures (let a, b, c = split3 l i in
+              length c > 0 ==> hd c == index l (i + 1))) =
+  match i with
+  | 0 -> ()
+  | _ -> lemma_hd_r_split3 (tl l) (i - 1)
