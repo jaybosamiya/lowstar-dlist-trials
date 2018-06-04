@@ -1476,6 +1476,9 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     assume (e2 `memP` reveal d.nodes);
     // assert (e@h0 |> e2 /\ e <| e2@h0);
     let f = tot_dll_to_fragment_split h0 d e e2 in
+    let p = tot_node_to_piece h0 n in
+    // assert (length f = 2);
+    let f' = (hd f) :: p :: (tl f) in
     admit ()
   )
 
