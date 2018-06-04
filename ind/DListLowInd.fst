@@ -1476,10 +1476,21 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     assume (e2 `memP` reveal d.nodes);
     // assert (e@h0 |> e2 /\ e <| e2@h0);
     let f = tot_dll_to_fragment_split h0 d e e2 in
-    let p = tot_node_to_piece h0 n in
     // assert (length f = 2);
-    let f' = (hd f) :: p :: (tl f) in
-    admit ()
+    let p1, p3 = f.[0], f.[1] in
+    // assert ([p1 ; p3] == f);
+    let p2 = tot_node_to_piece h0 n in
+    let f' = [p1 ; p2 ; p3] in
+    // assert (Mod.modifies (Mod.loc_buffer n) h0 h0');
+    // assert (piece_valid h0 p1);
+    assume (Mod.loc_disjoint (Mod.loc_buffer n) (piece_fp0 p1));
+    piece_remains_valid h0 h0' (Mod.loc_buffer n) p1;
+    // assert (piece_valid h0 p3);
+    assume (Mod.loc_disjoint (Mod.loc_buffer n) (piece_fp0 p3));
+    piece_remains_valid h0 h0' (Mod.loc_buffer n) p3;
+    admit ();
+    let y = tot_defragmentable_fragment_to_dll h1 f' in
+    y
   )
 
 (* TODO *)
