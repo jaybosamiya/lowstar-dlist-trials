@@ -1439,7 +1439,7 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
 
 #reset-options
 
-#set-options "--z3rlimit 10"
+#set-options "--z3rlimit 50 --initial_fuel 2 --initial_ifuel 2 --z3refresh"
 
 let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node t)) :
   StackInline (dll t)
@@ -1483,7 +1483,18 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     // assert (node_contained_b h0' (e@h0'));
     e =|> n;
     let h0'' = ST.get () in
-    assume (h0'' `contains` e2); assume (node_contained_f h0'' (e2@h0''));
+    // assert (h0 `contains` e2);
+    // assert (h0' `contains` e2);
+    // assert (e2 == (reveal d.nodes).[reveal d.nodes `index_of` e + 1]);
+    extract_nodelist_aa_r (reveal d.nodes) (reveal d.nodes `index_of` e);
+    lemma_hd_r_split3 (reveal d.nodes) (reveal d.nodes `index_of` e);
+    assume (Mod.loc_includes (nodelist_fp0 (reveal d.nodes)) (nodelist_fp0 (let _,_,z = split3 (reveal d.nodes) (reveal d.nodes `index_of` e) in z)));
+    assert (Mod.loc_includes (nodelist_fp0 (let _,_,z = split3 (reveal d.nodes) (reveal d.nodes `index_of` e) in z)) (Mod.loc_buffer e2));
+    // assert (Mod.loc_disjoint (Mod.loc_buffer e2) (Mod.loc_buffer e));
+    // assert (Mod.modifies (Mod.loc_buffer e) h0' h0'');
+    Mod.modifies_buffer_elim e2 (Mod.loc_buffer e) h0' h0'';
+    assert (h0'' `contains` e2);
+    assume (node_contained_f h0'' (e2@h0''));
     n <|= e2;
     let h1 = ST.get () in
     admit ();
