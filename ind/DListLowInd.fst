@@ -1150,6 +1150,8 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
   // assert (fragment_ghostly_connections f);
   // assert (nodelist_contained h0 (reveal p1.pnodes));
   // assert (nodelist_contained h0 (reveal p2.pnodes));
+  extract_nodelist_contained h0 (reveal l1) (length (reveal l1) - 1);
+  // assert (h0 `contains` p1.ptail);
   // assert (fragment_contained h0 f);
   // assert (nodelist_aa (reveal p1.pnodes));
   // assert (nodelist_aa (reveal p2.pnodes));
