@@ -1492,11 +1492,10 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     assume (Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p3));
     piece_remains_valid h0' h0'' (piece_fp0 p1) p3;
     piece_remains_valid h0'' h1 (piece_fp0 p3) p1;
-    admit ();
     // assume (piece_valid h0'' p3);
-    // assume (Mod.modifies (Mod.loc_buffer p3.phead) h0'' h1);
-    // assume (h1 `contains` p3.phead);
-    // assume ((p3.phead@h0'').flink == (p3.phead@h1).flink);
+    assume (Mod.modifies (Mod.loc_buffer p3.phead) h0'' h1);
+    assume (h1 `contains` p3.phead);
+    assume ((p3.phead@h0'').flink == (p3.phead@h1).flink);
     piece_remains_valid_b h0'' h1 p3;
     admit ();
     fragment_append_valid h1 [p2] [p3];
