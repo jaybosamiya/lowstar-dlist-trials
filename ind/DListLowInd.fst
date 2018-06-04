@@ -94,14 +94,6 @@ let rec fragment_ghostly_connections (#t:Type) (f:fragment t) : GTot Type0 =
 /// WARNING: [@] and [^@] require containment to reasonably talk about
 /// what they do.
 
-let node_contained_f (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
-  h0 `contains` n.flink
-let node_contained_b (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
-  h0 `contains` n.blink
-let node_contained (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
-  node_contained_f h0 n /\
-  node_contained_b h0 n
-
 let rec nodelist_contained0 (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
   match nl with
   | [] -> True
@@ -277,9 +269,6 @@ let rec fragment_conn (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
 /// + Anti aliasing properties
 /// + Connectivity properties
 
-let node_valid (#t:Type) (h0:heap) (n:node t) : GTot Type0 =
-  node_contained h0 n
-
 let nodelist_valid (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 =
   nodelist_contained h0 nl /\
   nodelist_aa nl /\
@@ -308,12 +297,10 @@ let fragment_valid (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
 let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
-         node_contained_b h0 (a@h0) /\
          not_aliased a b))
     (ensures (fun h0 _ h1 ->
          modifies_1 a h0 h1 /\
          h1 `contains` a /\
-         node_valid h1 (a@h1) /\
          (a@h0).p == (a@h1).p /\
          (a@h0).blink == (a@h1).blink /\
          b@h0 == b@h1 /\
@@ -323,12 +310,10 @@ let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline 
 let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
-         node_contained_f h0 (b@h0) /\
          not_aliased a b))
     (ensures (fun h0 _ h1 ->
          modifies_1 b h0 h1 /\
          h1 `contains` b /\
-         node_valid h1 (b@h1) /\
          a@h0 == a@h1 /\
          (b@h0).p == (b@h1).p /\
          (b@h0).flink == (b@h1).flink /\
@@ -336,22 +321,20 @@ let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline 
   b := { !b with blink = of_non_null a }
 
 let ( !=|> ) (#t:Type) (a:gpointer (node t)) : StackInline unit
-    (requires (fun h0 -> h0 `contains` a /\ node_contained_b h0 (a@h0)))
+    (requires (fun h0 -> h0 `contains` a))
     (ensures (fun h0 _ h1 ->
          modifies_1 a h0 h1 /\
          h1 `contains` a /\
-         node_valid h1 (a@h1) /\
          (a@h0).p == (a@h1).p /\
          (a@h0).blink == (a@h1).blink /\
          is_null (a@h1).flink)) =
   a := { !a with flink = null }
 
 let ( !<|= ) (#t:Type) (a:gpointer (node t)) : StackInline unit
-    (requires (fun h0 -> h0 `contains` a /\ node_contained_f h0 (a@h0)))
+    (requires (fun h0 -> h0 `contains` a))
     (ensures (fun h0 _ h1 ->
          modifies_1 a h0 h1 /\
          h1 `contains` a /\
-         node_valid h1 (a@h1) /\
          (a@h0).p == (a@h1).p /\
          (a@h0).flink == (a@h1).flink /\
          is_null (a@h1).blink)) =
@@ -1144,8 +1127,6 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
     (n1 n2:gpointer (node t)) :
   Pure (fragment t)
     (requires (
-        node_valid h0 (n1@h0) /\
-        node_valid h0 (n2@h0) /\
         n1 `memP` reveal d.nodes /\
         n2 `memP` reveal d.nodes /\
         n1@h0 |> n2 /\ n1 <| n2@h0))
@@ -1188,7 +1169,6 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
 let tot_node_to_dll (#t:Type) (h0:heap) (n:gpointer (node t)) :
   Pure (dll t)
     (requires (
-        (node_valid h0 (n@h0)) /\
         (h0 `contains` n) /\
         ((is_null (n@h0).flink)) /\
         (is_null (n@h0).blink)))
@@ -1198,7 +1178,6 @@ let tot_node_to_dll (#t:Type) (h0:heap) (n:gpointer (node t)) :
 let singleton_dll (#t:Type) (n:gpointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
-        (node_valid h0 (n@h0)) /\
         (h0 `contains` n)))
     (ensures (fun h0 d h1 ->
          modifies_1 n h0 h1 /\
@@ -1212,7 +1191,6 @@ let singleton_dll (#t:Type) (n:gpointer (node t)) :
 let tot_node_to_piece (#t:Type) (h0:heap) (n:gpointer (node t)) :
   Pure (piece t)
     (requires (
-        (node_valid h0 (n@h0)) /\
         (h0 `contains` n)))
     (ensures (fun p -> piece_valid h0 p)) =
   { phead = n ; ptail = n ; pnodes = ~. n }
@@ -1350,7 +1328,6 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
          (dll_valid h0 d) /\
-         (node_valid h0 (n@h0)) /\
          (h0 `contains` n) /\
          (node_not_in_dll h0 n d)))
     (ensures (fun h0 y h1 ->
@@ -1406,7 +1383,6 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
          (dll_valid h0 d) /\
-         (node_valid h0 (n@h0)) /\
          (h0 `contains` n) /\
          (node_not_in_dll h0 n d)))
     (ensures (fun h0 y h1 ->
@@ -1446,7 +1422,6 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     (requires (fun h0 ->
          (dll_valid h0 d) /\
          (e `memP` reveal d.nodes) /\
-         (node_valid h0 (n@h0)) /\
          (h0 `contains` n) /\
          (node_not_in_dll h0 n d)))
     (ensures (fun h0 y h1 ->
@@ -1456,7 +1431,6 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
   // assert (length (reveal d.nodes) > 0);
   lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
-  // assert (node_valid h0 (e@h0));
   if is_null (!e).flink then (
     dll_insert_at_tail d n
   ) else (
@@ -1480,7 +1454,6 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     // assert (is_not_null e1 ==> Mod.loc_disjoint (Mod.loc_buffer n) (Mod.loc_buffer e1));
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (Mod.loc_buffer e1));
     Mod.modifies_buffer_elim e1 (Mod.loc_buffer n) h0 h0';
-    // assert (node_contained_b h0' (e@h0'));
     e =|> n;
     let h0'' = ST.get () in
     // assert (h0 `contains` e2);
@@ -1494,7 +1467,6 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     // assert (Mod.modifies (Mod.loc_buffer e) h0' h0'');
     Mod.modifies_buffer_elim e2 (Mod.loc_buffer e) h0' h0'';
     // assert (h0'' `contains` e2);
-    assume (node_contained_f h0'' (e2@h0''));
     n <|= e2;
     let h1 = ST.get () in
     admit ();
