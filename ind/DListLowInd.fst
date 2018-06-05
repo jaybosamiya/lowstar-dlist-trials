@@ -1493,8 +1493,8 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     piece_remains_valid h0' h0'' (piece_fp0 p1) p3;
     piece_remains_valid h0'' h1 (piece_fp0 p3) p1;
     piece_remains_valid_b h0'' h1 p3;
-    admit ();
     fragment_append_valid h1 [p2] [p3];
+    admit ();
     assert ([p2 ; p3] == append [p2] [p3]);
     fragment_append_valid h1 [p1] [p2 ; p3];
     assert (f' == append [p1] [p2 ; p3]);
