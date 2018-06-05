@@ -1501,7 +1501,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     // assert (fragment_valid h1 f');
     assume (fragment_defragmentable h1 f');
     assert (length f' > 0);
-    assume (is_null ((hd f').phead@h1).blink);
+    // assert (is_null ((hd f').phead@h1).blink);
     assume (is_null ((last f').ptail@h1).flink);
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     y
