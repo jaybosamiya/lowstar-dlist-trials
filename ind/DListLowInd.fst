@@ -1498,7 +1498,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     fragment_append_valid h1 [p1] [p2 ; p3];
     // assert (f' == append [p1] [p2 ; p3]);
     //
-    assume (fragment_valid h1 f');
+    // assert (fragment_valid h1 f');
     assume (fragment_defragmentable h1 f');
     assert (length f' > 0);
     assume (is_null ((hd f').phead@h1).blink);
