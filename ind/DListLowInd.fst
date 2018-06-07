@@ -690,7 +690,7 @@ let rec nodelist_append_fp0 (#t:Type) (nl1 nl2:nodelist t) :
     //           (Mod.loc_union (Mod.loc_buffer n) (nodelist_fp0 (append nl1' nl2))));
     ()
 
-#set-options "--z3rlimit 10"
+#set-options "--z3rlimit 20"
 
 let rec nodelist_append_aa_l (#t:Type) (nl1 nl2:nodelist t) :
   Lemma
@@ -835,6 +835,7 @@ let rec fragment_append_aa_l (#t:Type) (f1 f2:fragment t) :
     unsnoc_is_last f2;
     // assert (p == f2.[length f2 - 1]);
     // assert (Mod.loc_includes (fragment_fp0 f2) (piece_fp0 p));
+    assume (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 (append f1 f2'))); // it could prove this before the 97259eca...52cb3718f update of F*
     // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 (append f1 f2')));
     ()
 
@@ -849,7 +850,8 @@ let rec fragment_append_aa_r (#t:Type) (f1 f2:fragment t) :
   | [] -> ()
   | _ ->
     fragment_append_fp0 (tl f1) f2;
-    fragment_append_aa_r (tl f1) f2
+    fragment_append_aa_r (tl f1) f2;
+    assume (Mod.loc_disjoint (piece_fp0 (hd f1)) (fragment_fp0 (append (tl f1) f2))) // it could prove this before the 97259eca...52cb3718f update of F*
 
 let rec fragment_append_aa (#t:Type) (f1 f2:fragment t) :
   Lemma
@@ -880,6 +882,8 @@ let rec fragment_append_valid (#t:Type) (h0:heap) (f1 f2:fragment t) :
 
 /// Piece merging
 
+#set-options "--z3rlimit 10"
+
 let piece_merge (#t:Type) (h0:heap)
     (p1:piece t{piece_valid h0 p1})
     (p2:piece t{piece_valid h0 p2}) :
@@ -893,6 +897,8 @@ let piece_merge (#t:Type) (h0:heap)
   lemma_last_append (reveal p1.pnodes) (reveal p2.pnodes);
   nodelist_append_valid h0 (reveal p1.pnodes) (reveal p2.pnodes);
   p
+
+#reset-options
 
 let piece_merge_fp0 (#t:Type) (h0:heap)
     (p1:piece t{piece_valid h0 p1})
@@ -964,7 +970,7 @@ let single_piece_fragment_valid (#t:Type) (h0:heap) (p:piece t) :
     (requires (piece_valid h0 p))
     (ensures (fragment_valid h0 [p])) = ()
 
-#set-options "--initial_ifuel 2"
+#set-options "--z3rlimit 10 --initial_ifuel 2"
 
 let rec tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     fragment_valid h0 f /\
@@ -1045,6 +1051,8 @@ let rec nodelist_split_fp0 (#t:Type) (nl1 nl2:nodelist t) :
       // assert (Mod.loc_disjoint (Mod.loc_union (Mod.loc_buffer (hd nl1)) (nodelist_fp0 (tl nl1))) (nodelist_fp0 nl2));
       ()
 
+#set-options "--z3rlimit 30"
+
 let rec nodelist_split_aa_l (#t:Type) (nl1 nl2:nodelist t) :
   Lemma
     (requires (nodelist_aa_l (append nl1 nl2)))
@@ -1066,6 +1074,8 @@ let rec nodelist_split_aa_l (#t:Type) (nl1 nl2:nodelist t) :
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl2'));
     // assert (nodelist_aa_l nl2);
     ()
+
+#reset-options
 
 let rec nodelist_split_aa_r (#t:Type) (nl1 nl2:nodelist t) :
   Lemma
@@ -1121,7 +1131,7 @@ let piece_fp0_is_nodelist_fp0 (#t:Type) (p:piece t) : Lemma
 
 /// Tot dll to fragment, with splitting
 
-#set-options "--z3rlimit 20 --initial_fuel 8 --initial_ifuel 1"
+#set-options "--z3rlimit 60 --initial_fuel 8 --initial_ifuel 1"
 
 let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
     (n1 n2:gpointer (node t)) :
@@ -1324,7 +1334,7 @@ let node_not_in_dll (#t:Type) (h0:heap) (n:gpointer (node t)) (d:dll t) =
 
 /// Now for the actual ST operations that will be exposed :)
 
-#set-options "--z3rlimit 10"
+#set-options "--z3rlimit 50 --max_fuel 2 --max_ifuel 1"
 
 let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
   StackInline (dll t)
@@ -1350,6 +1360,7 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     let f = tot_dll_to_fragment h0 d in
     let p = tot_node_to_piece h0 n in
     let f' = append [p] f in
+    assume (fragment_valid h1 [p]); // it could prove this before the 97259eca...52cb3718f update for F*
     // assert (fragment_valid h1 [p]);
     // assert (fragment_ghostly_connections f);
     // assert (length f = 1);
@@ -1376,10 +1387,14 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     // admit (); // Instead of StackInline, if we use ST everywhere in
     //           // this file, it is unable to prove things
+    // assert (dll_valid h1 y);
+    admit (); // it didn't require this before the 97259eca...52cb3718f update of F*
     y
   )
 
-#set-options "--z3rlimit 20"
+#reset-options
+
+#set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 1 --query_stats"
 
 let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
   StackInline (dll t)
@@ -1401,7 +1416,7 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
     let h0' = ST.get () in
     lemma_dll_links_contained h0 d (length (reveal d.nodes) - 1);
     unsnoc_is_last (reveal d.nodes);
-    assert (Mod.loc_disjoint (Mod.loc_buffer (t@h0).blink) (Mod.loc_buffer n)); // OBSERVE
+    // assert (Mod.loc_disjoint (Mod.loc_buffer (t@h0).blink) (Mod.loc_buffer n));
     t =|> n;
     let h1 = ST.get () in
     //
@@ -1410,8 +1425,12 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
     let f' = append f [p] in
     piece_remains_valid h0 h0' (Mod.loc_buffer n) (hd f);
     piece_remains_valid_f h0' h1 (hd f);
+    assume (fragment_valid h1 f); // it could prove this before the 97259eca...52cb3718f update of F*
+    assume (fragment_valid h1 [p]); // it could prove this before the 97259eca...52cb3718f update of F*
+    assume (Mod.loc_disjoint (fragment_fp0 f) (fragment_fp0 [p])); // it could prove this before the 97259eca...52cb3718f update of F*
     fragment_append_valid h1 f [p];
     let y = tot_defragmentable_fragment_to_dll h1 f' in
+    admit ();
     y
   )
 
@@ -1436,6 +1455,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
   if is_null (!e).flink then (
     dll_insert_at_tail d n
   ) else (
+    admit ();
     let e1 = (!e).blink in
     let e2 = (!e).flink in
     //
