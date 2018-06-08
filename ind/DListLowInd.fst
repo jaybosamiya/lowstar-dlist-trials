@@ -6,7 +6,7 @@ open Utils
 open FStar.HyperStack.ST
 open FStar.Ghost
 open Gpointers
-module Mod = FStar.Modifies
+module Mod = LowStar.Modifies
 module ST = FStar.HyperStack.ST
 
 /// Convenience operators
