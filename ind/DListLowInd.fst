@@ -1362,7 +1362,6 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     let f = tot_dll_to_fragment h0 d in
     let p = tot_node_to_piece h0 n in
     let f' = append [p] f in
-    assume (fragment_valid h1 [p]); // it could prove this before the 97259eca...52cb3718f update for F*
     // assert (fragment_valid h1 [p]);
     // assert (fragment_ghostly_connections f);
     // assert (length f = 1);
