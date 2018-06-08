@@ -1334,7 +1334,7 @@ let node_not_in_dll (#t:Type) (h0:heap) (n:gpointer (node t)) (d:dll t) =
 
 /// Now for the actual ST operations that will be exposed :)
 
-#set-options "--z3rlimit 50 --max_fuel 2 --max_ifuel 1"
+#set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 1 --query_stats"
 
 let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
   StackInline (dll t)
@@ -1452,13 +1452,12 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
   // assert (length (reveal d.nodes) > 0);
   lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
-  if is_null (!e).flink then (
+  let e1 = (!e).blink in
+  let e2 = (!e).flink in
+  if is_null e2 then (
     dll_insert_at_tail d n
   ) else (
     admit ();
-    let e1 = (!e).blink in
-    let e2 = (!e).flink in
-    //
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     unsnoc_is_last (reveal d.nodes);
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
