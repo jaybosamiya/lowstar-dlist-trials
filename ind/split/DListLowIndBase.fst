@@ -67,6 +67,7 @@ let empty_list #t =
 
 /// Ghostly connections
 
+abstract
 let dll_ghostly_connections (#t:Type) (d:dll t) : GTot Type0 =
   let nodes = reveal d.nodes in
   match length nodes with
@@ -75,6 +76,7 @@ let dll_ghostly_connections (#t:Type) (d:dll t) : GTot Type0 =
          d.lhead ==$ hd nodes /\
          d.ltail ==$ last nodes
 
+abstract
 let piece_ghostly_connections (#t:Type) (p:piece t) : GTot Type0 =
   let nodes = reveal p.pnodes in
   match length nodes with
@@ -82,6 +84,7 @@ let piece_ghostly_connections (#t:Type) (p:piece t) : GTot Type0 =
   | _ -> p.phead ==$ hd nodes /\
         p.ptail ==$ last nodes
 
+abstract
 let rec fragment_ghostly_connections (#t:Type) (f:fragment t) : GTot Type0 =
   match f with
   | [] -> True
@@ -145,15 +148,18 @@ let rec fragment_fp0 (#t:Type) (f:fragment t) : GTot Mod.loc =
 
 /// Anti aliasing properties
 
+abstract
 let node_aa (#t:Type) (n:node t) : GTot Type0 =
   Mod.loc_disjoint (node_fp_f n) (node_fp_b n)
 
+abstract
 let rec nodelist_aa_r (#t:Type) (nl:nodelist t) : GTot Type0 =
   match nl with
   | [] -> True
   | n :: ns ->
     Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 ns) /\
     nodelist_aa_r ns
+abstract
 let rec nodelist_aa_l (#t:Type) (nl:nodelist t) : GTot Type0 (decreases (length nl)) =
   match nl with
   | [] -> True
@@ -161,30 +167,37 @@ let rec nodelist_aa_l (#t:Type) (nl:nodelist t) : GTot Type0 (decreases (length 
     let ns, n = unsnoc nl in
     Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 ns) /\
     nodelist_aa_l ns
+abstract
 let nodelist_aa (#t:Type) (nl:nodelist t) : GTot Type0 =
   nodelist_aa_l nl /\ nodelist_aa_r nl
 
+abstract
 let dll_aa (#t:Type) (d:dll t) : GTot Type0 =
   nodelist_aa (reveal d.nodes)
 
+abstract
 let piece_aa (#t:Type) (p:piece t) : GTot Type0 =
   nodelist_aa (reveal p.pnodes)
 
+abstract
 let rec fragment_aa0 (#t:Type) (f:fragment t) : GTot Type0 =
   match f with
   | [] -> True
   | p :: ps -> piece_aa p /\ fragment_aa0 ps
+abstract
 let rec fragment_aa_r (#t:Type) (f:fragment t) : GTot Type0 =
   match f with
   | [] -> True
   | p :: ps -> Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 ps) /\
              fragment_aa_r ps
+abstract
 let rec fragment_aa_l (#t:Type) (f:fragment t) : GTot Type0 (decreases (length f)) =
   match f with
   | [] -> True
   | _ -> let ps, p = unsnoc f in
     Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 ps) /\
     fragment_aa_l ps
+abstract
 let fragment_aa (#t:Type) (f:fragment t) : GTot Type0 =
   fragment_aa0 f /\ fragment_aa_l f /\ fragment_aa_r f
 
@@ -196,6 +209,7 @@ let ( |> ) (#t:Type) (a:node t) (b:gpointer (node t)) : GTot Type0 =
 let ( <| ) (#t:Type) (a:gpointer (node t)) (b: node t) : GTot Type0 =
   b.blink ==$ a
 
+abstract
 let rec nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 (decreases (length nl)) =
   match nl with
   | [] -> True
@@ -206,14 +220,17 @@ let rec nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 (decrease
       n1 <| n2@h0 /\
       nodelist_conn h0 rest
 
+abstract
 let dll_conn (#t:Type) (h0:heap) (d:dll t) : GTot Type0 =
   nodelist_conn h0 (reveal d.nodes) /\
   (is_not_null d.lhead ==> is_null (d.lhead@h0).blink) /\
   (is_not_null d.ltail ==> is_null (d.ltail@h0).flink)
 
+abstract
 let piece_conn (#t:Type) (h0:heap) (p:piece t) : GTot Type0 =
   nodelist_conn h0 (reveal p.pnodes)
 
+abstract
 let rec fragment_conn (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
   match f with
   | [] -> True
