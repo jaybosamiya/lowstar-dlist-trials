@@ -125,63 +125,23 @@ let rec nodelist_fp0 (#t:Type) (n:nodelist t) : GTot Mod.loc =
   match n with
   | [] -> Mod.loc_none
   | n :: ns -> Mod.loc_union (Mod.loc_buffer n) (nodelist_fp0 ns)
-let rec nodelist_fp_f (#t:Type) (h0:heap) (n:nodelist t) : GTot Mod.loc =
-  match n with
-  | [] -> Mod.loc_none
-  | n :: ns -> Mod.loc_union (Mod.loc_buffer (n@h0).flink) (nodelist_fp_f h0 ns)
-let rec nodelist_fp_b (#t:Type) (h0:heap) (n:nodelist t) : GTot Mod.loc =
-  match n with
-  | [] -> Mod.loc_none
-  | n :: ns -> Mod.loc_union (Mod.loc_buffer (n@h0).blink) (nodelist_fp_b h0 ns)
 
 let dll_fp0 (#t:Type) (d:dll t) : GTot Mod.loc =
   Mod.loc_union // ghostly connections should give us this union for
                 // free, but still useful to have
     (Mod.loc_union (Mod.loc_buffer d.lhead) (Mod.loc_buffer d.ltail))
     (nodelist_fp0 (reveal d.nodes))
-let dll_fp_f (#t:Type) (h0:heap) (d:dll t) : GTot Mod.loc =
-  let a = if is_null d.lhead then Mod.loc_none else Mod.loc_buffer (d.lhead^@h0).flink in
-  let b = if is_null d.ltail then Mod.loc_none else Mod.loc_buffer (d.ltail^@h0).flink in
-  Mod.loc_union // ghostly connections should give us this union for
-                // free, but still useful to have
-    (Mod.loc_union a b)
-    (nodelist_fp_f h0 (reveal d.nodes))
-let dll_fp_b (#t:Type) (h0:heap) (d:dll t) : GTot Mod.loc =
-  let a = if is_null d.lhead then Mod.loc_none else Mod.loc_buffer (d.lhead^@h0).blink in
-  let b = if is_null d.ltail then Mod.loc_none else Mod.loc_buffer (d.ltail^@h0).blink in
-  Mod.loc_union // ghostly connections should give us this union for
-                // free, but still useful to have
-    (Mod.loc_union a b)
-    (nodelist_fp_b h0 (reveal d.nodes))
 
 let piece_fp0 (#t:Type) (p:piece t) : GTot Mod.loc =
   Mod.loc_union // ghostly connections should give us this union for
                 // free, but still useful to have
     (Mod.loc_union (Mod.loc_buffer p.phead) (Mod.loc_buffer p.ptail))
     (nodelist_fp0 (reveal p.pnodes))
-let piece_fp_f (#t:Type) (h0:heap) (p:piece t) : GTot Mod.loc =
-  Mod.loc_union // ghostly connections should give us this union for
-                // free, but still useful to have
-    (Mod.loc_union (Mod.loc_buffer (p.phead@h0).flink) (Mod.loc_buffer (p.ptail@h0).flink))
-    (nodelist_fp_f h0 (reveal p.pnodes))
-let piece_fp_b (#t:Type) (h0:heap) (p:piece t) : GTot Mod.loc =
-  Mod.loc_union // ghostly connections should give us this union for
-                // free, but still useful to have
-    (Mod.loc_union (Mod.loc_buffer (p.phead@h0).blink) (Mod.loc_buffer (p.ptail@h0).blink))
-    (nodelist_fp_b h0 (reveal p.pnodes))
 
 let rec fragment_fp0 (#t:Type) (f:fragment t) : GTot Mod.loc =
   match f with
   | [] -> Mod.loc_none
   | p :: ps -> Mod.loc_union (piece_fp0 p) (fragment_fp0 ps)
-let rec fragment_fp_f (#t:Type) (h0:heap) (f:fragment t) : GTot Mod.loc =
-  match f with
-  | [] -> Mod.loc_none
-  | p :: ps -> Mod.loc_union (piece_fp_f h0 p) (fragment_fp_f h0 ps)
-let rec fragment_fp_b (#t:Type) (h0:heap) (f:fragment t) : GTot Mod.loc =
-  match f with
-  | [] -> Mod.loc_none
-  | p :: ps -> Mod.loc_union (piece_fp_b h0 p) (fragment_fp_b h0 ps)
 
 /// Anti aliasing properties
 
@@ -1269,6 +1229,5 @@ let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
 let node_not_in_dll (#t:Type) (h0:heap) (n:gpointer (node t)) (d:dll t) =
   let m1 = Mod.loc_union (Mod.loc_buffer n)
       (Mod.loc_union (node_fp_b (n@h0)) (node_fp_f (n@h0))) in
-  let m2 = Mod.loc_union (dll_fp0 d) (Mod.loc_union
-                                        (dll_fp_f h0 d) (dll_fp_b h0 d)) in
+  let m2 = dll_fp0 d in
   Mod.loc_disjoint m1 m2
