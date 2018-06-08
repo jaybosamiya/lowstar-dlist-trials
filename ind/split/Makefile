@@ -1,7 +1,7 @@
 FSTAR := fstar.exe --query_stats --__no_positivity --include /home/jay/everest/kremlin/kremlib/ --use_hints --record_hints --cache_checked_modules
 
 # List of everything
-all: Gpointers DListLowInd Utils
+all: Gpointers DListLowIndBase DListLowIndST Utils
 
 # Cleanup
 cleanhints:
@@ -17,7 +17,8 @@ nuke: cleanhints cleanchecked
 	@echo "Nuked everything!"
 
 # Dependencies
-DListLowInd: Utils Gpointers
+DListLowIndBase: Utils Gpointers
+DListLowIndST: DListLowIndBase
 
 # Generic Rule
 %: %.fst
