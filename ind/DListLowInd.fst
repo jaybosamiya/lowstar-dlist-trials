@@ -853,7 +853,7 @@ let rec fragment_append_aa_r (#t:Type) (f1 f2:fragment t) :
   | _ ->
     fragment_append_fp0 (tl f1) f2;
     fragment_append_aa_r (tl f1) f2;
-    assume (Mod.loc_disjoint (piece_fp0 (hd f1)) (fragment_fp0 (append (tl f1) f2))) // it could prove this before the 97259eca...52cb3718f update of F*
+    assert (Mod.loc_disjoint (piece_fp0 (hd f1)) (Mod.loc_union (fragment_fp0 (tl f1)) (fragment_fp0 f2))) // OBSERVE
 
 let rec fragment_append_aa (#t:Type) (f1 f2:fragment t) :
   Lemma
