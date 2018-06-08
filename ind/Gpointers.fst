@@ -2,40 +2,24 @@ module Gpointers
 
 module HS = FStar.HyperStack
 module ST = FStar.HyperStack.ST
-module B = FStar.Buffer
-module CN = C.Nullity
-module Mod = FStar.Modifies
+module B = LowStar.Buffer
+module Mod = LowStar.Modifies
 
-type gpointer t = (p:C.Nullity.pointer t{
-    B.max_length p = B.length p /\
-    B.max_length p = 1 /\
-    B.idx p = 0
-  })
-
-type gpointer_or_null t = (p:C.Nullity.pointer_or_null t{
-    B.max_length p = B.length p /\
-    B.max_length p <= 1 /\
-    B.idx p = 0
-  })
-
-type gnull t = (p:C.Nullity.pointer_or_null t{
-    B.max_length p = B.length p /\
-    B.max_length p = 0 /\
-    B.idx p = 0
-  })
+type gpointer t = B.pointer t
+type gpointer_or_null t = B.pointer_or_null t
 
 let disjoint (#t:Type) (a b: gpointer t) = B.as_addr a <> B.as_addr b
 
-let is_null (p:gpointer_or_null 't) = CN.is_null p
-let is_not_null (p:gpointer_or_null 't) = not (CN.is_null p)
+assume val is_null (p:gpointer_or_null 't) : Tot (b:bool{b <==> B.g_is_null p})
+let is_not_null (p:gpointer_or_null 't) = not (is_null p)
 
-assume val null : #t:Type -> gnull t
+let null #t : gpointer_or_null t = B.null #t
 
 let test_null #t =
   let p : gpointer_or_null t = null in
   assert (is_null p)
 
-let ( := ) (a:gpointer 't) (b:'t) = B.(a.(0ul) <- b)
+let ( := ) (a:gpointer 't) (b:'t) = B.upd a 0ul b
 let ( ! ) (a:gpointer 't) = B.index a 0ul
 
 let recall (#t:Type) (p: gpointer_or_null t) = B.recall p
@@ -92,7 +76,7 @@ let modifies_2 (a:gpointer 'a) (b:gpointer 'b) h0 h1 =
                   (Mod.loc_buffer b)) h0 h1
 let modifies_3 (a:gpointer 'a) (b:gpointer 'b) (c:gpointer 'c) h0 h1 =
   Mod.modifies (Mod.loc_union
-                  (Modifies.loc_union
+                  (Mod.loc_union
                      (Mod.loc_buffer a)
                      (Mod.loc_buffer b))
                   (Mod.loc_buffer c)) h0 h1
