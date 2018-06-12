@@ -1425,12 +1425,8 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
     let f' = append f [p] in
     piece_remains_valid h0 h0' (Mod.loc_buffer n) (hd f);
     piece_remains_valid_f h0' h1 (hd f);
-    assume (fragment_valid h1 f); // it could prove this before the 97259eca...52cb3718f update of F*
-    assume (fragment_valid h1 [p]); // it could prove this before the 97259eca...52cb3718f update of F*
-    assume (Mod.loc_disjoint (fragment_fp0 f) (fragment_fp0 [p])); // it could prove this before the 97259eca...52cb3718f update of F*
     fragment_append_valid h1 f [p];
     let y = tot_defragmentable_fragment_to_dll h1 f' in
-    admit ();
     y
   )
 
