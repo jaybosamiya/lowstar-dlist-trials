@@ -1389,7 +1389,6 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
     // admit (); // Instead of StackInline, if we use ST everywhere in
     //           // this file, it is unable to prove things
     // assert (dll_valid h1 y);
-    admit (); // it didn't require this before the 97259eca...52cb3718f update of F*
     y
   )
 
