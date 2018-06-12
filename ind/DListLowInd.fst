@@ -1455,13 +1455,15 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
   ) else (
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     unsnoc_is_last (reveal d.nodes);
-    admit ();
+    assume (reveal d.nodes `index_of` e < length (reveal d.nodes) - 1);
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e + 1);
     if is_not_null e1 then (
+      assume (reveal d.nodes `index_of` e - 1 >= 0);
       extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
       extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1)
     ) else ();
+    admit ();
     e <|= n;
     // let h' = ST.get () in assert (h' `contains` e2); assert (not_aliased n e2);
     n =|> e2;
