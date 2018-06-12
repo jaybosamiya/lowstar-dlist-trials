@@ -1453,9 +1453,9 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
   if is_null e2 then (
     dll_insert_at_tail d n
   ) else (
-    admit ();
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     unsnoc_is_last (reveal d.nodes);
+    admit ();
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e + 1);
     if is_not_null e1 then (
