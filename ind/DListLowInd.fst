@@ -1485,7 +1485,6 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     // assert (h0'' `contains` e2);
     n <|= e2;
     let h1 = ST.get () in
-    admit ();
     //
     // assert (e `memP` reveal d.nodes);
     assume (e2 `memP` reveal d.nodes);
@@ -1519,6 +1518,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     // assert (is_null ((hd f').phead@h1).blink);
     assume (is_null ((last f').ptail@h1).flink);
     let y = tot_defragmentable_fragment_to_dll h1 f' in
+    admit ();
     y
   )
 
