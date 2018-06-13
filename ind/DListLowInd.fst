@@ -1455,20 +1455,15 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
   ) else (
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     unsnoc_is_last (reveal d.nodes);
-    assume (reveal d.nodes `index_of` e < length (reveal d.nodes) - 1);
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e + 1);
     if is_not_null e1 then (
-      assume (reveal d.nodes `index_of` e - 1 >= 0);
       extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
       extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1)
     ) else ();
-    assume (not_aliased e n);
     e <|= n;
     // let h' = ST.get () in assert (h' `contains` e2); assert (not_aliased n e2);
-    assume (not_aliased n e2);
     n =|> e2;
-    admit ();
     let h0' = ST.get () in
     // assert (is_not_null e1 ==> e1 == (reveal d.nodes).[reveal d.nodes `index_of` e - 1]);
     // assert (is_not_null e1 ==> Mod.loc_includes (nodelist_fp0 (reveal d.nodes)) (Mod.loc_buffer e1));
@@ -1490,6 +1485,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     // assert (h0'' `contains` e2);
     n <|= e2;
     let h1 = ST.get () in
+    admit ();
     //
     // assert (e `memP` reveal d.nodes);
     assume (e2 `memP` reveal d.nodes);
