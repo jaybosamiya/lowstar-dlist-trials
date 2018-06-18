@@ -1522,7 +1522,6 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     (ensures (fun h0 y h1 ->
          (* TODO: Write about what is modified *)
          dll_valid h1 y)) =
-  admit ();
   let h0 = ST.get () in
   // assert (length (reveal d.nodes) > 0);
   lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
