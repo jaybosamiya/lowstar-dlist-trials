@@ -6,6 +6,7 @@ open Utils
 open FStar.HyperStack.ST
 open FStar.Ghost
 open Gpointers
+open LowStar.ModifiesPat
 module Mod = LowStar.Modifies
 module ST = FStar.HyperStack.ST
 
@@ -184,6 +185,52 @@ let rec fragment_fp_b (#t:Type) (h0:heap) (f:fragment t) : GTot Mod.loc =
   match f with
   | [] -> Mod.loc_none
   | p :: ps -> Mod.loc_union (piece_fp_b h0 p) (fragment_fp_b h0 ps)
+
+/// Helper patterns for footprints
+
+let loc_includes_union_l_nodelist_fp0 (#t: Type) (s1 s2:loc) (nl:nodelist t) :
+  Lemma
+    (requires (loc_includes s1 (nodelist_fp0 nl) \/ loc_includes s2 (nodelist_fp0 nl)))
+    (ensures (loc_includes (loc_union s1 s2) (nodelist_fp0 nl)))
+    [SMTPat (loc_includes (loc_union s1 s2) (nodelist_fp0 nl))] =
+  loc_includes_union_l s1 s2 (nodelist_fp0 nl)
+
+let loc_includes_union_l_dll_fp0 (#t: Type) (s1 s2:loc) (d:dll t) :
+  Lemma
+    (requires (loc_includes s1 (dll_fp0 d) \/ loc_includes s2 (dll_fp0 d)))
+    (ensures (loc_includes (loc_union s1 s2) (dll_fp0 d)))
+    [SMTPat (loc_includes (loc_union s1 s2) (dll_fp0 d))] =
+  loc_includes_union_l s1 s2 (dll_fp0 d)
+
+let loc_includes_union_l_piece_fp0 (#t: Type) (s1 s2:loc) (p:piece t) :
+  Lemma
+    (requires (loc_includes s1 (piece_fp0 p) \/ loc_includes s2 (piece_fp0 p)))
+    (ensures (loc_includes (loc_union s1 s2) (piece_fp0 p)))
+    [SMTPat (loc_includes (loc_union s1 s2) (piece_fp0 p))] =
+  loc_includes_union_l s1 s2 (piece_fp0 p)
+
+let loc_includes_union_l_fragment_fp0 (#t: Type) (s1 s2:loc) (f:fragment t) :
+  Lemma
+    (requires (loc_includes s1 (fragment_fp0 f) \/ loc_includes s2 (fragment_fp0 f)))
+    (ensures (loc_includes (loc_union s1 s2) (fragment_fp0 f)))
+    [SMTPat (loc_includes (loc_union s1 s2) (fragment_fp0 f))] =
+  loc_includes_union_l s1 s2 (fragment_fp0 f)
+
+(* TODO *)
+
+let loc_disjoint_includes (p1 p2 p1' p2':loc) :
+  (* This one shall be removed soon, after F* master updates.
+     @taramana: I found the culprit. `loc_disjoint_union` should be an equivalence.
+     I'm going to push it soon. *)
+  Lemma
+    (requires (Mod.loc_includes p1 p1' /\ Mod.loc_includes p2 p2' /\ Mod.loc_disjoint p1 p2))
+    (ensures (Mod.loc_disjoint p1' p2'))
+    [SMTPatOr [
+        [SMTPat (loc_disjoint p1 p2); SMTPat (loc_disjoint p1' p2')];
+        [SMTPat (loc_includes p1 p1'); SMTPat (loc_includes p2 p2')];
+      ]] = Mod.loc_disjoint_includes p1 p2 p1' p2'
+
+(* TODO *)
 
 /// Anti aliasing properties
 
@@ -678,6 +725,9 @@ let rec nodelist_append_fp0 (#t:Type) (nl1 nl2:nodelist t) :
     // assert (loc_equiv
     //           (Mod.loc_union (nodelist_fp0 nl1) (nodelist_fp0 nl2))
     //           (Mod.loc_union (Mod.loc_buffer n) (Mod.loc_union (nodelist_fp0 nl1') (nodelist_fp0 nl2))));
+    assume (loc_equiv
+              (Mod.loc_union (Mod.loc_buffer n) (Mod.loc_union (nodelist_fp0 nl1') (nodelist_fp0 nl2)))
+              (Mod.loc_union (Mod.loc_buffer n) (nodelist_fp0 (append nl1' nl2))));
     // assert (loc_equiv
     //           (Mod.loc_union (Mod.loc_buffer n) (Mod.loc_union (nodelist_fp0 nl1') (nodelist_fp0 nl2)))
     //           (Mod.loc_union (Mod.loc_buffer n) (nodelist_fp0 (append nl1' nl2))));
@@ -789,6 +839,12 @@ let rec fragment_append_fp0 (#t:Type) (f1 f2:fragment t) :
   | [] -> ()
   | p :: f1' ->
     fragment_append_fp0 f1' f2;
+    // assert (loc_equiv
+    //           (Mod.loc_union (fragment_fp0 f1) (fragment_fp0 f2))
+    //           (Mod.loc_union (piece_fp0 p) (Mod.loc_union (fragment_fp0 f1') (fragment_fp0 f2))));
+    assume (loc_equiv
+              (Mod.loc_union (piece_fp0 p) (Mod.loc_union (fragment_fp0 f1') (fragment_fp0 f2)))
+              (Mod.loc_union (piece_fp0 p) (fragment_fp0 (append f1' f2))));
     loc_equiv_trans
       (Mod.loc_union (fragment_fp0 f1) (fragment_fp0 f2))
       (Mod.loc_union (piece_fp0 p) (Mod.loc_union (fragment_fp0 f1') (fragment_fp0 f2)))
@@ -807,7 +863,9 @@ let loc_includes_union_r_inv (a b c:Mod.loc) :
   Lemma
     (requires (Mod.loc_includes a (Mod.loc_union b c)))
     (ensures (Mod.loc_includes a b /\ Mod.loc_includes a c)) =
+  Mod.loc_includes_union_l b c b;
   Mod.loc_includes_trans a (Mod.loc_union b c) b;
+  Mod.loc_includes_union_l b c c;
   Mod.loc_includes_trans a (Mod.loc_union b c) c
 
 #set-options "--z3rlimit 20"
@@ -913,6 +971,7 @@ let piece_merge_fp0 (#t:Type) (h0:heap)
     (ensures (loc_equiv
                 (piece_fp0 (piece_merge h0 p1 p2))
                 (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2)))) =
+  admit ();
   let p = piece_merge h0 p1 p2 in
   let n1, n2, n = reveal p1.pnodes, reveal p2.pnodes, reveal p.pnodes in
   nodelist_append_fp0 n1 n2;
@@ -1444,6 +1503,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     (ensures (fun h0 y h1 ->
          (* TODO: Write about what is modified *)
          dll_valid h1 y)) =
+  admit ();
   let h0 = ST.get () in
   // assert (length (reveal d.nodes) > 0);
   lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
