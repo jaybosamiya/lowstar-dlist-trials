@@ -987,7 +987,6 @@ let piece_merge_fp0 (#t:Type) (h0:heap)
     (ensures (loc_equiv
                 (piece_fp0 (piece_merge h0 p1 p2))
                 (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2)))) =
-  admit ();
   let p = piece_merge h0 p1 p2 in
   let n1, n2, n = reveal p1.pnodes, reveal p2.pnodes, reveal p.pnodes in
   nodelist_append_fp0 n1 n2;
@@ -1025,6 +1024,8 @@ let piece_merge_fp0 (#t:Type) (h0:heap)
     (Mod.loc_union (nodelist_fp0 n1) (nodelist_fp0 n2));
   loc_equiv_trans (nodelist_fp0 n)
     (Mod.loc_union (nodelist_fp0 n1) (nodelist_fp0 n2))
+    (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2));
+  loc_equiv_trans (piece_fp0 p) (nodelist_fp0 n)
     (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2))
 
 /// Fragment merging to a dll
