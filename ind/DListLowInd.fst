@@ -232,6 +232,28 @@ let loc_disjoint_includes (p1 p2 p1' p2':loc) :
 
 (* TODO *)
 
+let loc_includes_union_union_loc (a b c:Mod.loc) :
+  (* TODO: Figure out if this one can be removed, or be made with stricted base cases. *)
+  Lemma
+    (requires (Mod.loc_includes b c))
+    (ensures (Mod.loc_includes
+                (Mod.loc_union a b)
+                (Mod.loc_union a c)))
+    [SMTPat (Mod.loc_includes
+                (Mod.loc_union a b)
+                (Mod.loc_union a c))] =
+  let incl = Mod.loc_includes in
+  let u = Mod.loc_union in
+  // assert (b `incl` c);
+  Mod.loc_includes_union_l a b c;
+  // assert ((a `u` b) `incl` c);
+  Mod.loc_includes_union_l a b a;
+  // assert ((a `u` b) `incl` a);
+  // assert ((a `u` b) `incl` (a `u` c));
+  ()
+
+(* TODO *)
+
 /// Anti aliasing properties
 
 let node_aa (#t:Type) (n:node t) : GTot Type0 =
@@ -725,9 +747,6 @@ let rec nodelist_append_fp0 (#t:Type) (nl1 nl2:nodelist t) :
     // assert (loc_equiv
     //           (Mod.loc_union (nodelist_fp0 nl1) (nodelist_fp0 nl2))
     //           (Mod.loc_union (Mod.loc_buffer n) (Mod.loc_union (nodelist_fp0 nl1') (nodelist_fp0 nl2))));
-    assume (loc_equiv
-              (Mod.loc_union (Mod.loc_buffer n) (Mod.loc_union (nodelist_fp0 nl1') (nodelist_fp0 nl2)))
-              (Mod.loc_union (Mod.loc_buffer n) (nodelist_fp0 (append nl1' nl2))));
     // assert (loc_equiv
     //           (Mod.loc_union (Mod.loc_buffer n) (Mod.loc_union (nodelist_fp0 nl1') (nodelist_fp0 nl2)))
     //           (Mod.loc_union (Mod.loc_buffer n) (nodelist_fp0 (append nl1' nl2))));
@@ -842,9 +861,6 @@ let rec fragment_append_fp0 (#t:Type) (f1 f2:fragment t) :
     // assert (loc_equiv
     //           (Mod.loc_union (fragment_fp0 f1) (fragment_fp0 f2))
     //           (Mod.loc_union (piece_fp0 p) (Mod.loc_union (fragment_fp0 f1') (fragment_fp0 f2))));
-    assume (loc_equiv
-              (Mod.loc_union (piece_fp0 p) (Mod.loc_union (fragment_fp0 f1') (fragment_fp0 f2)))
-              (Mod.loc_union (piece_fp0 p) (fragment_fp0 (append f1' f2))));
     loc_equiv_trans
       (Mod.loc_union (fragment_fp0 f1) (fragment_fp0 f2))
       (Mod.loc_union (piece_fp0 p) (Mod.loc_union (fragment_fp0 f1') (fragment_fp0 f2)))
