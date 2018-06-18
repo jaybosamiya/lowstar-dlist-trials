@@ -232,14 +232,27 @@ let loc_disjoint_includes (p1 p2 p1' p2':loc) :
 
 (* TODO *)
 
-let loc_includes_union_union_loc (a b c:Mod.loc) :
-  (* TODO: Figure out if this one can be removed, or be made with stricted base cases. *)
+/// Equivalence for locations
+
+let loc_equiv (a b:Mod.loc) = Mod.loc_includes a b /\ Mod.loc_includes b a
+
+let loc_equiv_trans (a b c:Mod.loc) :
   Lemma
-    (requires (Mod.loc_includes b c))
-    (ensures (Mod.loc_includes
+    (requires (loc_equiv a b /\ loc_equiv b c))
+    (ensures (loc_equiv a c))
+    [SMTPat (loc_equiv a b);
+     SMTPat (loc_equiv b c);
+     SMTPat (loc_equiv a c)] =
+  Mod.loc_includes_trans a b c;
+  Mod.loc_includes_trans c b a
+
+let loc_equiv_union_union_loc (a b c:Mod.loc) :
+  Lemma
+    (requires (loc_equiv b c))
+    (ensures (loc_equiv
                 (Mod.loc_union a b)
                 (Mod.loc_union a c)))
-    [SMTPat (Mod.loc_includes
+    [SMTPat (loc_equiv
                 (Mod.loc_union a b)
                 (Mod.loc_union a c))] =
   let incl = Mod.loc_includes in
@@ -250,7 +263,8 @@ let loc_includes_union_union_loc (a b c:Mod.loc) :
   Mod.loc_includes_union_l a b a;
   // assert ((a `u` b) `incl` a);
   // assert ((a `u` b) `incl` (a `u` c));
-  ()
+  Mod.loc_includes_union_l a c b;
+  Mod.loc_includes_union_l a c a
 
 (* TODO *)
 
@@ -712,18 +726,6 @@ let rec nodelist_append_contained (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
   match nl1 with
   | [] -> ()
   | _ :: nl1' -> nodelist_append_contained h0 nl1' nl2
-
-unfold let loc_equiv (a b:Mod.loc) = Mod.loc_includes a b /\ Mod.loc_includes b a
-
-let loc_equiv_trans (a b c:Mod.loc) :
-  Lemma
-    (requires (loc_equiv a b /\ loc_equiv b c))
-    (ensures (loc_equiv a c))
-    [SMTPat (loc_equiv a b);
-     SMTPat (loc_equiv b c);
-     SMTPat (loc_equiv a c)] =
-  Mod.loc_includes_trans a b c;
-  Mod.loc_includes_trans c b a
 
 let rec nodelist_append_fp0 (#t:Type) (nl1 nl2:nodelist t) :
   Lemma
