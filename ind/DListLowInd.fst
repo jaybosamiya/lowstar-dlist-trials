@@ -1565,7 +1565,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     let h1 = ST.get () in
     //
     // assert (e `memP` reveal d.nodes);
-    assume (e2 `memP` reveal d.nodes);
+    // assert (e2 `memP` reveal d.nodes);
     // assert (e@h0 |> e2 /\ e <| e2@h0);
     let f = tot_dll_to_fragment_split h0 d e e2 in
     // assert (length f = 2);
