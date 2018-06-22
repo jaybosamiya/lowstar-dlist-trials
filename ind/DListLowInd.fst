@@ -1259,13 +1259,19 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
         n1 `memP` reveal d.nodes /\
         n2 `memP` reveal d.nodes /\
         n1@h0 |> n2 /\ n1 <| n2@h0))
-    (ensures (fun f -> fragment_valid h0 f /\ length f = 2)) =
+    (ensures (fun f ->
+         fragment_valid h0 f /\
+         length f = 2 /\
+         loc_equiv (dll_fp0 d) (fragment_fp0 f))) =
   let split_nodes = elift2_p split_using d.nodes (hide n2) in
   lemma_split_using (reveal d.nodes) n2;
   let l1, l2 = (elift1 fst split_nodes), (elift1 snd split_nodes) in
   let p1 = { phead = d.lhead ; ptail = n1 ; pnodes = l1 } in
   let p2 = { phead = n2 ; ptail = d.ltail ; pnodes = l2 } in
   let f = [p1 ; p2] in
+  dll_fp0_is_nodelist_fp0 d;
+  // assert (loc_equiv (dll_fp0 d) (nodelist_fp0 (reveal d.nodes)));
+  nodelist_split_fp0_equiv (reveal l1) (reveal l2);
   nodelist_split_valid h0 (reveal l1) (reveal l2);
   unsnoc_is_last (reveal l1);
   unsnoc_is_last (reveal l2);
@@ -1286,6 +1292,19 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
   // assert (nodelist_aa (reveal p2.pnodes));
   piece_fp0_is_nodelist_fp0 p1;
   piece_fp0_is_nodelist_fp0 p2;
+  // assert (loc_equiv (dll_fp0 d)
+  //           (Mod.loc_union (nodelist_fp0 (reveal l1)) (nodelist_fp0 (reveal l2))));
+  // assert (loc_equiv (nodelist_fp0 (reveal l1)) (piece_fp0 p1));
+  // assert (loc_equiv (nodelist_fp0 (reveal l2)) (piece_fp0 p2));
+  // assert (loc_equiv
+  //           (Mod.loc_union (nodelist_fp0 (reveal l1)) (nodelist_fp0 (reveal l2)))
+  //           (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2)));
+  loc_equiv_trans
+    (dll_fp0 d)
+    (Mod.loc_union (nodelist_fp0 (reveal l1)) (nodelist_fp0 (reveal l2)))
+    (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2));
+  // assert (loc_equiv (dll_fp0 d)
+  //           (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2)));
   // assert (Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p2));
   // assert (fragment_aa f);
   // assert (nodelist_conn h0 (reveal p1.pnodes));
