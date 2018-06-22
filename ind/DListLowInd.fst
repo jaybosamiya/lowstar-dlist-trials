@@ -1230,8 +1230,17 @@ let nodelist_split_valid (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
   nodelist_split_aa nl1 nl2;
   nodelist_split_conn h0 nl1 nl2
 
-/// Useful lemma to convert from piece_fp0 to nodelist_fp0 and
-/// vice-versa
+/// Useful lemma to convert from dll_fp0 or piece_fp0 to nodelist_fp0
+/// and vice-versa
+
+let dll_fp0_is_nodelist_fp0 (#t:Type) (d:dll t) : Lemma
+  (requires (dll_ghostly_connections d))
+  (ensures
+     (loc_equiv (dll_fp0 d) (nodelist_fp0 (reveal d.nodes)))) =
+  if length (reveal d.nodes) > 0 then
+    unsnoc_is_last (reveal d.nodes)
+  else
+    ()
 
 let piece_fp0_is_nodelist_fp0 (#t:Type) (p:piece t) : Lemma
   (requires (piece_ghostly_connections p))
