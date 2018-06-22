@@ -1646,7 +1646,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (piece_fp0 p3));
     piece_remains_valid h0 h0' (Mod.loc_buffer n) p3;
     piece_remains_valid_f h0' h0'' p1;
-    assume (Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p3));
+    // assert (Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p3));
     piece_remains_valid h0' h0'' (piece_fp0 p1) p3;
     piece_remains_valid h0'' h1 (piece_fp0 p3) p1;
     piece_remains_valid_b h0'' h1 p3;
