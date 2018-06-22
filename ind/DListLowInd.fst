@@ -1697,7 +1697,26 @@ let dll_remove_head (#t:Type) (d:dll t) :
     (ensures (fun h0 y h1 ->
          (* TODO: Write about what is modified *)
          dll_valid h1 y)) =
-  admit ()
+  let h0 = ST.get () in
+  let e = d.lhead in
+  let e2 = (!e).flink in
+  if is_null e2 then (
+    empty_list
+  ) else (
+    !<|= e2;
+    let h1 = ST.get () in
+    let f = tot_dll_to_fragment h0 d in
+    let p = hd f in
+    let p' = { phead = e2 ; ptail = p.ptail ; pnodes = elift1_p tl p.pnodes } in
+    let f' = [p'] in
+    assume (fragment_valid h1 f');
+    // assert (fragment_defragmentable h1 f');
+    // assert (length f' > 0);
+    // assert (is_null ((hd f').phead@h1).blink);
+    assume (is_null ((last f').ptail@h1).flink);
+    let y = tot_defragmentable_fragment_to_dll h1 f' in
+    y
+  )
 
 let dll_remove_tail (#t:Type) (d:dll t) :
   StackInline (dll t)
