@@ -1689,4 +1689,46 @@ let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (nod
     dll_insert_after d e1 n
   )
 
+let dll_remove_head (#t:Type) (d:dll t) :
+  StackInline (dll t)
+    (requires (fun h0 ->
+         (dll_valid h0 d) /\
+         (length (reveal d.nodes) > 0)))
+    (ensures (fun h0 y h1 ->
+         (* TODO: Write about what is modified *)
+         dll_valid h1 y)) =
+  admit ()
+
+let dll_remove_tail (#t:Type) (d:dll t) :
+  StackInline (dll t)
+    (requires (fun h0 ->
+         (dll_valid h0 d) /\
+         (length (reveal d.nodes) > 0)))
+    (ensures (fun h0 y h1 ->
+         (* TODO: Write about what is modified *)
+         dll_valid h1 y)) =
+  admit ()
+
+let dll_remove (#t:Type) (d:dll t) (e:gpointer (node t)) :
+  StackInline (dll t)
+    (requires (fun h0 ->
+         (dll_valid h0 d) /\
+         (e `memP` reveal d.nodes)))
+    (ensures (fun h0 y h1 ->
+         (* TODO: Write about what is modified *)
+         dll_valid h1 y)) =
+  let h0 = ST.get () in
+  extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
+  let e1 = (!e).blink in
+  let e2 = (!e).flink in
+  if is_null e1 && is_null e2 then (
+    empty_list
+  ) else if is_null e1 then (
+    dll_remove_head d
+  ) else if is_null e2 then (
+    dll_remove_tail d
+  ) else (
+    admit ()
+  )
+
 (* TODO *)
