@@ -1705,15 +1705,12 @@ let dll_remove_head (#t:Type) (d:dll t) :
   ) else (
     !<|= e2;
     let h1 = ST.get () in
-    let f = tot_dll_to_fragment h0 d in
-    let p = hd f in
-    let p' = { phead = e2 ; ptail = p.ptail ; pnodes = elift1_p tl p.pnodes } in
-    let f' = [p'] in
-    assume (fragment_valid h1 f');
-    // assert (fragment_defragmentable h1 f');
-    // assert (length f' > 0);
-    // assert (is_null ((hd f').phead@h1).blink);
-    assume (is_null ((last f').ptail@h1).flink);
+    let f = tot_dll_to_fragment_split h0 d e e2 in
+    let [p1; p2] = f in
+    // assert (p1.phead == e);
+    // assert (p1.ptail == e);
+    let f' = [p2] in
+    piece_remains_valid_b h0 h1 p2;
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     y
   )
