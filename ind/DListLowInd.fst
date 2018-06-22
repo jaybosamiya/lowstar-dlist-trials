@@ -1746,7 +1746,7 @@ let dll_remove_tail (#t:Type) (d:dll t) :
     y
   )
 
-let dll_remove (#t:Type) (d:dll t) (e:gpointer (node t)) :
+let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
          (dll_valid h0 d) /\
