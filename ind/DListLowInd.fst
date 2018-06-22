@@ -1656,8 +1656,8 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     // assert (f' == append [p1] [p2 ; p3]);
     //
     // assert (fragment_valid h1 f');
-    assert (fragment_defragmentable h1 (tl f'));
-    assert (fragment_defragmentable h1 f');
+    assert (fragment_defragmentable h1 (tl f')); // OBSERVE
+    // assert (fragment_defragmentable h1 f');
     // assert (length f' > 0);
     // assert (is_null ((hd f').phead@h1).blink);
     unsnoc_is_last f';
