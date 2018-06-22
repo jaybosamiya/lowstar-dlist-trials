@@ -1723,7 +1723,28 @@ let dll_remove_tail (#t:Type) (d:dll t) :
     (ensures (fun h0 y h1 ->
          (* TODO: Write about what is modified *)
          dll_valid h1 y)) =
-  admit ()
+  let h0 = ST.get () in
+  let e = d.ltail in
+  let e1 = (!e).blink in
+  if is_null e1 then (
+    empty_list
+  ) else (
+    extract_nodelist_contained h0 (reveal d.nodes) (length (reveal d.nodes) - 2);
+    extract_nodelist_conn h0 (reveal d.nodes) (length (reveal d.nodes) - 2);
+    unsnoc_is_last (reveal d.nodes);
+    // assert (e == (reveal d.nodes).[length (reveal d.nodes) - 1]);
+    // assert (e1 == (reveal d.nodes).[length (reveal d.nodes) - 2]);
+    !=|> e1;
+    let h1 = ST.get () in
+    let f = tot_dll_to_fragment_split h0 d e1 e in
+    let [p1; p2] = f in
+    // assert (p2.phead == e);
+    // assert (p2.ptail == e);
+    let f' = [p1] in
+    piece_remains_valid_f h0 h1 p1;
+    let y = tot_defragmentable_fragment_to_dll h1 f' in
+    y
+  )
 
 let dll_remove (#t:Type) (d:dll t) (e:gpointer (node t)) :
   StackInline (dll t)
