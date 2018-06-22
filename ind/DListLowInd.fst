@@ -1133,6 +1133,36 @@ let rec nodelist_split_fp0 (#t:Type) (nl1 nl2:nodelist t) :
 
 #set-options "--z3rlimit 30"
 
+let rec nodelist_split_fp0_equiv (#t:Type) (nl1 nl2:nodelist t) :
+  Lemma
+    (ensures
+       ((loc_equiv
+           (nodelist_fp0 (append nl1 nl2))
+           (Mod.loc_union
+              (nodelist_fp0 nl1)
+              (nodelist_fp0 nl2))))) =
+  match nl1 with
+  | [] -> ()
+  | n :: ns ->
+    nodelist_split_fp0_equiv ns nl2;
+    assert (loc_equiv (nodelist_fp0 (append nl1 nl2))
+              (Mod.loc_union
+                 (Mod.loc_buffer n)
+                 (Mod.loc_union
+                    (nodelist_fp0 ns)
+                    (nodelist_fp0 nl2)))); // OBSERVE
+    assert (loc_equiv
+              (Mod.loc_union
+                 (Mod.loc_buffer n)
+                 (Mod.loc_union
+                    (nodelist_fp0 ns)
+                    (nodelist_fp0 nl2)))
+              (Mod.loc_union
+                 (Mod.loc_union
+                    (Mod.loc_buffer n)
+                    (nodelist_fp0 ns))
+                 (nodelist_fp0 nl2))) // OBSERVE
+
 let rec nodelist_split_aa_l (#t:Type) (nl1 nl2:nodelist t) :
   Lemma
     (requires (nodelist_aa_l (append nl1 nl2)))
