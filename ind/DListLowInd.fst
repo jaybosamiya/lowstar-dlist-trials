@@ -1740,9 +1740,7 @@ let dll_remove (#t:Type) (d:dll t) (e:gpointer (node t)) :
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
   let e1 = (!e).blink in
   let e2 = (!e).flink in
-  if is_null e1 && is_null e2 then (
-    empty_list
-  ) else if is_null e1 then (
+  if is_null e1 then (
     dll_remove_head d
   ) else if is_null e2 then (
     dll_remove_tail d
