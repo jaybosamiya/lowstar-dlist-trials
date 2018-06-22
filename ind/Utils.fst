@@ -206,3 +206,11 @@ let rec lemma_hd_r_split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
   match i with
   | 0 -> ()
   | _ -> lemma_hd_r_split3 (tl l) (i - 1)
+
+let rec indexed_implies_memP (#t:Type) (l:list t) (i:nat{i < length l}) :
+  Lemma
+    (ensures (index l i `memP` l))
+    [SMTPat (index l i `memP` l)] =
+  match i with
+  | 0 -> ()
+  | _ -> indexed_implies_memP (tl l) (i - 1)
