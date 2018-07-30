@@ -1770,7 +1770,21 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     e1 =|> e2;
     e2 <|= e1;
     let h1 = ST.get () in
-    admit ()
+    assume (e1 `memP` reveal d.nodes);
+    assume (e1@h0 |> e);
+    let f = tot_dll_to_fragment_split h0 d e1 e in
+    let [ p1; p2 ] = f in
+    let p2' = { phead = e2 ; ptail = p2.ptail ; pnodes = elift1_p tl p2.pnodes } in
+    let f' = [ p1; p2' ] in
+    assume (fragment_valid h1 f');
+    assume (fragment_defragmentable h1 f');
+    assume (
+      (is_null ((hd f').phead@h1).blink) /\
+      (is_null ((last f').ptail@h1).flink)
+    );
+    let y = tot_defragmentable_fragment_to_dll h1 f' in
+    admit ();
+    y
   )
 
 (* TODO *)
