@@ -1763,6 +1763,13 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
   ) else if is_null e2 then (
     dll_remove_tail d
   ) else (
+    lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
+    extract_nodelist_aa_r (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
+    extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e);
+    assume (not_aliased e1 e2);
+    e1 =|> e2;
+    e2 <|= e1;
+    let h1 = ST.get () in
     admit ()
   )
 
