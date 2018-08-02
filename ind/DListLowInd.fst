@@ -1345,6 +1345,19 @@ let tot_node_to_piece (#t:Type) (h0:heap) (n:gpointer (node t)) :
     (ensures (fun p -> piece_valid h0 p)) =
   { phead = n ; ptail = n ; pnodes = ~. n }
 
+/// Getting the "tail" of a piece
+
+let tot_piece_tail (#t:Type) (h0:heap) (p:piece t) (n:gpointer (node t)) :
+  Pure (piece t)
+    (requires (
+        (piece_valid h0 p) /\
+        (n == (((p.phead)@h0).flink)) /\
+        (length (reveal p.pnodes) > 1)))
+    (ensures (fun q ->
+         (piece_valid h0 q) /\
+         (reveal q.pnodes) == tl (reveal p.pnodes))) =
+  { phead = n ; ptail = p.ptail ; pnodes = elift1_p tl p.pnodes }
+
 /// If a dll is valid, then both the forward and backward links of
 /// each of the nodes are contained in the heap
 
