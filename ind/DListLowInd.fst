@@ -1838,10 +1838,6 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     piece_remains_valid h0 h0' (Mod.loc_buffer e1) p2';
     piece_remains_valid_b h0' h1 p2';
     fragment_append_valid h1 [p1] [p2'];
-    assume (
-      (is_null ((hd f').phead@h1).blink) /\
-      (is_null ((last f').ptail@h1).flink)
-    );
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     // assert (dll_valid h1 y);
     y
