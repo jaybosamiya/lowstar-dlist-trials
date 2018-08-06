@@ -1840,7 +1840,6 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     );
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     // assert (dll_valid h1 y);
-    admit ();                   // No idea why this is needed
     y
   )
 
