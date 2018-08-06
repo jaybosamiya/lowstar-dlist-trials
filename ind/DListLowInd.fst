@@ -1521,7 +1521,9 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
          (h0 `contains` n) /\
          (node_not_in_dll h0 n d)))
     (ensures (fun h0 y h1 ->
-         (* TODO: Write about what is modified *)
+         Mod.modifies (Mod.loc_union
+                         (Mod.loc_buffer n)
+                         (Mod.loc_buffer d.lhead)) h0 h1 /\
          dll_valid h1 y)) =
   if is_null d.lhead then (
     singleton_dll n
@@ -1579,7 +1581,9 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
          (h0 `contains` n) /\
          (node_not_in_dll h0 n d)))
     (ensures (fun h0 y h1 ->
-         (* TODO: Write about what is modified *)
+         Mod.modifies (Mod.loc_union
+                         (Mod.loc_buffer n)
+                         (Mod.loc_buffer d.ltail)) h0 h1 /\
          dll_valid h1 y)) =
   if is_null d.lhead then (
     singleton_dll n
@@ -1618,7 +1622,13 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
          (h0 `contains` n) /\
          (node_not_in_dll h0 n d)))
     (ensures (fun h0 y h1 ->
-         (* TODO: Write about what is modified *)
+         Mod.modifies (Mod.loc_union
+                         (Mod.loc_buffer n)
+                         (Mod.loc_union
+                            (Mod.loc_union
+                               (Mod.loc_buffer (e@h0).flink)
+                               (Mod.loc_buffer d.ltail))
+                            (Mod.loc_buffer e))) h0 h1 /\
          dll_valid h1 y)) =
   let h0 = ST.get () in
   // assert (length (reveal d.nodes) > 0);
@@ -1717,7 +1727,16 @@ let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (nod
          (h0 `contains` n) /\
          (node_not_in_dll h0 n d)))
     (ensures (fun h0 y h1 ->
-         (* TODO: Write about what is modified *)
+         Mod.modifies (Mod.loc_union
+                         (Mod.loc_buffer n)
+                         (Mod.loc_union
+                            (Mod.loc_union
+                               (Mod.loc_union
+                                  (Mod.loc_buffer d.lhead)
+                                  (Mod.loc_buffer d.ltail)) // this is needed due to using "after"
+                                                            // TODO: Figure out a way to remove it
+                               (Mod.loc_buffer (e@h0).blink))
+                            (Mod.loc_buffer e))) h0 h1 /\
          dll_valid h1 y)) =
   let h0 = ST.get () in
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
@@ -1735,7 +1754,7 @@ let dll_remove_head (#t:Type) (d:dll t) :
          (dll_valid h0 d) /\
          (length (reveal d.nodes) > 0)))
     (ensures (fun h0 y h1 ->
-         (* TODO: Write about what is modified *)
+         Mod.modifies (Mod.loc_buffer (d.lhead@h0).flink) h0 h1 /\
          dll_valid h1 y)) =
   let h0 = ST.get () in
   let e = d.lhead in
@@ -1761,7 +1780,7 @@ let dll_remove_tail (#t:Type) (d:dll t) :
          (dll_valid h0 d) /\
          (length (reveal d.nodes) > 0)))
     (ensures (fun h0 y h1 ->
-         (* TODO: Write about what is modified *)
+         Mod.modifies (Mod.loc_buffer (d.ltail@h0).blink) h0 h1 /\
          dll_valid h1 y)) =
   let h0 = ST.get () in
   let e = d.ltail in
@@ -1794,7 +1813,13 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
          (dll_valid h0 d) /\
          (e `memP` reveal d.nodes)))
     (ensures (fun h0 y h1 ->
-         (* TODO: Write about what is modified *)
+         Mod.modifies (Mod.loc_union
+                         (Mod.loc_union
+                            (Mod.loc_buffer (d.lhead@h0).flink)
+                            (Mod.loc_buffer (d.ltail@h0).blink))
+                         (Mod.loc_union
+                            (Mod.loc_buffer (e@h0).blink)
+                            (Mod.loc_buffer (e@h0).flink))) h0 h1 /\
          dll_valid h1 y)) =
   let h0 = ST.get () in
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
@@ -1834,10 +1859,10 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
 (*
    TODO:
 
-   [ ] Finish up the few remaining “modifies only x, y, z” clauses that I had left for later
    [ ] Update F* and see how much broke
    [ ] Test with KreMLin
    [ ] Write interfaces to get it working with QUIC
+   [ ] Think about making "modifies" postconditions stronger
    [ ] Figure out the StackInline issue that I had postponed until now
    [ ] Figure out why there are hint failures
    [ ] Figure out why the proof is so slow
