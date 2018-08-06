@@ -1835,7 +1835,8 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     let f' = [ p1; p2' ] in
     piece_remains_valid_f h0 h0' p1;
     piece_remains_valid h0' h1 (Mod.loc_buffer e2) p1;
-    // TODO: Validity maintenance for p2
+    piece_remains_valid h0 h0' (Mod.loc_buffer e1) p2';
+    piece_remains_valid_b h0' h1 p2';
     // assert (fragment_ghostly_connections f');
     assume (fragment_contained h1 f');
     assume (fragment_aa f');
