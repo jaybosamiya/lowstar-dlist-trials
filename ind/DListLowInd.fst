@@ -1832,7 +1832,10 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     let [ p1; p2 ] = f in
     let p2' = tot_piece_tail h0 p2 e2 in
     let f' = [ p1; p2' ] in
-    assume (fragment_valid h1 f');
+    // assert (fragment_ghostly_connections f');
+    assume (fragment_contained h1 f');
+    assume (fragment_aa f');
+    assume (fragment_conn h1 f');
     assume (fragment_defragmentable h1 f');
     assume (
       (is_null ((hd f').phead@h1).blink) /\
