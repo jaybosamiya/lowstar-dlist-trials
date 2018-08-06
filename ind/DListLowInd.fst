@@ -1823,7 +1823,7 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     lemma_dll_links_disjoint h0 d (reveal d.nodes `index_of` e);
     e1 =|> e2;
-    e2 <|= e1;
+    e1 <|= e2;
     let h1 = ST.get () in
     // assert (e1 == (reveal d.nodes).[reveal d.nodes `index_of` e - 1]);
     // assert (e1 `memP` reveal d.nodes);
