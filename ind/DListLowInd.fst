@@ -1798,7 +1798,7 @@ let dll_remove_tail (#t:Type) (d:dll t) :
     y
   )
 
-#set-options "--z3rlimit 20"
+#set-options "--z3rlimit 50"
 
 let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
   StackInline (dll t)
@@ -1837,11 +1837,7 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     piece_remains_valid h0' h1 (Mod.loc_buffer e2) p1;
     piece_remains_valid h0 h0' (Mod.loc_buffer e1) p2';
     piece_remains_valid_b h0' h1 p2';
-    // assert (fragment_ghostly_connections f');
-    // assert (fragment_contained h1 f');
-    // assert (fragment_aa f');
-    assume (fragment_conn h1 f');
-    assume (fragment_defragmentable h1 f');
+    fragment_append_valid h1 [p1] [p2'];
     assume (
       (is_null ((hd f').phead@h1).blink) /\
       (is_null ((last f').ptail@h1).flink)
