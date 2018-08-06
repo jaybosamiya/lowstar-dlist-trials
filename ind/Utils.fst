@@ -215,11 +215,24 @@ let rec indexed_implies_memP (#t:Type) (l:list t) (i:nat{i < length l}) :
   | 0 -> ()
   | _ -> indexed_implies_memP (tl l) (i - 1)
 
-let rec lemma_splitAt_left_last (#t:Type) (i:nat) (l:list t) :
-  Lemma (requires i <= length l /\ i > 0)
-    (ensures (let left, _ = splitAt i l in
-              last left == index l (i-1))) =
-  lemma_splitAt i l;
+let rec lemma_splitAt_reindex_left (#t:Type) (i:nat) (l:list t) (j:nat) :
+  Lemma
+    (requires i <= length l /\ j < i)
+    (ensures (
+        let left, right = splitAt i l in
+        lemma_splitAt i l;
+        index left j == index l j)) =
+  match i, j with
+  | 1, _ | _, 0 -> ()
+  | _ -> lemma_splitAt_reindex_left (i - 1) (tl l) (j - 1)
+
+let rec lemma_splitAt_reindex_right (#t:Type) (i:nat) (l:list t) (j:nat) :
+  Lemma
+    (requires i <= length l /\ j + i < length l)
+    (ensures (
+        let left, right = splitAt i l in
+        lemma_splitAt i l;
+        index right j == index l (j + i))) =
   match i with
-  | 1 -> ()
-  | _ -> lemma_splitAt_left_last (i-1) (tl l)
+  | 0 -> ()
+  | _ -> lemma_splitAt_reindex_right (i - 1) (tl l) j
