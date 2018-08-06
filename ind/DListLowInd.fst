@@ -216,8 +216,6 @@ let loc_includes_union_l_fragment_fp0 (#t: Type) (s1 s2:loc) (f:fragment t) :
     [SMTPat (loc_includes (loc_union s1 s2) (fragment_fp0 f))] =
   loc_includes_union_l s1 s2 (fragment_fp0 f)
 
-(* TODO *)
-
 let loc_disjoint_includes (p1 p2 p1' p2':loc) :
   (* This one shall be removed soon, after F* master updates.
      @taramana: I found the culprit. `loc_disjoint_union` should be an equivalence.
@@ -229,8 +227,6 @@ let loc_disjoint_includes (p1 p2 p1' p2':loc) :
         [SMTPat (loc_disjoint p1 p2); SMTPat (loc_disjoint p1' p2')];
         [SMTPat (loc_includes p1 p1'); SMTPat (loc_includes p2 p2')];
       ]] = Mod.loc_disjoint_includes p1 p2 p1' p2'
-
-(* TODO *)
 
 /// Equivalence for locations
 
@@ -265,8 +261,6 @@ let loc_equiv_union_union_loc (a b c:Mod.loc) :
   // assert ((a `u` b) `incl` (a `u` c));
   Mod.loc_includes_union_l a c b;
   Mod.loc_includes_union_l a c a
-
-(* TODO *)
 
 /// Anti aliasing properties
 
@@ -631,8 +625,6 @@ let fst_unsnoc_nodelist_valid (#t:Type) (h0:heap) (nl:nodelist t) :
   fst_unsnoc_nodelist_aa nl;
   fst_unsnoc_nodelist_conn h0 nl
 
-(* TODO *)
-
 /// Footprints are included, even upon breaking nodelist even further
 
 let rec nodelist_includes_r_fp0 (#t:Type) (nl:nodelist t) (i j:nat) :
@@ -683,8 +675,6 @@ let rec nodelist_includes_l_fp0 (#t:Type) (nl:nodelist t) (i j:nat) :
       Mod.loc_includes_trans (nodelist_fp0 b) (nodelist_fp0 c) (nodelist_fp0 a)
     )
   )
-
-(* TODO *)
 
 /// Total conversions between fragments, pieces, and dlls
 
@@ -1441,8 +1431,6 @@ let piece_remains_valid (#t:Type) (h0 h1:heap) (loc:Mod.loc) (p:piece t) :
         (Mod.loc_disjoint loc (piece_fp0 p))))
     (ensures (piece_valid h1 p)) =
   nodelist_remains_valid h0 h1 loc (reveal p.pnodes)
-
-(* TODO *)
 
 /// When outward facing pointers of ends of pieces are modified, they
 /// still remain valid
