@@ -1839,7 +1839,7 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     piece_remains_valid_b h0' h1 p2';
     // assert (fragment_ghostly_connections f');
     // assert (fragment_contained h1 f');
-    assume (fragment_aa f');
+    // assert (fragment_aa f');
     assume (fragment_conn h1 f');
     assume (fragment_defragmentable h1 f');
     assume (
