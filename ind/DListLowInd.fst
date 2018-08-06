@@ -1796,7 +1796,8 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
       (is_null ((last f').ptail@h1).flink)
     );
     let y = tot_defragmentable_fragment_to_dll h1 f' in
-    admit ();
+    // assert (dll_valid h1 y);
+    admit ();                   // No idea why this is needed
     y
   )
 
