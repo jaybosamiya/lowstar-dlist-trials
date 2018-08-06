@@ -1787,7 +1787,7 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     assume (e1@h0 |> e);
     let f = tot_dll_to_fragment_split h0 d e1 e in
     let [ p1; p2 ] = f in
-    let p2' = { phead = e2 ; ptail = p2.ptail ; pnodes = elift1_p tl p2.pnodes } in
+    let p2' = tot_piece_tail h0 p2 e2 in
     let f' = [ p1; p2' ] in
     assume (fragment_valid h1 f');
     assume (fragment_defragmentable h1 f');
