@@ -1798,7 +1798,7 @@ let dll_remove_tail (#t:Type) (d:dll t) :
     y
   )
 
-#set-options "--z3rlimit 10"
+#set-options "--z3rlimit 20"
 
 let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
   StackInline (dll t)
@@ -1823,6 +1823,7 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     lemma_dll_links_disjoint h0 d (reveal d.nodes `index_of` e);
     e1 =|> e2;
+    let h0' = ST.get () in
     e1 <|= e2;
     let h1 = ST.get () in
     // assert (e1 == (reveal d.nodes).[reveal d.nodes `index_of` e - 1]);
@@ -1832,6 +1833,9 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     let [ p1; p2 ] = f in
     let p2' = tot_piece_tail h0 p2 e2 in
     let f' = [ p1; p2' ] in
+    piece_remains_valid_f h0 h0' p1;
+    piece_remains_valid h0' h1 (Mod.loc_buffer e2) p1;
+    // TODO: Validity maintenance for p2
     // assert (fragment_ghostly_connections f');
     assume (fragment_contained h1 f');
     assume (fragment_aa f');
