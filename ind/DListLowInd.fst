@@ -1798,6 +1798,8 @@ let dll_remove_tail (#t:Type) (d:dll t) :
     y
   )
 
+#set-options "--z3rlimit 10"
+
 let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
@@ -1816,14 +1818,16 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     dll_remove_tail d
   ) else (
     lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
+    extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
     extract_nodelist_aa_r (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     lemma_dll_links_disjoint h0 d (reveal d.nodes `index_of` e);
     e1 =|> e2;
     e2 <|= e1;
     let h1 = ST.get () in
-    assume (e1 `memP` reveal d.nodes);
-    assume (e1@h0 |> e);
+    // assert (e1 == (reveal d.nodes).[reveal d.nodes `index_of` e - 1]);
+    // assert (e1 `memP` reveal d.nodes);
+    // assert (e1@h0 |> e);
     let f = tot_dll_to_fragment_split h0 d e1 e in
     let [ p1; p2 ] = f in
     let p2' = tot_piece_tail h0 p2 e2 in
