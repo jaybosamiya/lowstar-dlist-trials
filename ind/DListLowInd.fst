@@ -1359,7 +1359,8 @@ let tot_piece_tail (#t:Type) (h0:heap) (p:piece t) (n:gpointer (node t)) :
   { phead = n ; ptail = p.ptail ; pnodes = elift1_p tl p.pnodes }
 
 /// If a dll is valid, then both the forward and backward links of
-/// each of the nodes are contained in the heap
+/// each of the nodes are contained in the heap, and disjoint from
+/// each other
 
 let lemma_dll_links_contained (#t:Type) (h0:heap) (d:dll t) (i:nat) :
   Lemma
@@ -1379,6 +1380,44 @@ let lemma_dll_links_contained (#t:Type) (h0:heap) (d:dll t) (i:nat) :
     (if i = 0 then () else extract_nodelist_contained h0 nl (i - 1));
     (if i = length nl - 1 then () else extract_nodelist_contained h0 nl (i + 1));
     unsnoc_is_last nl
+
+let lemma_dll_links_disjoint (#t:Type) (h0:heap) (d:dll t) (i:nat) :
+  Lemma
+    (requires (
+        (dll_valid h0 d) /\
+        (i < length (reveal d.nodes))))
+    (ensures (
+        let nodes = reveal d.nodes in
+        let left = (nodes.[i]@h0).blink in
+        let right = (nodes.[i]@h0).flink in
+        Mod.loc_disjoint
+          (Mod.loc_buffer left)
+          (Mod.loc_buffer right))) =
+  let nl = reveal d.nodes in
+  match nl with
+  | [_] -> ()
+  | _ ->
+    let node_split = splitAt i nl in
+    lemma_splitAt i nl;
+    lemma_index_splitAt i nl;
+    let l1, x :: l2 = node_split in
+    (if i = 0 then () else extract_nodelist_conn h0 nl (i-1));
+    (if i = length nl - 1 then () else extract_nodelist_conn h0 nl i);
+    (if i = 0 then () else (
+        if i = length nl - 1 then (unsnoc_is_last nl) else (
+          unsnoc_is_last l1;
+          let left = last l1 in
+          let right = hd l2 in
+          lemma_splitAt_reindex_left i nl (length l1 - 1);
+          // assert (left == (nl.[i]@h0).blink);
+          lemma_splitAt_reindex_right i nl 1;
+          // assert (right == (nl.[i]@h0).flink);
+          nodelist_split_aa l1 (x :: l2);
+          // assert (Mod.loc_disjoint (nodelist_fp0 l1) (nodelist_fp0 l2));
+          // assert (Mod.loc_includes (nodelist_fp0 l1) (Mod.loc_buffer left));
+          // assert (Mod.loc_includes (nodelist_fp0 l2) (Mod.loc_buffer right));
+          ()
+        )))
 
 /// When something unrelated to a XYZ is changed, the XYZ itself shall
 /// remain valid
