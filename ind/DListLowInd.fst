@@ -1843,4 +1843,14 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     y
   )
 
-(* TODO *)
+(*
+   TODO:
+
+   [ ] Finish up the few remaining “modifies only x, y, z” clauses that I had left for later
+   [ ] Update F* and see how much broke
+   [ ] Test with KreMLin
+   [ ] Write interfaces to get it working with QUIC
+   [ ] Figure out the StackInline issue that I had postponed until now
+   [ ] Figure out why there are hint failures
+   [ ] Figure out why the proof is so slow
+*)
