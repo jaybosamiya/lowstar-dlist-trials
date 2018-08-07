@@ -13,12 +13,12 @@ FStar version tested:
 *)
 
 open FStar
-open FStar.List.Tot
 open Utils
 open FStar.HyperStack.ST
 open FStar.Ghost
-open Gpointers
 open LowStar.ModifiesPat
+open FStar.List.Tot
+open Gpointers
 module Mod = LowStar.Modifies
 module ST = FStar.HyperStack.ST
 
