@@ -1642,7 +1642,6 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
                             (Mod.loc_buffer e)
                             (Mod.loc_buffer (e@h0).flink))) h0 h1 /\
          dll_valid h1 y)) =
-  admit ();
   let h0 = ST.get () in
   // assert (length (reveal d.nodes) > 0);
   lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
@@ -1663,6 +1662,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     e <|= n;
     // let h' = ST.get () in assert (h' `contains` e2); assert (not_aliased n e2);
     n =|> e2;
+    admit ();
     let h0' = ST.get () in
     // assert (is_not_null e1 ==> e1 == (reveal d.nodes).[reveal d.nodes `index_of` e - 1]);
     // assert (is_not_null e1 ==> Mod.loc_includes (nodelist_fp0 (reveal d.nodes)) (Mod.loc_buffer e1));
@@ -1751,13 +1751,13 @@ let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (nod
                                (Mod.loc_buffer (e@h0).blink))
                             (Mod.loc_buffer e))) h0 h1 /\
          dll_valid h1 y)) =
-  admit ();
   let h0 = ST.get () in
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
   let e1 = (!e).blink in
   if is_null e1 then (
     dll_insert_at_head d n
   ) else (
+    admit ();
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
     dll_insert_after d e1 n
   )
@@ -1770,7 +1770,6 @@ let dll_remove_head (#t:Type) (d:dll t) :
     (ensures (fun h0 y h1 ->
          Mod.modifies (Mod.loc_buffer (d.lhead@h0).flink) h0 h1 /\
          dll_valid h1 y)) =
-  admit ();
   let h0 = ST.get () in
   let e = d.lhead in
   let e2 = (!e).flink in
@@ -1785,6 +1784,7 @@ let dll_remove_head (#t:Type) (d:dll t) :
     // assert (p1.ptail == e);
     let f' = [p2] in
     piece_remains_valid_b h0 h1 p2;
+    admit ();
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     y
   )
@@ -1797,7 +1797,6 @@ let dll_remove_tail (#t:Type) (d:dll t) :
     (ensures (fun h0 y h1 ->
          Mod.modifies (Mod.loc_buffer (d.ltail@h0).blink) h0 h1 /\
          dll_valid h1 y)) =
-  admit ();
   let h0 = ST.get () in
   let e = d.ltail in
   let e1 = (!e).blink in
@@ -1811,6 +1810,7 @@ let dll_remove_tail (#t:Type) (d:dll t) :
     // assert (e1 == (reveal d.nodes).[length (reveal d.nodes) - 2]);
     !=|> e1;
     let h1 = ST.get () in
+    admit ();
     let f = tot_dll_to_fragment_split h0 d e1 e in
     let [p1; p2] = f in
     // assert (p2.phead == e);
@@ -1837,7 +1837,6 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
                             (Mod.loc_buffer (e@h0).blink)
                             (Mod.loc_buffer (e@h0).flink))) h0 h1 /\
          dll_valid h1 y)) =
-  admit ();
   let h0 = ST.get () in
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
   let e1 = (!e).blink in
@@ -1856,6 +1855,7 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     let h0' = ST.get () in
     e1 <|= e2;
     let h1 = ST.get () in
+    admit ();
     // assert (e1 == (reveal d.nodes).[reveal d.nodes `index_of` e - 1]);
     // assert (e1 `memP` reveal d.nodes);
     // assert (e1@h0 |> e);
