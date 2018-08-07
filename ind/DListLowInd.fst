@@ -1824,6 +1824,8 @@ let dll_remove_head (#t:Type) (d:dll t) :
 
 #reset-options
 
+#set-options "--z3rlimit 20"
+
 let dll_remove_tail (#t:Type) (d:dll t) :
   StackInline (dll t)
     (requires (fun h0 ->
@@ -1845,16 +1847,18 @@ let dll_remove_tail (#t:Type) (d:dll t) :
     // assert (e1 == (reveal d.nodes).[length (reveal d.nodes) - 2]);
     !=|> e1;
     let h1 = ST.get () in
-    admit ();
     let f = tot_dll_to_fragment_split h0 d e1 e in
     let [p1; p2] = f in
     // assert (p2.phead == e);
     // assert (p2.ptail == e);
     let f' = [p1] in
     piece_remains_valid_f h0 h1 p1;
+    admit ();
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     y
   )
+
+#reset-options
 
 #set-options "--z3rlimit 50"
 
