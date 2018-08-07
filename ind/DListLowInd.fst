@@ -1771,15 +1771,15 @@ let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (nod
          (node_not_in_dll h0 n d)))
     (ensures (fun h0 y h1 ->
          Mod.modifies (Mod.loc_union
-                         (Mod.loc_buffer n)
+                         (Mod.loc_buffer d.lhead)
                          (Mod.loc_union
                             (Mod.loc_union
-                               (Mod.loc_union
-                                  (Mod.loc_buffer d.lhead)
-                                  (Mod.loc_buffer d.ltail)) // this is needed due to using "after"
-                                                            // TODO: Figure out a way to remove it
-                               (Mod.loc_buffer (e@h0).blink))
-                            (Mod.loc_buffer e))) h0 h1 /\
+                               (Mod.loc_buffer n)
+                               (Mod.loc_buffer d.ltail)) // this is needed due to using "after"
+                                                         // TODO: Figure out a way to remove it
+                            (Mod.loc_union
+                               (Mod.loc_buffer (e@h0).blink)
+                               (Mod.loc_buffer e)))) h0 h1 /\
          dll_valid h1 y)) =
   let h0 = ST.get () in
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
@@ -1789,9 +1789,7 @@ let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (nod
   ) else (
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
     assume (e1 == (reveal d.nodes).[reveal d.nodes `index_of` e - 1]);
-    let y = dll_insert_after d e1 n in
-    admit ();
-    y
+    dll_insert_after d e1 n
   )
 
 #reset-options
