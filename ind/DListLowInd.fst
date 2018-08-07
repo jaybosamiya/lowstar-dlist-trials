@@ -1623,12 +1623,12 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
          (node_not_in_dll h0 n d)))
     (ensures (fun h0 y h1 ->
          Mod.modifies (Mod.loc_union
-                         (Mod.loc_buffer n)
                          (Mod.loc_union
-                            (Mod.loc_union
-                               (Mod.loc_buffer (e@h0).flink)
-                               (Mod.loc_buffer d.ltail))
-                            (Mod.loc_buffer e))) h0 h1 /\
+                            (Mod.loc_buffer n)
+                            (Mod.loc_buffer d.ltail))
+                         (Mod.loc_union
+                            (Mod.loc_buffer e)
+                            (Mod.loc_buffer (e@h0).flink))) h0 h1 /\
          dll_valid h1 y)) =
   let h0 = ST.get () in
   // assert (length (reveal d.nodes) > 0);
