@@ -85,8 +85,8 @@ let empty_list #t =
 let dll_ghostly_connections (#t:Type) (d:dll t) : GTot Type0 =
   let nodes = reveal d.nodes in
   match length nodes with
-  | 0 -> is_null d.lhead /\ is_null d.ltail
-  | _ -> is_not_null d.lhead /\ is_not_null d.ltail /\
+  | 0 -> d.lhead == null /\ d.ltail == null
+  | _ -> d.lhead =!= null /\ d.ltail =!= null /\
          d.lhead ==$ hd nodes /\
          d.ltail ==$ last nodes
 
