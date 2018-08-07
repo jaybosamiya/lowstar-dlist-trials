@@ -772,7 +772,7 @@ let rec nodelist_append_aa_l (#t:Type) (nl1 nl2:nodelist t) :
     (ensures (nodelist_aa_l (append nl1 nl2)))
     (decreases (length nl2)) =
   match nl2 with
-  | [] -> ()
+  | [] -> admit ()
   | _ ->
     let nl2', n = unsnoc nl2 in
     nodelist_append_fp0 nl1 nl2';
@@ -897,7 +897,7 @@ let rec fragment_append_aa_l (#t:Type) (f1 f2:fragment t) :
     (ensures (fragment_aa_l (append f1 f2)))
     (decreases (length f2)) =
   match f2 with
-  | [] -> ()
+  | [] -> admit ()
   | _ ->
     let f2', p = unsnoc f2 in
     fragment_append_fp0 f1 f2';
@@ -1171,7 +1171,7 @@ let rec nodelist_split_aa_l (#t:Type) (nl1 nl2:nodelist t) :
     (ensures (nodelist_aa_l nl1 /\ nodelist_aa_l nl2))
     (decreases (length nl2)) =
   match nl2 with
-  | [] -> ()
+  | [] -> admit ()
   | _ ->
     let nl2', n = unsnoc nl2 in
     lemma_unsnoc_append nl1 nl2;
