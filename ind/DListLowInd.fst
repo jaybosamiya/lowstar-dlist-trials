@@ -1824,7 +1824,7 @@ let dll_remove_head (#t:Type) (d:dll t) :
 
 #reset-options
 
-#set-options "--z3rlimit 20"
+#set-options "--z3rlimit 50"
 
 let dll_remove_tail (#t:Type) (d:dll t) :
   StackInline (dll t)
@@ -1853,7 +1853,6 @@ let dll_remove_tail (#t:Type) (d:dll t) :
     // assert (p2.ptail == e);
     let f' = [p1] in
     piece_remains_valid_f h0 h1 p1;
-    admit ();
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     y
   )
