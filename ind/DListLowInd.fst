@@ -1,5 +1,17 @@
 module DListLowInd
 
+(*
+Status:
+   [ ] Working
+   [X] Broken
+FStar version tested:
+   F* 0.9.7.0~dev
+   platform=Linux_x86_64
+   compiler=OCaml 4.05.0
+   date=2018-08-07T15:52:45-0400
+   commit=0ec69139d84c8d011813a6c3766cd35ad0ac3ccf
+*)
+
 open FStar
 open FStar.List.Tot
 open Utils
@@ -1859,7 +1871,7 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
 (*
    TODO:
 
-   [ ] Update F* and see how much broke
+   [X] Update F* and see how much broke
    [ ] Test with KreMLin
    [ ] Write interfaces to get it working with QUIC
    [ ] Think about making "modifies" postconditions stronger
