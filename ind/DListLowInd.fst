@@ -1760,6 +1760,8 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
 
 #reset-options
 
+#set-options "--z3rlimit 20"
+
 let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
@@ -1785,11 +1787,14 @@ let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (nod
   if is_null e1 then (
     dll_insert_at_head d n
   ) else (
-    not_first_node h0 d e;
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
+    assume (e1 == (reveal d.nodes).[reveal d.nodes `index_of` e - 1]);
+    let y = dll_insert_after d e1 n in
     admit ();
-    dll_insert_after d e1 n
+    y
   )
+
+#reset-options
 
 let dll_remove_head (#t:Type) (d:dll t) :
   StackInline (dll t)
