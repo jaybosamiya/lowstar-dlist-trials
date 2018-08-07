@@ -1794,6 +1794,8 @@ let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (nod
 
 #reset-options
 
+#set-options "--z3rlimit 20"
+
 let dll_remove_head (#t:Type) (d:dll t) :
   StackInline (dll t)
     (requires (fun h0 ->
@@ -1816,10 +1818,11 @@ let dll_remove_head (#t:Type) (d:dll t) :
     // assert (p1.ptail == e);
     let f' = [p2] in
     piece_remains_valid_b h0 h1 p2;
-    admit ();
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     y
   )
+
+#reset-options
 
 let dll_remove_tail (#t:Type) (d:dll t) :
   StackInline (dll t)
