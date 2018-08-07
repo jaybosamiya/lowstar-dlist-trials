@@ -1522,6 +1522,34 @@ let node_not_in_dll (#t:Type) (h0:heap) (n:gpointer (node t)) (d:dll t) =
                                         (dll_fp_f h0 d) (dll_fp_b h0 d)) in
   Mod.loc_disjoint m1 m2
 
+/// Ensuring that a node is strictly in the middle of a list
+
+let not_first_node (#t:Type) (h0:heap) (d:dll t) (e:gpointer (node t)) :
+  Lemma
+    (requires (
+        (dll_valid h0 d) /\
+        ((e@h0).blink =!= null) /\
+        (e `memP` reveal d.nodes)))
+    (ensures (reveal d.nodes `index_of` e >= 1)) = ()
+
+let not_last_node (#t:Type) (h0:heap) (d:dll t) (e:gpointer (node t)) :
+  Lemma
+    (requires (
+        (dll_valid h0 d) /\
+        ((e@h0).flink =!= null) /\
+        (e `memP` reveal d.nodes)))
+    (ensures (reveal d.nodes `index_of` e < length (reveal d.nodes) - 1)) =
+  let rec aux l :
+    Lemma
+      (requires (
+          (e `memP` l) /\
+          ((e@h0).flink =!= null) /\
+          (((last l)@h0).flink == null)))
+      (ensures (l `index_of` e < length l - 1)) =
+    if StrongExcludedMiddle.strong_excluded_middle (hd l == e) then () else (aux (tl l)) in
+  unsnoc_is_last (reveal d.nodes);
+  aux (reveal d.nodes)
+
 /// Now for the actual ST operations that will be exposed :)
 
 #set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 0 --query_stats"
