@@ -1690,7 +1690,6 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     e <|= n;
     // let h' = ST.get () in assert (h' `contains` e2); assert (not_aliased n e2);
     n =|> e2;
-    admit ();
     let h0' = ST.get () in
     // assert (is_not_null e1 ==> e1 == (reveal d.nodes).[reveal d.nodes `index_of` e - 1]);
     // assert (is_not_null e1 ==> Mod.loc_includes (nodelist_fp0 (reveal d.nodes)) (Mod.loc_buffer e1));
@@ -1711,6 +1710,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     Mod.modifies_buffer_elim e2 (Mod.loc_buffer e) h0' h0'';
     // assert (h0'' `contains` e2);
     n <|= e2;
+    admit ();
     let h1 = ST.get () in
     //
     // assert (e `memP` reveal d.nodes);
