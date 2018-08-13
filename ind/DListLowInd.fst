@@ -1652,7 +1652,7 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
 
 #reset-options
 
-#set-options "--z3rlimit 1000 --initial_fuel 2 --initial_ifuel 2 --max_fuel 2 --max_ifuel 2 --z3refresh --query_stats"
+#set-options "--z3rlimit 1000 --query_stats"
 
 let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node t)) :
   StackInline (dll t)
@@ -1710,13 +1710,13 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     Mod.modifies_buffer_elim e2 (Mod.loc_buffer e) h0' h0'';
     // assert (h0'' `contains` e2);
     n <|= e2;
-    admit ();
     let h1 = ST.get () in
     //
     // assert (e `memP` reveal d.nodes);
     // assert (e2 `memP` reveal d.nodes);
     // assert (e@h0 |> e2 /\ e <| e2@h0);
     let f = tot_dll_to_fragment_split h0 d e e2 in
+    admit ();
     // assert (length f = 2);
     let p1, p3 = f.[0], f.[1] in
     // assert ([p1 ; p3] == f);
