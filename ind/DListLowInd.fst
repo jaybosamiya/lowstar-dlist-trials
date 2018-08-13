@@ -1721,7 +1721,6 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     // assert ([p1 ; p3] == f);
     let p2 = tot_node_to_piece h0 n in
     let f' = [p1 ; p2 ; p3] in
-    admit ();
     // assert (Mod.modifies (Mod.loc_buffer n) h0 h0');
     // assert (piece_valid h0 p1);
     // assert (loc_equiv (dll_fp0 d) (fragment_fp0 f));
@@ -1735,6 +1734,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     // assert (piece_valid h0 p3);
     Mod.loc_includes_trans (dll_fp0 d) (fragment_fp0 f) (piece_fp0 p3);
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (piece_fp0 p3));
+    admit ();
     piece_remains_valid h0 h0' (Mod.loc_buffer n) p3;
     piece_remains_valid_f h0' h0'' p1;
     // assert (Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p3));
