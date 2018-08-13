@@ -31,20 +31,25 @@ earlier proofs were based on the `seq` library, and relied heavily on
 a quantifier based proof style.
 
 The latest version of the proof uses an approach heavily dependent on
-the concept of "separation of concerns". Any time an operation is to
-be performed on a `dll` (doubly linked list), it is first turned into
-a `fragment` (which consists of 0 or more `piece`s). These `piece`s
-themselves are moved around or manipulated, with every single
-operation "maintaining `valid`ity"). Then finally, these are
-transformed back into a `dll`. Since only the first and last
-transformations need to worry about `dll` validity, these separate out
-concerns regarding continuity of the list, as well as properties about
-the "ends". The validity of a `piece` and `fragment`, on the other
-hand, allows controlling things in a much more easy-to-use way, by
-having composable operations that can violate `dll` validity, but
-maintain `piece` validity. This way, operations can _temporarily_
-violate `dll` validity, perform manipulations, and then return back to
-`dll` validity in a sane way.
+the concept of "separation of concerns". In addition, it purely relies
+on inductive definitions of validity, rather than quantifier based
+definitions. While this makes certain proofs cumbersome, it
+significantly improves proof performance, since the proofs can now be
+directed in certain directions, rather than relying on z3's heuristics
+for quantifiers to instantiate correctly. As for the "separation of
+concerns" part, any time an operation is to be performed on a `dll`
+(doubly linked list), it is first turned into a `fragment` (which
+consists of 0 or more `piece`s). These `piece`s themselves are moved
+around or manipulated, with every single operation "maintaining
+`valid`ity"). Then finally, these are transformed back into a
+`dll`. Since only the first and last transformations need to worry
+about `dll` validity, these separate out concerns regarding continuity
+of the list, as well as properties about the "ends". The validity of a
+`piece` and `fragment`, on the other hand, allows controlling things
+in a much more easy-to-use way, by having composable operations that
+can violate `dll` validity, but maintain `piece` validity. This way,
+operations can _temporarily_ violate `dll` validity, perform
+manipulations, and then return back to `dll` validity in a sane way.
 
 In addition to the proof style, the current version of the proof also
 uses the new Low\* `buffer` and Low\* `modifies` libraries. These are
