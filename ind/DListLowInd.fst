@@ -1858,7 +1858,7 @@ let dll_remove_tail (#t:Type) (d:dll t) :
 
 #reset-options
 
-#set-options "--z3rlimit 100"
+#set-options "--z3rlimit 400"
 
 let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
   StackInline (dll t)
@@ -1903,9 +1903,9 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     piece_remains_valid h0' h1 (Mod.loc_buffer e2) p1;
     piece_remains_valid h0 h0' (Mod.loc_buffer e1) p2';
     piece_remains_valid_b h0' h1 p2';
-    admit ();
     fragment_append_valid h1 [p1] [p2'];
     let y = tot_defragmentable_fragment_to_dll h1 f' in
+    admit ();
     // assert (dll_valid h1 y);
     y
   )
