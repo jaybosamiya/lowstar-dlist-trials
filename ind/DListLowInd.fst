@@ -1734,13 +1734,13 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
     // assert (piece_valid h0 p3);
     Mod.loc_includes_trans (dll_fp0 d) (fragment_fp0 f) (piece_fp0 p3);
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (piece_fp0 p3));
-    admit ();
     piece_remains_valid h0 h0' (Mod.loc_buffer n) p3;
     piece_remains_valid_f h0' h0'' p1;
     // assert (Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p3));
     piece_remains_valid h0' h0'' (piece_fp0 p1) p3;
     piece_remains_valid h0'' h1 (piece_fp0 p3) p1;
     piece_remains_valid_b h0'' h1 p3;
+    admit ();
     fragment_append_valid h1 [p2] [p3];
     // assert ([p2 ; p3] == append [p2] [p3]);
     fragment_append_valid h1 [p1] [p2 ; p3];
