@@ -1788,7 +1788,6 @@ let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (nod
     dll_insert_at_head d n
   ) else (
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
-    assume (e1 == (reveal d.nodes).[reveal d.nodes `index_of` e - 1]);
     dll_insert_after d e1 n
   )
 
