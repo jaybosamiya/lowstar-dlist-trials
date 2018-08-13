@@ -1905,7 +1905,6 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
     piece_remains_valid_b h0' h1 p2';
     fragment_append_valid h1 [p1] [p2'];
     let y = tot_defragmentable_fragment_to_dll h1 f' in
-    admit ();
     // assert (dll_valid h1 y);
     y
   )
