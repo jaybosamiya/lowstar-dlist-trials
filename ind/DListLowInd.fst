@@ -1760,7 +1760,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
 
 #reset-options
 
-#set-options "--z3rlimit 20"
+#set-options "--z3rlimit 50"
 
 let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node t)) :
   StackInline (dll t)
