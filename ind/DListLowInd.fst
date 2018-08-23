@@ -1497,9 +1497,8 @@ let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
     // assert (Mod.loc_disjoint (Mod.loc_buffer (last (fst (unsnoc nodes)))) (Mod.loc_buffer p.ptail));
     // assert (Mod.modifies (Mod.loc_buffer p.ptail) h0 h1);
     extract_nodelist_contained h0 nodes (length nodes - 2);
-    admit ();
     // assert (h0 `contains` last (fst (unsnoc nodes)));
-    // assert ((last (fst (unsnoc nodes)))@h0 == (last (fst (unsnoc nodes)))@h1);
+    assume ((last (fst (unsnoc nodes)))@h0 == (last (fst (unsnoc nodes)))@h1);
     // assert ((last (fst (unsnoc nodes)))@h1 |> (hd [snd (unsnoc nodes)]));
     // assert ((last (fst (unsnoc nodes))) <| (hd [snd (unsnoc nodes)])@h1);
     nodelist_append_conn h1 (fst (unsnoc nodes)) [snd (unsnoc nodes)];
