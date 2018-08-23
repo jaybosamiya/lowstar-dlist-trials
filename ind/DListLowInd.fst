@@ -1,12 +1,24 @@
 module DListLowInd
 
+(*
+Status:
+   [X] Working
+   [ ] Broken
+FStar version tested:
+   F* 0.9.7.0~dev
+   platform=Linux_x86_64
+   compiler=OCaml 4.05.0
+   date=2018-08-07T15:52:45-0400
+   commit=0ec69139d84c8d011813a6c3766cd35ad0ac3ccf
+*)
+
 open FStar
-open FStar.List.Tot
-open Utils
 open FStar.HyperStack.ST
 open FStar.Ghost
-open Gpointers
 open LowStar.ModifiesPat
+open FStar.List.Tot
+open Utils
+open Gpointers
 module Mod = LowStar.Modifies
 module ST = FStar.HyperStack.ST
 
@@ -73,8 +85,8 @@ let empty_list #t =
 let dll_ghostly_connections (#t:Type) (d:dll t) : GTot Type0 =
   let nodes = reveal d.nodes in
   match length nodes with
-  | 0 -> is_null d.lhead /\ is_null d.ltail
-  | _ -> is_not_null d.lhead /\ is_not_null d.ltail /\
+  | 0 -> d.lhead == null /\ d.ltail == null
+  | _ -> d.lhead =!= null /\ d.ltail =!= null /\
          d.lhead ==$ hd nodes /\
          d.ltail ==$ last nodes
 
@@ -215,18 +227,6 @@ let loc_includes_union_l_fragment_fp0 (#t: Type) (s1 s2:loc) (f:fragment t) :
     (ensures (loc_includes (loc_union s1 s2) (fragment_fp0 f)))
     [SMTPat (loc_includes (loc_union s1 s2) (fragment_fp0 f))] =
   loc_includes_union_l s1 s2 (fragment_fp0 f)
-
-let loc_disjoint_includes (p1 p2 p1' p2':loc) :
-  (* This one shall be removed soon, after F* master updates.
-     @taramana: I found the culprit. `loc_disjoint_union` should be an equivalence.
-     I'm going to push it soon. *)
-  Lemma
-    (requires (Mod.loc_includes p1 p1' /\ Mod.loc_includes p2 p2' /\ Mod.loc_disjoint p1 p2))
-    (ensures (Mod.loc_disjoint p1' p2'))
-    [SMTPatOr [
-        [SMTPat (loc_disjoint p1 p2); SMTPat (loc_disjoint p1' p2')];
-        [SMTPat (loc_includes p1 p1'); SMTPat (loc_includes p2 p2')];
-      ]] = Mod.loc_disjoint_includes p1 p2 p1' p2'
 
 /// Equivalence for locations
 
@@ -607,7 +607,16 @@ let rec fst_unsnoc_nodelist_aa (#t:Type) (nl:nodelist t) :
     (ensures (nodelist_aa (fst (unsnoc nl)))) =
   match nl with
   | [_] -> ()
-  | _ -> fst_unsnoc_nodelist_aa (tl nl)
+  | _ ->
+    fst_unsnoc_nodelist_aa (tl nl);
+    // assert (nodelist_aa_l (fst (unsnoc nl)));
+    let n :: ns = fst (unsnoc nl) in
+    Mod.loc_disjoint_includes
+      (Mod.loc_buffer n) (nodelist_fp0 (tl nl))
+      (Mod.loc_buffer n) (nodelist_fp0 ns);
+    // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 ns));
+    // assert (nodelist_aa_r (fst (unsnoc nl)));
+    ()
 
 let rec fst_unsnoc_nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) :
   Lemma
@@ -765,9 +774,9 @@ let rec nodelist_append_aa_l (#t:Type) (nl1 nl2:nodelist t) :
     let nl2', n = unsnoc nl2 in
     nodelist_append_fp0 nl1 nl2';
     // assert (nodelist_aa_l nl2');
-    // assert (Mod.loc_includes (nodelist_fp0 nl2) (nodelist_fp0 nl2'));
+    assert (Mod.loc_includes (nodelist_fp0 nl2) (nodelist_fp0 nl2')); // OBSERVE
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl2'));
-    // assert (Mod.loc_includes (nodelist_fp0 nl2) (Mod.loc_buffer n));
+    assert (Mod.loc_includes (nodelist_fp0 nl2) (Mod.loc_buffer n)); // OBSERVE
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl1));
     // assert (loc_equiv (nodelist_fp0 (append nl1 nl2')) (Mod.loc_union (nodelist_fp0 nl1) (nodelist_fp0 nl2')));
     nodelist_append_aa_l nl1 nl2';
@@ -1404,8 +1413,8 @@ let lemma_dll_links_disjoint (#t:Type) (h0:heap) (d:dll t) (i:nat) :
           // assert (right == (nl.[i]@h0).flink);
           nodelist_split_aa l1 (x :: l2);
           // assert (Mod.loc_disjoint (nodelist_fp0 l1) (nodelist_fp0 l2));
-          // assert (Mod.loc_includes (nodelist_fp0 l1) (Mod.loc_buffer left));
-          // assert (Mod.loc_includes (nodelist_fp0 l2) (Mod.loc_buffer right));
+          assert (Mod.loc_includes (nodelist_fp0 l1) (Mod.loc_buffer left)); // OBSERVE
+          assert (Mod.loc_includes (nodelist_fp0 l2) (Mod.loc_buffer right)); // OBSERVE
           ()
         )))
 
@@ -1489,6 +1498,9 @@ let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
     // assert (Mod.modifies (Mod.loc_buffer p.ptail) h0 h1);
     extract_nodelist_contained h0 nodes (length nodes - 2);
     // assert (h0 `contains` last (fst (unsnoc nodes)));
+    // assert (Mod.loc_disjoint (nodelist_fp0 (fst (unsnoc nodes))) (Mod.loc_buffer p.ptail));
+    assert (Mod.loc_includes (nodelist_fp0 (fst (unsnoc nodes))) (Mod.loc_buffer (last (fst (unsnoc nodes))))); // OBSERVE
+    // assert (Mod.loc_disjoint (Mod.loc_buffer (last (fst (unsnoc nodes)))) (Mod.loc_buffer p.ptail));
     // assert ((last (fst (unsnoc nodes)))@h0 == (last (fst (unsnoc nodes)))@h1);
     // assert ((last (fst (unsnoc nodes)))@h1 |> (hd [snd (unsnoc nodes)]));
     // assert ((last (fst (unsnoc nodes))) <| (hd [snd (unsnoc nodes)])@h1);
@@ -1509,6 +1521,34 @@ let node_not_in_dll (#t:Type) (h0:heap) (n:gpointer (node t)) (d:dll t) =
   let m2 = Mod.loc_union (dll_fp0 d) (Mod.loc_union
                                         (dll_fp_f h0 d) (dll_fp_b h0 d)) in
   Mod.loc_disjoint m1 m2
+
+/// Ensuring that a node is strictly in the middle of a list
+
+let not_first_node (#t:Type) (h0:heap) (d:dll t) (e:gpointer (node t)) :
+  Lemma
+    (requires (
+        (dll_valid h0 d) /\
+        ((e@h0).blink =!= null) /\
+        (e `memP` reveal d.nodes)))
+    (ensures (reveal d.nodes `index_of` e >= 1)) = ()
+
+let not_last_node (#t:Type) (h0:heap) (d:dll t) (e:gpointer (node t)) :
+  Lemma
+    (requires (
+        (dll_valid h0 d) /\
+        ((e@h0).flink =!= null) /\
+        (e `memP` reveal d.nodes)))
+    (ensures (reveal d.nodes `index_of` e < length (reveal d.nodes) - 1)) =
+  let rec aux l :
+    Lemma
+      (requires (
+          (e `memP` l) /\
+          ((e@h0).flink =!= null) /\
+          (((last l)@h0).flink == null)))
+      (ensures (l `index_of` e < length l - 1)) =
+    if StrongExcludedMiddle.strong_excluded_middle (hd l == e) then () else (aux (tl l)) in
+  unsnoc_is_last (reveal d.nodes);
+  aux (reveal d.nodes)
 
 /// Now for the actual ST operations that will be exposed :)
 
@@ -1612,7 +1652,7 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
 
 #reset-options
 
-#set-options "--z3rlimit 1000 --initial_fuel 2 --initial_ifuel 2 --max_fuel 2 --max_ifuel 2 --z3refresh --query_stats"
+#set-options "--z3rlimit 1000 --initial_fuel 2 --initial_ifuel 2 --query_stats"
 
 let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node t)) :
   StackInline (dll t)
@@ -1719,6 +1759,8 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
 
 #reset-options
 
+#set-options "--z3rlimit 50"
+
 let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
@@ -1728,15 +1770,15 @@ let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (nod
          (node_not_in_dll h0 n d)))
     (ensures (fun h0 y h1 ->
          Mod.modifies (Mod.loc_union
-                         (Mod.loc_buffer n)
+                         (Mod.loc_buffer d.lhead)
                          (Mod.loc_union
                             (Mod.loc_union
-                               (Mod.loc_union
-                                  (Mod.loc_buffer d.lhead)
-                                  (Mod.loc_buffer d.ltail)) // this is needed due to using "after"
-                                                            // TODO: Figure out a way to remove it
-                               (Mod.loc_buffer (e@h0).blink))
-                            (Mod.loc_buffer e))) h0 h1 /\
+                               (Mod.loc_buffer n)
+                               (Mod.loc_buffer d.ltail)) // this is needed due to using "after"
+                                                         // TODO: Figure out a way to remove it
+                            (Mod.loc_union
+                               (Mod.loc_buffer (e@h0).blink)
+                               (Mod.loc_buffer e)))) h0 h1 /\
          dll_valid h1 y)) =
   let h0 = ST.get () in
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
@@ -1747,6 +1789,10 @@ let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (nod
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
     dll_insert_after d e1 n
   )
+
+#reset-options
+
+#set-options "--z3rlimit 20"
 
 let dll_remove_head (#t:Type) (d:dll t) :
   StackInline (dll t)
@@ -1773,6 +1819,10 @@ let dll_remove_head (#t:Type) (d:dll t) :
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     y
   )
+
+#reset-options
+
+#set-options "--z3rlimit 50"
 
 let dll_remove_tail (#t:Type) (d:dll t) :
   StackInline (dll t)
@@ -1805,7 +1855,9 @@ let dll_remove_tail (#t:Type) (d:dll t) :
     y
   )
 
-#set-options "--z3rlimit 50"
+#reset-options
+
+#set-options "--z3rlimit 400"
 
 let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
   StackInline (dll t)
@@ -1859,7 +1911,7 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
 (*
    TODO:
 
-   [ ] Update F* and see how much broke
+   [X] Update F* and see how much broke
    [ ] Test with KreMLin
    [ ] Write interfaces to get it working with QUIC
    [ ] Think about making "modifies" postconditions stronger
