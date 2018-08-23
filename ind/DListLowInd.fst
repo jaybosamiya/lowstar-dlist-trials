@@ -607,7 +607,16 @@ let rec fst_unsnoc_nodelist_aa (#t:Type) (nl:nodelist t) :
     (ensures (nodelist_aa (fst (unsnoc nl)))) =
   match nl with
   | [_] -> ()
-  | _ -> admit (); fst_unsnoc_nodelist_aa (tl nl)
+  | _ ->
+    fst_unsnoc_nodelist_aa (tl nl);
+    // assert (nodelist_aa_l (fst (unsnoc nl)));
+    let n :: ns = fst (unsnoc nl) in
+    Mod.loc_disjoint_includes
+      (Mod.loc_buffer n) (nodelist_fp0 (tl nl))
+      (Mod.loc_buffer n) (nodelist_fp0 ns);
+    // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 ns));
+    // assert (nodelist_aa_r (fst (unsnoc nl)));
+    ()
 
 let rec fst_unsnoc_nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) :
   Lemma
