@@ -1396,7 +1396,6 @@ let lemma_dll_links_disjoint (#t:Type) (h0:heap) (d:dll t) (i:nat) :
   match nl with
   | [_] -> ()
   | _ ->
-    admit ();
     let node_split = splitAt i nl in
     lemma_splitAt i nl;
     lemma_index_splitAt i nl;
@@ -1414,8 +1413,8 @@ let lemma_dll_links_disjoint (#t:Type) (h0:heap) (d:dll t) (i:nat) :
           // assert (right == (nl.[i]@h0).flink);
           nodelist_split_aa l1 (x :: l2);
           // assert (Mod.loc_disjoint (nodelist_fp0 l1) (nodelist_fp0 l2));
-          // assert (Mod.loc_includes (nodelist_fp0 l1) (Mod.loc_buffer left));
-          // assert (Mod.loc_includes (nodelist_fp0 l2) (Mod.loc_buffer right));
+          assert (Mod.loc_includes (nodelist_fp0 l1) (Mod.loc_buffer left)); // OBSERVE
+          assert (Mod.loc_includes (nodelist_fp0 l2) (Mod.loc_buffer right)); // OBSERVE
           ()
         )))
 
