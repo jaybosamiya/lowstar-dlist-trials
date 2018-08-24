@@ -56,7 +56,7 @@ val lemma_of_non_null:
 let lemma_of_non_null #t a = ()
 
 let heap = HS.mem
-let contains = B.live
+let contains #a #rrel #rel h b = B.live #a #rrel #rel h b
 
 (** Dereference a gpointer. NOTE: To get a sane result, also need to
     prove that the pointer is on the heap. *)
