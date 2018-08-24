@@ -1380,6 +1380,8 @@ let lemma_dll_links_contained (#t:Type) (h0:heap) (d:dll t) (i:nat) :
     (if i = length nl - 1 then () else extract_nodelist_contained h0 nl (i + 1));
     unsnoc_is_last nl
 
+#set-options "--initial_ifuel 2"
+
 let lemma_dll_links_disjoint (#t:Type) (h0:heap) (d:dll t) (i:nat) :
   Lemma
     (requires (
@@ -1417,6 +1419,8 @@ let lemma_dll_links_disjoint (#t:Type) (h0:heap) (d:dll t) (i:nat) :
           assert (Mod.loc_includes (nodelist_fp0 l2) (Mod.loc_buffer right)); // OBSERVE
           ()
         )))
+
+#reset-options
 
 /// When something unrelated to a XYZ is changed, the XYZ itself shall
 /// remain valid
@@ -1532,6 +1536,8 @@ let not_first_node (#t:Type) (h0:heap) (d:dll t) (e:gpointer (node t)) :
         (e `memP` reveal d.nodes)))
     (ensures (reveal d.nodes `index_of` e >= 1)) = ()
 
+#set-options "--initial_ifuel 2"
+
 let not_last_node (#t:Type) (h0:heap) (d:dll t) (e:gpointer (node t)) :
   Lemma
     (requires (
@@ -1549,6 +1555,8 @@ let not_last_node (#t:Type) (h0:heap) (d:dll t) (e:gpointer (node t)) :
     if StrongExcludedMiddle.strong_excluded_middle (hd l == e) then () else (aux (tl l)) in
   unsnoc_is_last (reveal d.nodes);
   aux (reveal d.nodes)
+
+#reset-options
 
 /// Now for the actual ST operations that will be exposed :)
 
