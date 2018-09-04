@@ -26,8 +26,6 @@ let test_null #t =
   let p : gpointer_or_null t = null in
   assert (is_null p)
 
-let recall (#t:Type) (p: gpointer_or_null t) = B.recall p
-
 val non_null:
   #t:Type ->
   a:gpointer_or_null t{is_not_null a} ->
@@ -46,12 +44,3 @@ val of_non_null:
   a:gpointer t ->
   b:gpointer_or_null t
 let of_non_null #t a = a
-
-val lemma_of_non_null:
-  #t:Type ->
-  a:gpointer t ->
-  Lemma (ensures (is_not_null (of_non_null a)) /\ (of_non_null a == a))
-let lemma_of_non_null #t a = ()
-
-let heap = HS.mem
-let contains #a #rrel #rel h b = B.live #a #rrel #rel h b

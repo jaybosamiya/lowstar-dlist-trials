@@ -22,6 +22,13 @@ open LowStar.BufferOps
 open Gpointers
 module Mod = LowStar.Modifies
 module ST = FStar.HyperStack.ST
+module HS = FStar.HyperStack
+module B = LowStar.Buffer
+
+/// Convenience renaming
+
+unfold let heap = HS.mem
+unfold let contains #a #rrel #rel h b = B.live #a #rrel #rel h b
 
 /// Convenience operators
 
@@ -30,8 +37,8 @@ unfold let (~.) (#t:Type) (a:t) : Tot (erased (list t)) = hide ([a])
 unfold let (^+) (#t:Type) (a:t) (b:erased (list t)) : Tot (erased (list t)) = elift2 Cons (hide a) b
 unfold let (+^) (#t:Type) (a:erased (list t)) (b:t) : Tot (erased (list t)) = elift2 append a (hide [b])
 unfold let (^@^) (#t:Type) (a:erased (list t)) (b:erased (list t)) : Tot (erased (list t)) = elift2 append a b
-unfold let (@) (a:pointer 't) (h0:heap) = Mod.get h0 a 0
-unfold let (^@) (a:pointer_or_null 't{is_not_null a}) (h0:heap) = Mod.get h0 a 0
+unfold let (@) (a:pointer 't) (h0:heap) = B.get h0 a 0
+unfold let (^@) (a:pointer_or_null 't{is_not_null a}) (h0:heap) = B.get h0 a 0
 
 /// All the data structures
 
