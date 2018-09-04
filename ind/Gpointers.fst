@@ -3,6 +3,7 @@ module Gpointers
 module HS = FStar.HyperStack
 module ST = FStar.HyperStack.ST
 module B = LowStar.Buffer
+module BO = LowStar.BufferOps
 module Mod = LowStar.Modifies
 
 type gpointer t = B.pointer t
@@ -25,8 +26,8 @@ let test_null #t =
   let p : gpointer_or_null t = null in
   assert (is_null p)
 
-let ( := ) (a:gpointer 't) (b:'t) = B.upd a 0ul b
-let ( ! ) (a:gpointer 't) = B.index a 0ul
+let ( := ) (a:gpointer 't) (b:'t) = BO.op_Star_Equals a b
+let ( ! ) (a:gpointer 't) = BO.op_Bang_Star a
 
 let recall (#t:Type) (p: gpointer_or_null t) = B.recall p
 
