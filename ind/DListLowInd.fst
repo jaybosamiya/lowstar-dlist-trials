@@ -374,7 +374,7 @@ let fragment_valid (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
 let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
-         not_aliased a b))
+         Mod.loc_disjoint (Mod.loc_buffer a) (Mod.loc_buffer b)))
     (ensures (fun h0 _ h1 ->
          Mod.modifies (Mod.loc_buffer a) h0 h1 /\
          h1 `contains` a /\
@@ -387,7 +387,7 @@ let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline 
 let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
-         not_aliased a b))
+         Mod.loc_disjoint (Mod.loc_buffer a) (Mod.loc_buffer b)))
     (ensures (fun h0 _ h1 ->
          Mod.modifies (Mod.loc_buffer b) h0 h1 /\
          h1 `contains` b /\
@@ -1696,7 +1696,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
       extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1)
     ) else ();
     e <|= n;
-    // let h' = ST.get () in assert (h' `contains` e2); assert (not_aliased n e2);
+    // let h' = ST.get () in assert (h' `contains` e2); assert (Mod.loc_disjoint (Mod.loc_buffer n) (Mod.loc_buffer e2));
     n =|> e2;
     let h0' = ST.get () in
     // assert (is_not_null e1 ==> e1 == (reveal d.nodes).[reveal d.nodes `index_of` e - 1]);

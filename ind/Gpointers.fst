@@ -69,7 +69,3 @@ let (==$) (#t:Type) (a:gpointer_or_null t) (b:gpointer t) =
   is_not_null a /\
   (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
    (non_null a) == b)
-
-// logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
-let not_aliased (#t:Type) (a:gpointer_or_null t) (b:gpointer_or_null t) : GTot Type0 =
-  Mod.loc_disjoint (Mod.loc_buffer a) (Mod.loc_buffer b)
