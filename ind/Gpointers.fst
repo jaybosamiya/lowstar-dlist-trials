@@ -64,8 +64,3 @@ let (@) (a:gpointer 't) (h0:heap) = B.get h0 a 0
 (** Dereference a non-null gpointer_or_null. NOTE: To get a sane
     result, also need to prove that the pointer is on the heap. *)
 let (^@) (a:gpointer_or_null 't{is_not_null a}) (h0:heap) = (non_null a) @ h0
-
-let (==$) (#t:Type) (a:gpointer_or_null t) (b:gpointer t) =
-  is_not_null a /\
-  (let (a:_{is_not_null a}) = a in // workaround for not using two phase type checker
-   (non_null a) == b)

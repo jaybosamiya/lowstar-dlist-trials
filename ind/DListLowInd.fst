@@ -87,15 +87,15 @@ let dll_ghostly_connections (#t:Type) (d:dll t) : GTot Type0 =
   match length nodes with
   | 0 -> d.lhead == null /\ d.ltail == null
   | _ -> d.lhead =!= null /\ d.ltail =!= null /\
-         d.lhead ==$ hd nodes /\
-         d.ltail ==$ last nodes
+         d.lhead == hd nodes /\
+         d.ltail == last nodes
 
 let piece_ghostly_connections (#t:Type) (p:piece t) : GTot Type0 =
   let nodes = reveal p.pnodes in
   match length nodes with
   | 0 -> False
-  | _ -> p.phead ==$ hd nodes /\
-        p.ptail ==$ last nodes
+  | _ -> p.phead == hd nodes /\
+        p.ptail == last nodes
 
 let rec fragment_ghostly_connections (#t:Type) (f:fragment t) : GTot Type0 =
   match f with
@@ -310,10 +310,10 @@ let fragment_aa (#t:Type) (f:fragment t) : GTot Type0 =
 /// Connectivity properties
 
 let ( |> ) (#t:Type) (a:node t) (b:gpointer (node t)) : GTot Type0 =
-  a.flink ==$ b
+  a.flink == b
 
 let ( <| ) (#t:Type) (a:gpointer (node t)) (b: node t) : GTot Type0 =
-  b.blink ==$ a
+  b.blink == a
 
 let rec nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 (decreases (length nl)) =
   match nl with
@@ -1276,10 +1276,10 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
   unsnoc_is_last (reveal l2);
   unsnoc_is_last (reveal d.nodes);
   // assert (piece_ghostly_connections p1);
-  // assert ( n2 ==$ hd (reveal l2) );
+  // assert ( n2 == hd (reveal l2) );
   lemma_last_append (reveal l1) (reveal l2);
   // assert ( last (reveal l2) == last (append (reveal l1) (reveal l2)) );
-  // assert ( d.ltail ==$ last (reveal l2) );
+  // assert ( d.ltail == last (reveal l2) );
   // assert (piece_ghostly_connections p2);
   // assert (fragment_ghostly_connections f);
   // assert (nodelist_contained h0 (reveal p1.pnodes));
