@@ -73,6 +73,3 @@ let (==$) (#t:Type) (a:gpointer_or_null t) (b:gpointer t) =
 // logic : Cannot use due to https://github.com/FStarLang/FStar/issues/638
 let not_aliased (#t:Type) (a:gpointer_or_null t) (b:gpointer_or_null t) : GTot Type0 =
   Mod.loc_disjoint (Mod.loc_buffer a) (Mod.loc_buffer b)
-
-let modifies_1 (a:gpointer 'a) h0 h1 =
-  Mod.modifies (Mod.loc_buffer a) h0 h1

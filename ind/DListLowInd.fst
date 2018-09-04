@@ -376,7 +376,7 @@ let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline 
          h0 `contains` a /\ h0 `contains` b /\
          not_aliased a b))
     (ensures (fun h0 _ h1 ->
-         modifies_1 a h0 h1 /\
+         Mod.modifies (Mod.loc_buffer a) h0 h1 /\
          h1 `contains` a /\
          (a@h0).p == (a@h1).p /\
          (a@h0).blink == (a@h1).blink /\
@@ -389,7 +389,7 @@ let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline 
          h0 `contains` a /\ h0 `contains` b /\
          not_aliased a b))
     (ensures (fun h0 _ h1 ->
-         modifies_1 b h0 h1 /\
+         Mod.modifies (Mod.loc_buffer b) h0 h1 /\
          h1 `contains` b /\
          a@h0 == a@h1 /\
          (b@h0).p == (b@h1).p /\
@@ -400,7 +400,7 @@ let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline 
 let ( !=|> ) (#t:Type) (a:gpointer (node t)) : StackInline unit
     (requires (fun h0 -> h0 `contains` a))
     (ensures (fun h0 _ h1 ->
-         modifies_1 a h0 h1 /\
+         Mod.modifies (Mod.loc_buffer a) h0 h1 /\
          h1 `contains` a /\
          (a@h0).p == (a@h1).p /\
          (a@h0).blink == (a@h1).blink /\
@@ -410,7 +410,7 @@ let ( !=|> ) (#t:Type) (a:gpointer (node t)) : StackInline unit
 let ( !<|= ) (#t:Type) (a:gpointer (node t)) : StackInline unit
     (requires (fun h0 -> h0 `contains` a))
     (ensures (fun h0 _ h1 ->
-         modifies_1 a h0 h1 /\
+         Mod.modifies (Mod.loc_buffer a) h0 h1 /\
          h1 `contains` a /\
          (a@h0).p == (a@h1).p /\
          (a@h0).flink == (a@h1).flink /\
@@ -1329,7 +1329,7 @@ let singleton_dll (#t:Type) (n:gpointer (node t)) :
     (requires (fun h0 ->
         (h0 `contains` n)))
     (ensures (fun h0 d h1 ->
-         modifies_1 n h0 h1 /\
+         Mod.modifies (Mod.loc_buffer n) h0 h1 /\
          dll_valid h1 d)) =
   !=|> n;
   !<|= n;
