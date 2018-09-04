@@ -26,9 +26,6 @@ let test_null #t =
   let p : gpointer_or_null t = null in
   assert (is_null p)
 
-let ( := ) (a:gpointer 't) (b:'t) = BO.op_Star_Equals a b
-let ( ! ) (a:gpointer 't) = BO.op_Bang_Star a
-
 let recall (#t:Type) (p: gpointer_or_null t) = B.recall p
 
 val non_null:

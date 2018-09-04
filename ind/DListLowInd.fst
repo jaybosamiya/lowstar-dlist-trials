@@ -18,6 +18,7 @@ open FStar.Ghost
 open LowStar.ModifiesPat
 open FStar.List.Tot
 open Utils
+open LowStar.BufferOps
 open Gpointers
 module Mod = LowStar.Modifies
 module ST = FStar.HyperStack.ST
@@ -382,7 +383,7 @@ let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline 
          (a@h0).blink == (a@h1).blink /\
          b@h0 == b@h1 /\
          (a@h1) |> b)) =
-  a := { !a with flink = of_non_null b }
+  a *= { !*a with flink = of_non_null b }
 
 let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline unit
     (requires (fun h0 ->
@@ -395,7 +396,7 @@ let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline 
          (b@h0).p == (b@h1).p /\
          (b@h0).flink == (b@h1).flink /\
          a <| (b@h1))) =
-  b := { !b with blink = of_non_null a }
+  b *= { !*b with blink = of_non_null a }
 
 let ( !=|> ) (#t:Type) (a:gpointer (node t)) : StackInline unit
     (requires (fun h0 -> h0 `contains` a))
@@ -405,7 +406,7 @@ let ( !=|> ) (#t:Type) (a:gpointer (node t)) : StackInline unit
          (a@h0).p == (a@h1).p /\
          (a@h0).blink == (a@h1).blink /\
          is_null (a@h1).flink)) =
-  a := { !a with flink = null }
+  a *= { !*a with flink = null }
 
 let ( !<|= ) (#t:Type) (a:gpointer (node t)) : StackInline unit
     (requires (fun h0 -> h0 `contains` a))
@@ -415,7 +416,7 @@ let ( !<|= ) (#t:Type) (a:gpointer (node t)) : StackInline unit
          (a@h0).p == (a@h1).p /\
          (a@h0).flink == (a@h1).flink /\
          is_null (a@h1).blink)) =
-  a := { !a with blink = null }
+  a *= { !*a with blink = null }
 
 /// Extraction lemmas: these allow one to use one of the properties
 /// above, which are defined inductively, to get the property at one
@@ -1682,8 +1683,8 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
   // assert (length (reveal d.nodes) > 0);
   lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
-  let e1 = (!e).blink in
-  let e2 = (!e).flink in
+  let e1 = (!*e).blink in
+  let e2 = (!*e).flink in
   if is_null e2 then (
     dll_insert_at_tail d n
   ) else (
@@ -1790,7 +1791,7 @@ let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (nod
          dll_valid h1 y)) =
   let h0 = ST.get () in
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
-  let e1 = (!e).blink in
+  let e1 = (!*e).blink in
   if is_null e1 then (
     dll_insert_at_head d n
   ) else (
@@ -1812,7 +1813,7 @@ let dll_remove_head (#t:Type) (d:dll t) :
          dll_valid h1 y)) =
   let h0 = ST.get () in
   let e = d.lhead in
-  let e2 = (!e).flink in
+  let e2 = (!*e).flink in
   if is_null e2 then (
     empty_list
   ) else (
@@ -1842,7 +1843,7 @@ let dll_remove_tail (#t:Type) (d:dll t) :
          dll_valid h1 y)) =
   let h0 = ST.get () in
   let e = d.ltail in
-  let e1 = (!e).blink in
+  let e1 = (!*e).blink in
   if is_null e1 then (
     empty_list
   ) else (
@@ -1883,8 +1884,8 @@ let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
          dll_valid h1 y)) =
   let h0 = ST.get () in
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
-  let e1 = (!e).blink in
-  let e2 = (!e).flink in
+  let e1 = (!*e).blink in
+  let e2 = (!*e).flink in
   if is_null e1 then (
     dll_remove_head d
   ) else if is_null e2 then (
