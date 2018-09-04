@@ -76,13 +76,3 @@ let not_aliased (#t:Type) (a:gpointer_or_null t) (b:gpointer_or_null t) : GTot T
 
 let modifies_1 (a:gpointer 'a) h0 h1 =
   Mod.modifies (Mod.loc_buffer a) h0 h1
-let modifies_2 (a:gpointer 'a) (b:gpointer 'b) h0 h1 =
-  Mod.modifies (Mod.loc_union
-                  (Mod.loc_buffer a)
-                  (Mod.loc_buffer b)) h0 h1
-let modifies_3 (a:gpointer 'a) (b:gpointer 'b) (c:gpointer 'c) h0 h1 =
-  Mod.modifies (Mod.loc_union
-                  (Mod.loc_union
-                     (Mod.loc_buffer a)
-                     (Mod.loc_buffer b))
-                  (Mod.loc_buffer c)) h0 h1
