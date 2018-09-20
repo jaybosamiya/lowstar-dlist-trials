@@ -7,8 +7,6 @@ module B = LowStar.Buffer
 module BO = LowStar.BufferOps
 module Mod = LowStar.Modifies
 
-let disjoint (#t:Type) (a b: pointer t) = B.as_addr a <> B.as_addr b
-
 let null #t : pointer_or_null t = B.null #t
 
 assume val is_null (p:pointer_or_null 't) : Tot (b:bool{b <==> p == null})
