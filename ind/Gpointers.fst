@@ -34,9 +34,3 @@ val lemma_non_null :
   Lemma (ensures (a == non_null a))
     [SMTPat (non_null a)]
 let lemma_non_null #t a = ()
-
-val of_non_null:
-  #t:Type ->
-  a:pointer t ->
-  b:pointer_or_null t
-let of_non_null #t a = a

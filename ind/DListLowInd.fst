@@ -392,7 +392,7 @@ let ( =|> ) (#t:Type) (a:pointer (node t)) (b:pointer (node t)) : StackInline un
          (a@h0).blink == (a@h1).blink /\
          b@h0 == b@h1 /\
          (a@h1) |> b)) =
-  a *= { !*a with flink = of_non_null b }
+  a *= { !*a with flink = b }
 
 let ( <|= ) (#t:Type) (a:pointer (node t)) (b:pointer (node t)) : StackInline unit
     (requires (fun h0 ->
@@ -405,7 +405,7 @@ let ( <|= ) (#t:Type) (a:pointer (node t)) (b:pointer (node t)) : StackInline un
          (b@h0).p == (b@h1).p /\
          (b@h0).flink == (b@h1).flink /\
          a <| (b@h1))) =
-  b *= { !*b with blink = of_non_null a }
+  b *= { !*b with blink = a }
 
 let ( !=|> ) (#t:Type) (a:pointer (node t)) : StackInline unit
     (requires (fun h0 -> h0 `contains` a))
