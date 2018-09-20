@@ -17,20 +17,3 @@ let lemma_is_null (p:pointer_or_null 't) :
     (ensures (is_null p <==> B.g_is_null p))
     [SMTPat (is_null p)]
     = B.null_unique p
-
-let test_null #t =
-  let p : pointer_or_null t = null in
-  assert (is_null p)
-
-val non_null:
-  #t:Type ->
-  a:pointer_or_null t{is_not_null a} ->
-  b:pointer t
-let non_null #t a = a
-
-val lemma_non_null :
-  #t:Type ->
-  a:pointer_or_null t{is_not_null a} ->
-  Lemma (ensures (a == non_null a))
-    [SMTPat (non_null a)]
-let lemma_non_null #t a = ()
