@@ -46,21 +46,21 @@ unopteq
 (** Node of a doubly linked list *)
 type node (t:Type0) = {
   (* forward link *)
-  flink: gpointer_or_null (node t);
+  flink: pointer_or_null (node t);
   (* backward link *)
-  blink: gpointer_or_null (node t);
+  blink: pointer_or_null (node t);
   (* payload *)
   p: t;
 }
 
 private
-type nodelist t = list (gpointer (node t))
+type nodelist t = list (pointer (node t))
 
 unopteq
 (** Doubly linked list head *)
 type dll (t:Type0) ={
-  lhead: gpointer_or_null (node t);
-  ltail: gpointer_or_null (node t);
+  lhead: pointer_or_null (node t);
+  ltail: pointer_or_null (node t);
   nodes: erased (nodelist t);
 }
 
@@ -69,8 +69,8 @@ type nonempty_dll t = (h:dll t{is_not_null h.lhead /\ is_not_null h.ltail})
 unopteq private
 (** An "almost valid" dll *)
 type piece t = {
-  phead: gpointer (node t);
-  ptail: gpointer (node t);
+  phead: pointer (node t);
+  ptail: pointer (node t);
   pnodes: erased (nodelist t);
 }
 
@@ -319,10 +319,10 @@ let fragment_aa (#t:Type) (f:fragment t) : GTot Type0 =
 
 /// Connectivity properties
 
-let ( |> ) (#t:Type) (a:node t) (b:gpointer (node t)) : GTot Type0 =
+let ( |> ) (#t:Type) (a:node t) (b:pointer (node t)) : GTot Type0 =
   a.flink == b
 
-let ( <| ) (#t:Type) (a:gpointer (node t)) (b: node t) : GTot Type0 =
+let ( <| ) (#t:Type) (a:pointer (node t)) (b: node t) : GTot Type0 =
   b.blink == a
 
 let rec nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 (decreases (length nl)) =
@@ -381,7 +381,7 @@ let fragment_valid (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
 
 /// Useful operations on nodes
 
-let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline unit
+let ( =|> ) (#t:Type) (a:pointer (node t)) (b:pointer (node t)) : StackInline unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
          Mod.loc_disjoint (Mod.loc_buffer a) (Mod.loc_buffer b)))
@@ -394,7 +394,7 @@ let ( =|> ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline 
          (a@h1) |> b)) =
   a *= { !*a with flink = of_non_null b }
 
-let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline unit
+let ( <|= ) (#t:Type) (a:pointer (node t)) (b:pointer (node t)) : StackInline unit
     (requires (fun h0 ->
          h0 `contains` a /\ h0 `contains` b /\
          Mod.loc_disjoint (Mod.loc_buffer a) (Mod.loc_buffer b)))
@@ -407,7 +407,7 @@ let ( <|= ) (#t:Type) (a:gpointer (node t)) (b:gpointer (node t)) : StackInline 
          a <| (b@h1))) =
   b *= { !*b with blink = of_non_null a }
 
-let ( !=|> ) (#t:Type) (a:gpointer (node t)) : StackInline unit
+let ( !=|> ) (#t:Type) (a:pointer (node t)) : StackInline unit
     (requires (fun h0 -> h0 `contains` a))
     (ensures (fun h0 _ h1 ->
          Mod.modifies (Mod.loc_buffer a) h0 h1 /\
@@ -417,7 +417,7 @@ let ( !=|> ) (#t:Type) (a:gpointer (node t)) : StackInline unit
          is_null (a@h1).flink)) =
   a *= { !*a with flink = null }
 
-let ( !<|= ) (#t:Type) (a:gpointer (node t)) : StackInline unit
+let ( !<|= ) (#t:Type) (a:pointer (node t)) : StackInline unit
     (requires (fun h0 -> h0 `contains` a))
     (ensures (fun h0 _ h1 ->
          Mod.modifies (Mod.loc_buffer a) h0 h1 /\
@@ -1262,7 +1262,7 @@ let piece_fp0_is_nodelist_fp0 (#t:Type) (p:piece t) : Lemma
 #set-options "--z3rlimit 60 --initial_fuel 8 --initial_ifuel 1"
 
 let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
-    (n1 n2:gpointer (node t)) :
+    (n1 n2:pointer (node t)) :
   Pure (fragment t)
     (requires (
         n1 `memP` reveal d.nodes /\
@@ -1325,7 +1325,7 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
 
 /// Creating a dll from a single node. Pure and ST forms of this.
 
-let tot_node_to_dll (#t:Type) (h0:heap) (n:gpointer (node t)) :
+let tot_node_to_dll (#t:Type) (h0:heap) (n:pointer (node t)) :
   Pure (dll t)
     (requires (
         (h0 `contains` n) /\
@@ -1334,7 +1334,7 @@ let tot_node_to_dll (#t:Type) (h0:heap) (n:gpointer (node t)) :
     (ensures (fun d -> dll_valid h0 d)) =
   { lhead = n ; ltail = n ; nodes = ~. n }
 
-let singleton_dll (#t:Type) (n:gpointer (node t)) :
+let singleton_dll (#t:Type) (n:pointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
         (h0 `contains` n)))
@@ -1347,7 +1347,7 @@ let singleton_dll (#t:Type) (n:gpointer (node t)) :
 
 /// Creating a piece from a single node.
 
-let tot_node_to_piece (#t:Type) (h0:heap) (n:gpointer (node t)) :
+let tot_node_to_piece (#t:Type) (h0:heap) (n:pointer (node t)) :
   Pure (piece t)
     (requires (
         (h0 `contains` n)))
@@ -1356,7 +1356,7 @@ let tot_node_to_piece (#t:Type) (h0:heap) (n:gpointer (node t)) :
 
 /// Getting the "tail" of a piece
 
-let tot_piece_tail (#t:Type) (h0:heap) (p:piece t) (n:gpointer (node t)) :
+let tot_piece_tail (#t:Type) (h0:heap) (p:piece t) (n:pointer (node t)) :
   Pure (piece t)
     (requires (
         (piece_valid h0 p) /\
@@ -1529,7 +1529,7 @@ let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
 
 /// Testing is a node is within a dll or not
 
-let node_not_in_dll (#t:Type) (h0:heap) (n:gpointer (node t)) (d:dll t) =
+let node_not_in_dll (#t:Type) (h0:heap) (n:pointer (node t)) (d:dll t) =
   let m1 = Mod.loc_union (Mod.loc_buffer n)
       (Mod.loc_union (node_fp_b (n@h0)) (node_fp_f (n@h0))) in
   let m2 = Mod.loc_union (dll_fp0 d) (Mod.loc_union
@@ -1538,7 +1538,7 @@ let node_not_in_dll (#t:Type) (h0:heap) (n:gpointer (node t)) (d:dll t) =
 
 /// Ensuring that a node is strictly in the middle of a list
 
-let not_first_node (#t:Type) (h0:heap) (d:dll t) (e:gpointer (node t)) :
+let not_first_node (#t:Type) (h0:heap) (d:dll t) (e:pointer (node t)) :
   Lemma
     (requires (
         (dll_valid h0 d) /\
@@ -1548,7 +1548,7 @@ let not_first_node (#t:Type) (h0:heap) (d:dll t) (e:gpointer (node t)) :
 
 #set-options "--initial_ifuel 2"
 
-let not_last_node (#t:Type) (h0:heap) (d:dll t) (e:gpointer (node t)) :
+let not_last_node (#t:Type) (h0:heap) (d:dll t) (e:pointer (node t)) :
   Lemma
     (requires (
         (dll_valid h0 d) /\
@@ -1572,7 +1572,7 @@ let not_last_node (#t:Type) (h0:heap) (d:dll t) (e:gpointer (node t)) :
 
 #set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 0 --query_stats"
 
-let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
+let dll_insert_at_head (#t:Type) (d:dll t) (n:pointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
          (dll_valid h0 d) /\
@@ -1632,7 +1632,7 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
 
 #set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 0 --query_stats"
 
-let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
+let dll_insert_at_tail (#t:Type) (d:dll t) (n:pointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
          (dll_valid h0 d) /\
@@ -1672,7 +1672,7 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:gpointer (node t)) :
 
 #set-options "--z3rlimit 1000 --initial_fuel 2 --initial_ifuel 2 --query_stats"
 
-let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node t)) :
+let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
          (dll_valid h0 d) /\
@@ -1779,7 +1779,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node
 
 #set-options "--z3rlimit 50"
 
-let dll_insert_before (#t:Type) (d:dll t) (e:gpointer (node t)) (n:gpointer (node t)) :
+let dll_insert_before (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
          (dll_valid h0 d) /\
@@ -1877,7 +1877,7 @@ let dll_remove_tail (#t:Type) (d:dll t) :
 
 #set-options "--z3rlimit 400"
 
-let dll_remove_node (#t:Type) (d:dll t) (e:gpointer (node t)) :
+let dll_remove_node (#t:Type) (d:dll t) (e:pointer (node t)) :
   StackInline (dll t)
     (requires (fun h0 ->
          (dll_valid h0 d) /\
