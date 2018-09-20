@@ -30,6 +30,15 @@ module B = LowStar.Buffer
 unfold let heap = HS.mem
 unfold let contains #a #rrel #rel h b = B.live #a #rrel #rel h b
 
+/// Convenience patterns
+
+let lemma_non_null (#t:Type) (a:pointer_or_null t) :
+  Lemma
+    (requires (a =!= null))
+    (ensures (len a = 1ul))
+    [SMTPat (len a)] =
+  null_unique a
+
 /// Convenience operators
 
 unfold let (.[]) (s:list 'a) (n:nat{n < length s}) = index s n
@@ -38,7 +47,7 @@ unfold let (^+) (#t:Type) (a:t) (b:erased (list t)) : Tot (erased (list t)) = el
 unfold let (+^) (#t:Type) (a:erased (list t)) (b:t) : Tot (erased (list t)) = elift2 append a (hide [b])
 unfold let (^@^) (#t:Type) (a:erased (list t)) (b:erased (list t)) : Tot (erased (list t)) = elift2 append a b
 unfold let (@) (a:pointer 't) (h0:heap) = B.get h0 a 0
-unfold let (^@) (a:pointer_or_null 't{is_not_null a}) (h0:heap) = B.get h0 a 0
+unfold let (^@) (a:pointer_or_null 't{a =!= null}) (h0:heap) = B.get h0 a 0
 
 /// All the data structures
 
@@ -64,7 +73,7 @@ type dll (t:Type0) ={
   nodes: erased (nodelist t);
 }
 
-type nonempty_dll t = (h:dll t{is_not_null h.lhead /\ is_not_null h.ltail})
+type nonempty_dll t = (h:dll t{h.lhead =!= null /\ h.ltail =!= null})
 
 unopteq private
 (** An "almost valid" dll *)
@@ -165,15 +174,15 @@ let dll_fp0 (#t:Type) (d:dll t) : GTot Mod.loc =
     (Mod.loc_union (Mod.loc_buffer d.lhead) (Mod.loc_buffer d.ltail))
     (nodelist_fp0 (reveal d.nodes))
 let dll_fp_f (#t:Type) (h0:heap) (d:dll t) : GTot Mod.loc =
-  let a = if is_null d.lhead then Mod.loc_none else Mod.loc_buffer (d.lhead^@h0).flink in
-  let b = if is_null d.ltail then Mod.loc_none else Mod.loc_buffer (d.ltail^@h0).flink in
+  let a = if g_is_null d.lhead then Mod.loc_none else Mod.loc_buffer (d.lhead^@h0).flink in
+  let b = if g_is_null d.ltail then Mod.loc_none else Mod.loc_buffer (d.ltail^@h0).flink in
   Mod.loc_union // ghostly connections should give us this union for
                 // free, but still useful to have
     (Mod.loc_union a b)
     (nodelist_fp_f h0 (reveal d.nodes))
 let dll_fp_b (#t:Type) (h0:heap) (d:dll t) : GTot Mod.loc =
-  let a = if is_null d.lhead then Mod.loc_none else Mod.loc_buffer (d.lhead^@h0).blink in
-  let b = if is_null d.ltail then Mod.loc_none else Mod.loc_buffer (d.ltail^@h0).blink in
+  let a = if g_is_null d.lhead then Mod.loc_none else Mod.loc_buffer (d.lhead^@h0).blink in
+  let b = if g_is_null d.ltail then Mod.loc_none else Mod.loc_buffer (d.ltail^@h0).blink in
   Mod.loc_union // ghostly connections should give us this union for
                 // free, but still useful to have
     (Mod.loc_union a b)
@@ -337,8 +346,8 @@ let rec nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) : GTot Type0 (decrease
 
 let dll_conn (#t:Type) (h0:heap) (d:dll t) : GTot Type0 =
   nodelist_conn h0 (reveal d.nodes) /\
-  (is_not_null d.lhead ==> is_null (d.lhead@h0).blink) /\
-  (is_not_null d.ltail ==> is_null (d.ltail@h0).flink)
+  (d.lhead =!= null ==> (d.lhead@h0).blink == null) /\
+  (d.ltail =!= null ==> (d.ltail@h0).flink == null)
 
 let piece_conn (#t:Type) (h0:heap) (p:piece t) : GTot Type0 =
   nodelist_conn h0 (reveal p.pnodes)
@@ -414,7 +423,7 @@ let ( !=|> ) (#t:Type) (a:pointer (node t)) : StackInline unit
          h1 `contains` a /\
          (a@h0).p == (a@h1).p /\
          (a@h0).blink == (a@h1).blink /\
-         is_null (a@h1).flink)) =
+         (a@h1).flink == null)) =
   a *= { !*a with flink = null }
 
 let ( !<|= ) (#t:Type) (a:pointer (node t)) : StackInline unit
@@ -424,7 +433,7 @@ let ( !<|= ) (#t:Type) (a:pointer (node t)) : StackInline unit
          h1 `contains` a /\
          (a@h0).p == (a@h1).p /\
          (a@h0).flink == (a@h1).flink /\
-         is_null (a@h1).blink)) =
+         (a@h1).blink == null)) =
   a *= { !*a with blink = null }
 
 /// Extraction lemmas: these allow one to use one of the properties
@@ -701,14 +710,14 @@ let tot_dll_to_piece (#t:Type) (h0:heap) (d:nonempty_dll t{dll_valid h0 d}) :
   Tot (p:piece t{piece_valid h0 p}) =
   { phead = d.lhead ; ptail = d.ltail ; pnodes = d.nodes }
 
-let tot_dll_to_fragment (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d}) :
+let tot_dll_to_fragment (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d /\ d.lhead =!= null}) :
   Tot (f:fragment t{fragment_valid h0 f}) =
-  if is_not_null d.lhead && is_not_null d.ltail then [tot_dll_to_piece h0 d] else []
+  [tot_dll_to_piece h0 d]
 
 let tot_piece_to_dll (#t:Type) (h0:heap) (p:piece t{
     piece_valid h0 p /\
-    is_null (p.phead@h0).blink /\
-    is_null (p.ptail@h0).flink}) :
+    (p.phead@h0).blink == null /\
+    (p.ptail@h0).flink == null}) :
   Tot (d:dll t{dll_valid h0 d}) =
   { lhead = p.phead ; ltail = p.ptail ; nodes = p.pnodes }
 
@@ -716,8 +725,8 @@ let tot_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     fragment_valid h0 f /\
     (length f <= 1) /\
     (length f = 1 ==> (
-        (is_null ((hd f).phead@h0).blink) /\
-        (is_null ((hd f).ptail@h0).flink)))
+        (((hd f).phead@h0).blink == null) /\
+        (((hd f).ptail@h0).flink == null)))
   }) :
   Tot (d:dll t{dll_valid h0 d}) =
   match f with
@@ -1065,8 +1074,8 @@ let rec tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     fragment_valid h0 f /\
     fragment_defragmentable h0 f /\
     (length f > 0 ==>
-     (is_null ((hd f).phead@h0).blink) /\
-     (is_null ((last f).ptail@h0).flink))
+     (((hd f).phead@h0).blink == null) /\
+     (((last f).ptail@h0).flink == null))
   }) :
   Tot (d:dll t{dll_valid h0 d})
   (decreases (length f)) =
@@ -1329,8 +1338,8 @@ let tot_node_to_dll (#t:Type) (h0:heap) (n:pointer (node t)) :
   Pure (dll t)
     (requires (
         (h0 `contains` n) /\
-        ((is_null (n@h0).flink)) /\
-        (is_null (n@h0).blink)))
+        (((n@h0).flink == null)) /\
+        ((n@h0).blink == null)))
     (ensures (fun d -> dll_valid h0 d)) =
   { lhead = n ; ltail = n ; nodes = ~. n }
 
@@ -1701,7 +1710,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
     unsnoc_is_last (reveal d.nodes);
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e + 1);
-    if is_not_null e1 then (
+    if not (is_null e1) then (
       extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
       extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1)
     ) else ();
@@ -1801,6 +1810,7 @@ let dll_insert_before (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node 
   let h0 = ST.get () in
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
   let e1 = (!*e).blink in
+  assume (h0 `contains` e1);
   if is_null e1 then (
     dll_insert_at_head d n
   ) else (
@@ -1853,6 +1863,7 @@ let dll_remove_tail (#t:Type) (d:dll t) :
   let h0 = ST.get () in
   let e = d.ltail in
   let e1 = (!*e).blink in
+  assume (h0 `contains` e1);
   if is_null e1 then (
     empty_list
   ) else (
@@ -1895,6 +1906,8 @@ let dll_remove_node (#t:Type) (d:dll t) (e:pointer (node t)) :
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
   let e1 = (!*e).blink in
   let e2 = (!*e).flink in
+  assume (h0 `contains` e1);
+  assume (h0 `contains` e2);
   if is_null e1 then (
     dll_remove_head d
   ) else if is_null e2 then (
