@@ -19,7 +19,6 @@ open LowStar.ModifiesPat
 open FStar.List.Tot
 open Utils
 open LowStar.BufferOps
-open Gpointers
 module Mod = LowStar.Modifies
 module ST = FStar.HyperStack.ST
 module HS = FStar.HyperStack
