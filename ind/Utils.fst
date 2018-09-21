@@ -134,13 +134,13 @@ let rec lemma_unsnoc_append (#t:Type) (l1 l2:list t) :
   | [] -> ()
   | _ :: l1' -> lemma_unsnoc_append l1' l2
 
-let rec unsnoc_is_last (#t:Type) (l:list t) :
+let rec lemma_unsnoc_is_last (#t:Type) (l:list t) :
   Lemma
     (requires (length l > 0))
     (ensures (snd (unsnoc l) == last l /\ snd (unsnoc l) == index l (length l - 1))) =
   match l with
   | [_] -> ()
-  | _ -> unsnoc_is_last (tl l)
+  | _ -> lemma_unsnoc_is_last (tl l)
 
 let rec split_using (#t:Type) (l:list t) (x:t{x `memP` l}) :
   GTot (list t * list t) =
@@ -168,13 +168,13 @@ let rec lemma_split_using (#t:Type) (l:list t) (x:t{x `memP` l}) :
     then ()
     else lemma_split_using (tl l) x
 
-let rec index_fst_unsnoc (#t:Type) (l:list t) (i:nat) :
+let rec lemma_index_fst_unsnoc (#t:Type) (l:list t) (i:nat) :
   Lemma
     (requires (length l > 0 /\ i < length l - 1))
     (ensures (index (fst (unsnoc l)) i == index l i)) =
   match i with
   | 0 -> ()
-  | _ -> index_fst_unsnoc (tl l) (i - 1)
+  | _ -> lemma_index_fst_unsnoc (tl l) (i - 1)
 
 let rec lemma_splitAt_append (#t:Type) (l1 l2:list t) :
   Lemma
@@ -202,13 +202,13 @@ let rec lemma_hd_r_split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
   | 0 -> ()
   | _ -> lemma_hd_r_split3 (tl l) (i - 1)
 
-let rec indexed_implies_memP (#t:Type) (l:list t) (i:nat{i < length l}) :
+let rec lemma_indexed_implies_memP (#t:Type) (l:list t) (i:nat{i < length l}) :
   Lemma
     (ensures (index l i `memP` l))
     [SMTPat (index l i `memP` l)] =
   match i with
   | 0 -> ()
-  | _ -> indexed_implies_memP (tl l) (i - 1)
+  | _ -> lemma_indexed_implies_memP (tl l) (i - 1)
 
 let rec lemma_splitAt_reindex_left (#t:Type) (i:nat) (l:list t) (j:nat) :
   Lemma

@@ -822,10 +822,10 @@ let piece_merge_fp0 (#t:Type) (h0:heap)
   // assert (Mod.loc_includes (nodelist_fp0 n) (Mod.loc_buffer p.phead));
   // assert (last n2 == p2.ptail);
   extract_nodelist_fp0 n2 (length n2 - 1);
-  unsnoc_is_last n2;
+  lemma_unsnoc_is_last n2;
   // assert (Mod.loc_includes (nodelist_fp0 n2) (Mod.loc_buffer p2.ptail));
   extract_nodelist_fp0 n (length n - 1);
-  unsnoc_is_last n;
+  lemma_unsnoc_is_last n;
   // assert (Mod.loc_includes (nodelist_fp0 n) (Mod.loc_buffer p.ptail));
   loc_includes_union_r_inv (nodelist_fp0 n) (nodelist_fp0 n1) (nodelist_fp0 n2);
   // assert (Mod.loc_includes (nodelist_fp0 n) (nodelist_fp0 n1));
@@ -833,7 +833,7 @@ let piece_merge_fp0 (#t:Type) (h0:heap)
   //
   // assert (loc_equiv (nodelist_fp0 n) (piece_fp0 p));
   extract_nodelist_fp0 n1 (length n1 - 1);
-  unsnoc_is_last n1;
+  lemma_unsnoc_is_last n1;
   // assert (loc_equiv (nodelist_fp0 n1) (piece_fp0 p1));
   // assert (loc_equiv (nodelist_fp0 n2) (piece_fp0 p2));
   //
@@ -1038,7 +1038,7 @@ let dll_fp0_is_nodelist_fp0 (#t:Type) (d:dll t) : Lemma
   (ensures
      (loc_equiv (dll_fp0 d) (nodelist_fp0 (reveal d.nodes)))) =
   if length (reveal d.nodes) > 0 then
-    unsnoc_is_last (reveal d.nodes)
+    lemma_unsnoc_is_last (reveal d.nodes)
   else
     ()
 
@@ -1046,7 +1046,7 @@ let piece_fp0_is_nodelist_fp0 (#t:Type) (p:piece t) : Lemma
   (requires (piece_ghostly_connections p))
   (ensures
      (loc_equiv (piece_fp0 p) (nodelist_fp0 (reveal p.pnodes)))) =
-  unsnoc_is_last (reveal p.pnodes)
+  lemma_unsnoc_is_last (reveal p.pnodes)
 
 /// Tot dll to fragment, with splitting
 
@@ -1073,9 +1073,9 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
   // assert (loc_equiv (dll_fp0 d) (nodelist_fp0 (reveal d.nodes)));
   nodelist_split_fp0_equiv (reveal l1) (reveal l2);
   nodelist_split_valid h0 (reveal l1) (reveal l2);
-  unsnoc_is_last (reveal l1);
-  unsnoc_is_last (reveal l2);
-  unsnoc_is_last (reveal d.nodes);
+  lemma_unsnoc_is_last (reveal l1);
+  lemma_unsnoc_is_last (reveal l2);
+  lemma_unsnoc_is_last (reveal d.nodes);
   // assert (piece_ghostly_connections p1);
   // assert ( n2 == hd (reveal l2) );
   lemma_last_append (reveal l1) (reveal l2);
@@ -1179,7 +1179,7 @@ let lemma_dll_links_contained (#t:Type) (h0:heap) (d:dll t) (i:nat) :
     (if i = length nl - 1 then () else extract_nodelist_conn h0 nl i);
     (if i = 0 then () else extract_nodelist_contained h0 nl (i - 1));
     (if i = length nl - 1 then () else extract_nodelist_contained h0 nl (i + 1));
-    unsnoc_is_last nl
+    lemma_unsnoc_is_last nl
 
 #set-options "--initial_ifuel 2"
 
@@ -1206,8 +1206,8 @@ let lemma_dll_links_disjoint (#t:Type) (h0:heap) (d:dll t) (i:nat) :
     (if i = 0 then () else extract_nodelist_conn h0 nl (i-1));
     (if i = length nl - 1 then () else extract_nodelist_conn h0 nl i);
     (if i = 0 then () else (
-        if i = length nl - 1 then (unsnoc_is_last nl) else (
-          unsnoc_is_last l1;
+        if i = length nl - 1 then (lemma_unsnoc_is_last nl) else (
+          lemma_unsnoc_is_last l1;
           let left = last l1 in
           let right = hd l2 in
           lemma_splitAt_reindex_left i nl (length l1 - 1);
@@ -1262,7 +1262,7 @@ let piece_remains_valid_b (#t:Type) (h0 h1:heap) (p:piece t) :
   let nodes = reveal p.pnodes in
   if length nodes > 1 then (
     nodelist_includes_r_fp0 nodes 1 (length nodes - 1);
-    unsnoc_is_last nodes;
+    lemma_unsnoc_is_last nodes;
     // assert (p.ptail == nodes.[length nodes - 1]);
     // assert (p.ptail@h0 == p.ptail@h1);
     // assert (h1 `contains` p.ptail);
@@ -1282,7 +1282,7 @@ let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
   if length nodes > 1 then (
     fst_unsnoc_nodelist_valid h0 nodes;
     // assert (nodelist_valid h0 (fst (unsnoc nodes)));
-    unsnoc_is_last nodes;
+    lemma_unsnoc_is_last nodes;
     // assert (Mod.loc_disjoint (Mod.loc_buffer p.ptail) (nodelist_fp0 (fst (unsnoc nodes))));
     nodelist_remains_valid h0 h1 (Mod.loc_buffer p.ptail) (fst (unsnoc nodes));
     // assert (nodelist_contained h1 (fst (unsnoc nodes)));
@@ -1292,10 +1292,10 @@ let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
     // assert (piece_contained h1 p);
     extract_nodelist_conn h0 nodes (length nodes - 2);
     // let nl1 = fst (unsnoc nodes) in
-    unsnoc_is_last (fst (unsnoc nodes));
+    lemma_unsnoc_is_last (fst (unsnoc nodes));
     // assert (last nl1 == nl1.[length nl1 - 1]);
     // assert (last nl1 == nl1.[length nodes - 2]);
-    index_fst_unsnoc nodes (length nodes - 2);
+    lemma_index_fst_unsnoc nodes (length nodes - 2);
     // assert (last nl1 == nodes.[length nodes - 2]);
     // assert ((last (fst (unsnoc nodes)))@h0 |> (hd [snd (unsnoc nodes)]));
     // assert (Mod.loc_disjoint (nodelist_fp0 (fst (unsnoc nodes))) (Mod.loc_buffer p.ptail));
@@ -1411,7 +1411,7 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:pointer (node t)) :
     t <|= n;
     let h0' = ST.get () in
     lemma_dll_links_contained h0 d (length (reveal d.nodes) - 1);
-    unsnoc_is_last (reveal d.nodes);
+    lemma_unsnoc_is_last (reveal d.nodes);
     // assert (Mod.loc_disjoint (Mod.loc_buffer (t@h0).blink) (Mod.loc_buffer n));
     t =|> n;
     let h1 = ST.get () in
@@ -1455,7 +1455,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
     dll_insert_at_tail d n
   ) else (
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e);
-    unsnoc_is_last (reveal d.nodes);
+    lemma_unsnoc_is_last (reveal d.nodes);
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e + 1);
     if not (is_null e1) then (
@@ -1523,7 +1523,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
     // assert (fragment_defragmentable h1 f');
     // assert (length f' > 0);
     // assert (is_null ((hd f').phead@h1).blink);
-    // unsnoc_is_last f';
+    // lemma_unsnoc_is_last f';
     // assert (last f' == p3);
     // assert (is_null ((last f').ptail@h1).flink);
     let y = tot_defragmentable_fragment_to_dll h1 f' in
@@ -1615,7 +1615,7 @@ let dll_remove_tail (#t:Type) (d:dll t) :
   ) else (
     extract_nodelist_contained h0 (reveal d.nodes) (length (reveal d.nodes) - 2);
     extract_nodelist_conn h0 (reveal d.nodes) (length (reveal d.nodes) - 2);
-    unsnoc_is_last (reveal d.nodes);
+    lemma_unsnoc_is_last (reveal d.nodes);
     // assert (e == (reveal d.nodes).[length (reveal d.nodes) - 1]);
     // assert (e1 == (reveal d.nodes).[length (reveal d.nodes) - 2]);
     !=|> e1;
