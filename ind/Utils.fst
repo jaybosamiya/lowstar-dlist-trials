@@ -6,11 +6,6 @@ module Utils
 open FStar.List.Tot
 open FStar.List.Pure
 
-// Workaround to force usage of all SMTPats that are in
-// FStar.List.Tot.Properties regarding append (which for some reason
-// have patterns on @ but not on append)
-unfold let append #t (a b:list t) = a@b
-
 let snoc (#t:Type) (a:list t) (b:t) : (c:list t{length c = length a + 1}) =
   append_length a [b];
   append a [b]

@@ -709,7 +709,7 @@ let rec nodelist_append_aa_l (#t:Type) (nl1 nl2:nodelist t) :
     (ensures (nodelist_aa_l (append nl1 nl2)))
     (decreases (length nl2)) =
   match nl2 with
-  | [] -> ()
+  | [] -> append_l_nil nl1
   | _ ->
     let nl2', n = unsnoc nl2 in
     nodelist_append_fp0 nl1 nl2';
@@ -969,7 +969,7 @@ let rec nodelist_split_aa_l (#t:Type) (nl1 nl2:nodelist t) :
     (ensures (nodelist_aa_l nl1 /\ nodelist_aa_l nl2))
     (decreases (length nl2)) =
   match nl2 with
-  | [] -> ()
+  | [] -> append_l_nil nl1
   | _ ->
     let nl2', n = unsnoc nl2 in
     lemma_unsnoc_append nl1 nl2;
