@@ -82,9 +82,13 @@ type piece t = {
   pnodes: erased (nodelist t);
 }
 
-private
+unopteq private
 (** An intermediate for when linked lists are being formed or destroyed *)
-type fragment t = list (piece t)
+type fragment t =
+  | Frag0 : fragment t
+  | Frag1 : piece t -> fragment t
+  | Frag2 : piece t -> piece t -> fragment t
+  | Frag3 : piece t -> piece t -> piece t -> fragment t
 
 /// Some useful empty initializers
 
@@ -97,6 +101,29 @@ let empty_node #t payload =
 val empty_list: #t:Type -> dll t
 let empty_list #t =
   { lhead = null ; ltail = null ; nodes = hide [] }
+
+/// Convenience wrappers for writing properties on fragments
+
+let fragment_for_each0 (#t:Type) (pr:piece t -> GTot Type0) (f:fragment t) : GTot Type0 =
+  match f with
+  | Frag0 -> True
+  | Frag1 p1 -> pr p1
+  | Frag2 p1 p2 -> pr p1 /\ pr p2
+  | Frag3 p1 p2 p3 -> pr p1 /\ pr p2 /\ pr p3
+
+let fragment_for_each1 (#t:Type) (#u:Type) (pr:u -> piece t -> GTot Type0) (v:u) (f:fragment t) : GTot Type0 =
+  match f with
+  | Frag0 -> True
+  | Frag1 p1 -> pr v p1
+  | Frag2 p1 p2 -> pr v p1 /\ pr v p2
+  | Frag3 p1 p2 p3 -> pr v p1 /\ pr v p2 /\ pr v p3
+
+let fragment_length (#t:Type) (f:fragment t) : GTot int =
+  match f with
+  | Frag0 -> 0
+  | Frag1 _ -> 1
+  | Frag2 _ _ -> 2
+  | Frag3 _ _ _ -> 3
 
 /// Ghostly connections
 
@@ -116,9 +143,7 @@ let piece_ghostly_connections (#t:Type) (p:piece t) : GTot Type0 =
         p.ptail == last nodes
 
 let rec fragment_ghostly_connections (#t:Type) (f:fragment t) : GTot Type0 =
-  match f with
-  | [] -> True
-  | p :: ps -> piece_ghostly_connections p /\ fragment_ghostly_connections ps
+  fragment_for_each0 piece_ghostly_connections f
 
 /// Containment properties
 ///
@@ -143,9 +168,7 @@ let piece_contained (#t:Type) (h0:heap) (p:piece t) : GTot Type0 =
   nodelist_contained h0 (reveal p.pnodes)
 
 let rec fragment_contained (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
-  match f with
-  | [] -> True
-  | p :: ps -> piece_contained h0 p /\ fragment_contained h0 ps
+  fragment_for_each1 piece_contained h0 f
 
 /// Footprints
 
@@ -205,16 +228,10 @@ let piece_fp_b (#t:Type) (h0:heap) (p:piece t) : GTot Mod.loc =
 
 let rec fragment_fp0 (#t:Type) (f:fragment t) : GTot Mod.loc =
   match f with
-  | [] -> Mod.loc_none
-  | p :: ps -> Mod.loc_union (piece_fp0 p) (fragment_fp0 ps)
-let rec fragment_fp_f (#t:Type) (h0:heap) (f:fragment t) : GTot Mod.loc =
-  match f with
-  | [] -> Mod.loc_none
-  | p :: ps -> Mod.loc_union (piece_fp_f h0 p) (fragment_fp_f h0 ps)
-let rec fragment_fp_b (#t:Type) (h0:heap) (f:fragment t) : GTot Mod.loc =
-  match f with
-  | [] -> Mod.loc_none
-  | p :: ps -> Mod.loc_union (piece_fp_b h0 p) (fragment_fp_b h0 ps)
+  | Frag0 -> Mod.loc_none
+  | Frag1 p1 -> piece_fp0 p1
+  | Frag2 p1 p2 -> Mod.loc_union (piece_fp0 p1) (piece_fp0 p2)
+  | Frag3 p1 p2 p3 -> Mod.loc_union (piece_fp0 p1) (Mod.loc_union (piece_fp0 p2) (piece_fp0 p3))
 
 /// Helper patterns for footprints
 
@@ -308,22 +325,17 @@ let piece_aa (#t:Type) (p:piece t) : GTot Type0 =
   nodelist_aa (reveal p.pnodes)
 
 let rec fragment_aa0 (#t:Type) (f:fragment t) : GTot Type0 =
+  fragment_for_each0 piece_aa f
+let rec fragment_aa_lr (#t:Type) (f:fragment t) : GTot Type0 =
   match f with
-  | [] -> True
-  | p :: ps -> piece_aa p /\ fragment_aa0 ps
-let rec fragment_aa_r (#t:Type) (f:fragment t) : GTot Type0 =
-  match f with
-  | [] -> True
-  | p :: ps -> Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 ps) /\
-             fragment_aa_r ps
-let rec fragment_aa_l (#t:Type) (f:fragment t) : GTot Type0 (decreases (length f)) =
-  match f with
-  | [] -> True
-  | _ -> let ps, p = unsnoc f in
-    Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 ps) /\
-    fragment_aa_l ps
+  | Frag0 -> True
+  | Frag1 p1 -> True
+  | Frag2 p1 p2 -> Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p2)
+  | Frag3 p1 p2 p3 -> ((Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p2)) /\
+                       (Mod.loc_disjoint (piece_fp0 p2) (piece_fp0 p3)) /\
+                       (Mod.loc_disjoint (piece_fp0 p3) (piece_fp0 p1)))
 let fragment_aa (#t:Type) (f:fragment t) : GTot Type0 =
-  fragment_aa0 f /\ fragment_aa_l f /\ fragment_aa_r f
+  fragment_aa0 f /\ fragment_aa_lr f
 
 /// Connectivity properties
 
@@ -352,9 +364,7 @@ let piece_conn (#t:Type) (h0:heap) (p:piece t) : GTot Type0 =
   nodelist_conn h0 (reveal p.pnodes)
 
 let rec fragment_conn (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
-  match f with
-  | [] -> True
-  | p :: ps -> nodelist_conn h0 (reveal p.pnodes) /\ fragment_conn h0 ps
+  fragment_for_each1 piece_conn h0 f
 
 /// Validity properties
 ///
@@ -447,14 +457,6 @@ let rec extract_nodelist_contained (#t:Type) (h0:heap) (nl:nodelist t) (i:nat{i 
   | 0 -> ()
   | _ -> extract_nodelist_contained h0 (tl nl) (i - 1)
 
-let rec extract_fragment_contained (#t:Type) (h0:heap) (f:fragment t) (i:nat{i < length f}) :
-  Lemma
-    (requires (fragment_contained h0 f))
-    (ensures (piece_contained h0 f.[i])) =
-  match i with
-  | 0 -> ()
-  | _ -> extract_fragment_contained h0 (tl f) (i - 1)
-
 let rec extract_nodelist_fp0 (#t:Type) (nl:nodelist t) (i:nat{i < length nl}) :
   Lemma
     (ensures (Mod.loc_includes
@@ -464,14 +466,14 @@ let rec extract_nodelist_fp0 (#t:Type) (nl:nodelist t) (i:nat{i < length nl}) :
   | 0 -> ()
   | _ -> extract_nodelist_fp0 (tl nl) (i - 1)
 
-let rec extract_fragment_fp0 (#t:Type) (f:fragment t) (i:nat{i < length f}) :
-  Lemma
-    (ensures (Mod.loc_includes
-                (fragment_fp0 f)
-                (piece_fp0 f.[i]))) =
-  match i with
-  | 0 -> ()
-  | _ -> extract_fragment_fp0 (tl f) (i - 1)
+// let rec extract_fragment_fp0 (#t:Type) (f:fragment t) (i:nat{i < length f}) :
+//   Lemma
+//     (ensures (Mod.loc_includes
+//                 (fragment_fp0 f)
+//                 (piece_fp0 f.[i]))) =
+//   match i with
+//   | 0 -> ()
+//   | _ -> extract_fragment_fp0 (tl f) (i - 1)
 
 let rec extract_nodelist_aa_r (#t:Type) (nl:nodelist t) (i:nat{i < length nl}) :
   Lemma
@@ -499,39 +501,39 @@ let rec extract_nodelist_aa_l (#t:Type) (nl:nodelist t) (i:nat{i < length nl}) :
     lemma_split3_unsnoc nl i
   )
 
-let rec extract_fragment_aa0 (#t:Type) (f:fragment t) (i:nat{i < length f}) :
-  Lemma
-    (requires (fragment_aa0 f))
-    (ensures (piece_aa f.[i])) =
-  match i with
-  | 0 -> ()
-  | _ -> extract_fragment_aa0 (tl f) (i - 1)
+// let rec extract_fragment_aa0 (#t:Type) (f:fragment t) (i:nat{i < length f}) :
+//   Lemma
+//     (requires (fragment_aa0 f))
+//     (ensures (piece_aa f.[i])) =
+//   match i with
+//   | 0 -> ()
+//   | _ -> extract_fragment_aa0 (tl f) (i - 1)
 
-let rec extract_fragment_aa_r (#t:Type) (f:fragment t) (i:nat{i < length f}) :
-  Lemma
-    (requires (fragment_aa_r f))
-    (ensures (
-        let left, p, right = split3 f i in
-        Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 right))) =
-  match i with
-  | 0 -> ()
-  | _ -> extract_fragment_aa_r (tl f) (i - 1)
+// let rec extract_fragment_aa_r (#t:Type) (f:fragment t) (i:nat{i < length f}) :
+//   Lemma
+//     (requires (fragment_aa_r f))
+//     (ensures (
+//         let left, p, right = split3 f i in
+//         Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 right))) =
+//   match i with
+//   | 0 -> ()
+//   | _ -> extract_fragment_aa_r (tl f) (i - 1)
 
-let rec extract_fragment_aa_l (#t:Type) (f:fragment t) (i:nat{i < length f}) :
-  Lemma
-    (requires (fragment_aa_l f))
-    (ensures (
-        let left, p, right = split3 f i in
-        Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 left)))
-    (decreases (length f)) =
-  if i = length f - 1 then () else (
-    let a, b = unsnoc f in
-    let left, p, right = split3 f i in
-    lemma_unsnoc_split3 f i;
-    // assert (append (left) (n :: (fst (unsnoc right))) == a);
-    extract_fragment_aa_l a i;
-    lemma_split3_unsnoc f i
-  )
+// let rec extract_fragment_aa_l (#t:Type) (f:fragment t) (i:nat{i < length f}) :
+//   Lemma
+//     (requires (fragment_aa_l f))
+//     (ensures (
+//         let left, p, right = split3 f i in
+//         Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 left)))
+//     (decreases (length f)) =
+//   if i = length f - 1 then () else (
+//     let a, b = unsnoc f in
+//     let left, p, right = split3 f i in
+//     lemma_unsnoc_split3 f i;
+//     // assert (append (left) (n :: (fst (unsnoc right))) == a);
+//     extract_fragment_aa_l a i;
+//     lemma_split3_unsnoc f i
+//   )
 
 let rec extract_nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) (i:nat{i < length nl - 1}) :
   Lemma
@@ -544,13 +546,13 @@ let rec extract_nodelist_conn (#t:Type) (h0:heap) (nl:nodelist t) (i:nat{i < len
   | 0 -> ()
   | _ -> extract_nodelist_conn h0 (tl nl) (i - 1)
 
-let rec extract_fragment_conn (#t:Type) (h0:heap) (f:fragment t) (i:nat{i < length f}) :
-  Lemma
-    (requires (fragment_conn h0 f))
-    (ensures (nodelist_conn h0 (reveal (f.[i]).pnodes))) =
-  match i with
-  | 0 -> ()
-  | _ -> extract_fragment_conn h0 (tl f) (i - 1)
+// let rec extract_fragment_conn (#t:Type) (h0:heap) (f:fragment t) (i:nat{i < length f}) :
+//   Lemma
+//     (requires (fragment_conn h0 f))
+//     (ensures (nodelist_conn h0 (reveal (f.[i]).pnodes))) =
+//   match i with
+//   | 0 -> ()
+//   | _ -> extract_fragment_conn h0 (tl f) (i - 1)
 
 /// Validity is maintained upon breaking the lists, via (hd :: tl)
 
@@ -571,22 +573,22 @@ let rec nodelist_remains_aa_l (#t:Type) (nl:nodelist t) :
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 ns'));
     nodelist_remains_aa_l ns
 
-let rec fragment_remains_aa_l (#t:Type) (f:fragment t) :
-  Lemma
-    (requires (fragment_aa_l f /\ length f > 0))
-    (ensures (fragment_aa_l (tl f)))
-    (decreases (length f))
-    [SMTPat (fragment_aa_l (tl f))] =
-  match f with
-  | [p] -> ()
-  | _ ->
-    let ps, p = unsnoc f in
-    let ps', p' = unsnoc (tl f) in
-    // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 ps));
-    // assert (p' == p);
-    // assert (ps' == tl ps);
-    // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 ps'));
-    fragment_remains_aa_l ps
+// let rec fragment_remains_aa_l (#t:Type) (f:fragment t) :
+//   Lemma
+//     (requires (fragment_aa_l f /\ length f > 0))
+//     (ensures (fragment_aa_l (tl f)))
+//     (decreases (length f))
+//     [SMTPat (fragment_aa_l (tl f))] =
+//   match f with
+//   | [p] -> ()
+//   | _ ->
+//     let ps, p = unsnoc f in
+//     let ps', p' = unsnoc (tl f) in
+//     // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 ps));
+//     // assert (p' == p);
+//     // assert (ps' == tl ps);
+//     // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 ps'));
+//     fragment_remains_aa_l ps
 
 (* Rest of the validity predicates are held trivially due to their
    direction of definition *)
@@ -711,7 +713,7 @@ let tot_dll_to_piece (#t:Type) (h0:heap) (d:nonempty_dll t{dll_valid h0 d}) :
 
 let tot_dll_to_fragment (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d /\ d.lhead =!= null}) :
   Tot (f:fragment t{fragment_valid h0 f}) =
-  [tot_dll_to_piece h0 d]
+  Frag1 (tot_dll_to_piece h0 d)
 
 let tot_piece_to_dll (#t:Type) (h0:heap) (p:piece t{
     piece_valid h0 p /\
@@ -722,15 +724,16 @@ let tot_piece_to_dll (#t:Type) (h0:heap) (p:piece t{
 
 let tot_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     fragment_valid h0 f /\
-    (length f <= 1) /\
-    (length f = 1 ==> (
-        (((hd f).phead@h0).blink == null) /\
-        (((hd f).ptail@h0).flink == null)))
+    (fragment_length f <= 1) /\
+    (fragment_length f = 1 ==> (
+        let Frag1 p = f in
+        ((p.phead@h0).blink == null) /\
+        ((p.ptail@h0).flink == null)))
   }) :
   Tot (d:dll t{dll_valid h0 d}) =
   match f with
-  | [] -> empty_list
-  | [p] -> tot_piece_to_dll h0 p
+  | Frag0 -> empty_list
+  | Frag1 p -> tot_piece_to_dll h0 p
 
 (* The conversions piece<->fragment are trivial *)
 
@@ -851,48 +854,48 @@ let nodelist_append_valid (#t:Type) (h0:heap) (nl1 nl2:nodelist t) :
 
 /// Properties maintained when appending fragments
 
-let rec fragment_append_ghostly_connections (#t:Type) (f1 f2:fragment t) :
-  Lemma
-    (requires (fragment_ghostly_connections f1 /\ fragment_ghostly_connections f2))
-    (ensures (fragment_ghostly_connections (append f1 f2))) =
-  match f1 with
-  | [] -> ()
-  | _ -> fragment_append_ghostly_connections (tl f1) f2
+// let rec fragment_append_ghostly_connections (#t:Type) (f1 f2:fragment t) :
+//   Lemma
+//     (requires (fragment_ghostly_connections f1 /\ fragment_ghostly_connections f2))
+//     (ensures (fragment_ghostly_connections (append f1 f2))) =
+//   match f1 with
+//   | [] -> ()
+//   | _ -> fragment_append_ghostly_connections (tl f1) f2
 
-let rec fragment_append_contained (#t:Type) (h0:heap) (f1 f2:fragment t) :
-  Lemma
-    (requires (fragment_contained h0 f1 /\ fragment_contained h0 f2))
-    (ensures (fragment_contained h0 (append f1 f2))) =
-  match f1 with
-  | [] -> ()
-  | _ -> fragment_append_contained h0 (tl f1) f2
+// let rec fragment_append_contained (#t:Type) (h0:heap) (f1 f2:fragment t) :
+//   Lemma
+//     (requires (fragment_contained h0 f1 /\ fragment_contained h0 f2))
+//     (ensures (fragment_contained h0 (append f1 f2))) =
+//   match f1 with
+//   | [] -> ()
+//   | _ -> fragment_append_contained h0 (tl f1) f2
 
-let rec fragment_append_fp0 (#t:Type) (f1 f2:fragment t) :
-  Lemma
-    (ensures (
-        loc_equiv
-          (fragment_fp0 (append f1 f2))
-          (Mod.loc_union (fragment_fp0 f1) (fragment_fp0 f2)))) =
-  match f1 with
-  | [] -> ()
-  | p :: f1' ->
-    fragment_append_fp0 f1' f2;
-    // assert (loc_equiv
-    //           (Mod.loc_union (fragment_fp0 f1) (fragment_fp0 f2))
-    //           (Mod.loc_union (piece_fp0 p) (Mod.loc_union (fragment_fp0 f1') (fragment_fp0 f2))));
-    loc_equiv_trans
-      (Mod.loc_union (fragment_fp0 f1) (fragment_fp0 f2))
-      (Mod.loc_union (piece_fp0 p) (Mod.loc_union (fragment_fp0 f1') (fragment_fp0 f2)))
-      (Mod.loc_union (piece_fp0 p) (fragment_fp0 (append f1' f2)))
+// let rec fragment_append_fp0 (#t:Type) (f1 f2:fragment t) :
+//   Lemma
+//     (ensures (
+//         loc_equiv
+//           (fragment_fp0 (append f1 f2))
+//           (Mod.loc_union (fragment_fp0 f1) (fragment_fp0 f2)))) =
+//   match f1 with
+//   | [] -> ()
+//   | p :: f1' ->
+//     fragment_append_fp0 f1' f2;
+//     // assert (loc_equiv
+//     //           (Mod.loc_union (fragment_fp0 f1) (fragment_fp0 f2))
+//     //           (Mod.loc_union (piece_fp0 p) (Mod.loc_union (fragment_fp0 f1') (fragment_fp0 f2))));
+//     loc_equiv_trans
+//       (Mod.loc_union (fragment_fp0 f1) (fragment_fp0 f2))
+//       (Mod.loc_union (piece_fp0 p) (Mod.loc_union (fragment_fp0 f1') (fragment_fp0 f2)))
+//       (Mod.loc_union (piece_fp0 p) (fragment_fp0 (append f1' f2)))
 
-let rec fragment_append_aa0 (#t:Type) (f1 f2:fragment t) :
-  Lemma
-    (requires (fragment_aa0 f1 /\ fragment_aa0 f2 /\
-               Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
-    (ensures (fragment_aa0 (append f1 f2))) =
-  match f1 with
-  | [] -> ()
-  | _ -> fragment_append_aa0 (tl f1) f2
+// let rec fragment_append_aa0 (#t:Type) (f1 f2:fragment t) :
+//   Lemma
+//     (requires (fragment_aa0 f1 /\ fragment_aa0 f2 /\
+//                Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
+//     (ensures (fragment_aa0 (append f1 f2))) =
+//   match f1 with
+//   | [] -> ()
+//   | _ -> fragment_append_aa0 (tl f1) f2
 
 let loc_includes_union_r_inv (a b c:Mod.loc) :
   Lemma
@@ -905,75 +908,75 @@ let loc_includes_union_r_inv (a b c:Mod.loc) :
 
 #set-options "--z3rlimit 20"
 
-let rec fragment_append_aa_l (#t:Type) (f1 f2:fragment t) :
-  Lemma
-    (requires (fragment_aa_l f1 /\ fragment_aa_l f2 /\
-               Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
-    (ensures (fragment_aa_l (append f1 f2)))
-    (decreases (length f2)) =
-  match f2 with
-  | [] -> ()
-  | _ ->
-    let f2', p = unsnoc f2 in
-    fragment_append_fp0 f1 f2';
-    fragment_append_fp0 f2' [p];
-    loc_includes_union_r_inv (fragment_fp0 f2) (fragment_fp0 f2') (fragment_fp0 [p]);
-    // assert (Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2'));
-    fragment_append_aa_l f1 f2';
-    // assert (fragment_aa_l (append f1 f2'));
-    lemma_unsnoc_append f1 f2;
-    // assert (append f1 f2' == fst (unsnoc (append f1 f2)));
-    // assert (p == snd (unsnoc (append f1 f2)));
-    extract_fragment_fp0 f2 (length f2 - 1);
-    unsnoc_is_last f2;
-    // assert (p == f2.[length f2 - 1]);
-    // assert (Mod.loc_includes (fragment_fp0 f2) (piece_fp0 p));
-    // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 f1));
-    // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 f2'));
-    assert (Mod.loc_disjoint (piece_fp0 p) (Mod.loc_union (fragment_fp0 f1) (fragment_fp0 f2'))); // OBSERVE
-    // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 (append f1 f2')));
-    ()
+// let rec fragment_append_aa_l (#t:Type) (f1 f2:fragment t) :
+//   Lemma
+//     (requires (fragment_aa_l f1 /\ fragment_aa_l f2 /\
+//                Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
+//     (ensures (fragment_aa_l (append f1 f2)))
+//     (decreases (length f2)) =
+//   match f2 with
+//   | [] -> ()
+//   | _ ->
+//     let f2', p = unsnoc f2 in
+//     fragment_append_fp0 f1 f2';
+//     fragment_append_fp0 f2' [p];
+//     loc_includes_union_r_inv (fragment_fp0 f2) (fragment_fp0 f2') (fragment_fp0 [p]);
+//     // assert (Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2'));
+//     fragment_append_aa_l f1 f2';
+//     // assert (fragment_aa_l (append f1 f2'));
+//     lemma_unsnoc_append f1 f2;
+//     // assert (append f1 f2' == fst (unsnoc (append f1 f2)));
+//     // assert (p == snd (unsnoc (append f1 f2)));
+//     extract_fragment_fp0 f2 (length f2 - 1);
+//     unsnoc_is_last f2;
+//     // assert (p == f2.[length f2 - 1]);
+//     // assert (Mod.loc_includes (fragment_fp0 f2) (piece_fp0 p));
+//     // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 f1));
+//     // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 f2'));
+//     assert (Mod.loc_disjoint (piece_fp0 p) (Mod.loc_union (fragment_fp0 f1) (fragment_fp0 f2'))); // OBSERVE
+//     // assert (Mod.loc_disjoint (piece_fp0 p) (fragment_fp0 (append f1 f2')));
+//     ()
 
 #reset-options
 
-let rec fragment_append_aa_r (#t:Type) (f1 f2:fragment t) :
-  Lemma
-    (requires (fragment_aa_r f1 /\ fragment_aa_r f2 /\
-               Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
-    (ensures (fragment_aa_r (append f1 f2))) =
-  match f1 with
-  | [] -> ()
-  | _ ->
-    fragment_append_fp0 (tl f1) f2;
-    fragment_append_aa_r (tl f1) f2;
-    assert (Mod.loc_disjoint (piece_fp0 (hd f1)) (Mod.loc_union (fragment_fp0 (tl f1)) (fragment_fp0 f2))) // OBSERVE
+// let rec fragment_append_aa_r (#t:Type) (f1 f2:fragment t) :
+//   Lemma
+//     (requires (fragment_aa_r f1 /\ fragment_aa_r f2 /\
+//                Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
+//     (ensures (fragment_aa_r (append f1 f2))) =
+//   match f1 with
+//   | [] -> ()
+//   | _ ->
+//     fragment_append_fp0 (tl f1) f2;
+//     fragment_append_aa_r (tl f1) f2;
+//     assert (Mod.loc_disjoint (piece_fp0 (hd f1)) (Mod.loc_union (fragment_fp0 (tl f1)) (fragment_fp0 f2))) // OBSERVE
 
-let rec fragment_append_aa (#t:Type) (f1 f2:fragment t) :
-  Lemma
-    (requires (fragment_aa f1 /\ fragment_aa f2 /\
-               Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
-    (ensures (fragment_aa (append f1 f2))) =
-  fragment_append_aa0 f1 f2;
-  fragment_append_aa_l f1 f2;
-  fragment_append_aa_r f1 f2
+// let rec fragment_append_aa (#t:Type) (f1 f2:fragment t) :
+//   Lemma
+//     (requires (fragment_aa f1 /\ fragment_aa f2 /\
+//                Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
+//     (ensures (fragment_aa (append f1 f2))) =
+//   fragment_append_aa0 f1 f2;
+//   fragment_append_aa_l f1 f2;
+//   fragment_append_aa_r f1 f2
 
-let rec fragment_append_conn (#t:Type) (h0:heap) (f1 f2:fragment t) :
-  Lemma
-    (requires (fragment_conn h0 f1 /\ fragment_conn h0 f2))
-    (ensures (fragment_conn h0 (append f1 f2))) =
-  match f1 with
-  | [] -> ()
-  | _ -> fragment_append_conn h0 (tl f1) f2
+// let rec fragment_append_conn (#t:Type) (h0:heap) (f1 f2:fragment t) :
+//   Lemma
+//     (requires (fragment_conn h0 f1 /\ fragment_conn h0 f2))
+//     (ensures (fragment_conn h0 (append f1 f2))) =
+//   match f1 with
+//   | [] -> ()
+//   | _ -> fragment_append_conn h0 (tl f1) f2
 
-let rec fragment_append_valid (#t:Type) (h0:heap) (f1 f2:fragment t) :
-  Lemma
-    (requires (fragment_valid h0 f1 /\ fragment_valid h0 f2 /\
-               Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
-    (ensures (fragment_valid h0 (append f1 f2))) =
-  fragment_append_ghostly_connections f1 f2;
-  fragment_append_contained h0 f1 f2;
-  fragment_append_aa f1 f2;
-  fragment_append_conn h0 f1 f2
+// let rec fragment_append_valid (#t:Type) (h0:heap) (f1 f2:fragment t) :
+//   Lemma
+//     (requires (fragment_valid h0 f1 /\ fragment_valid h0 f2 /\
+//                Mod.loc_disjoint (fragment_fp0 f1) (fragment_fp0 f2)))
+//     (ensures (fragment_valid h0 (append f1 f2))) =
+//   fragment_append_ghostly_connections f1 f2;
+//   fragment_append_contained h0 f1 f2;
+//   fragment_append_aa f1 f2;
+//   fragment_append_conn h0 f1 f2
 
 /// Piece merging
 
@@ -1050,64 +1053,40 @@ let piece_merge_fp0 (#t:Type) (h0:heap)
 /// Fragment merging to a dll
 
 let rec fragment_defragmentable (#t:Type) (h0:heap) (f:fragment t{fragment_valid h0 f}) :
-  GTot Type0 (decreases (length f)) =
+  GTot Type0 =
+  let aux (p1 p2:(p:piece t{piece_valid h0 p})) =
+    let a, b = last (reveal p1.pnodes), hd (reveal p2.pnodes) in
+    (a@h0 |> b) /\(a <| b@h0) in
   match f with
-  | [] -> True
-  | p1 :: rest -> match rest with
-    | [] -> True
-    | p2 :: ps ->
-      let a, b = last (reveal p1.pnodes), hd (reveal p2.pnodes) in
-      (a@h0 |> b) /\
-      (a <| b@h0) /\
-      (assert (rest == tl f); // OBSERVE
-         fragment_defragmentable h0 rest)
+  | Frag0 -> True
+  | Frag1 p1 -> True
+  | Frag2 p1 p2 -> aux p1 p2
+  | Frag3 p1 p2 p3 -> aux p1 p2 /\ aux p2 p3
 
 let single_piece_fragment_valid (#t:Type) (h0:heap) (p:piece t) :
   Lemma
     (requires (piece_valid h0 p))
-    (ensures (fragment_valid h0 [p])) = ()
+    (ensures (fragment_valid h0 (Frag1 p))) = ()
 
 #set-options "--z3rlimit 10 --initial_ifuel 2"
 
-let rec tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
+let tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     fragment_valid h0 f /\
     fragment_defragmentable h0 f /\
-    (length f > 0 ==>
-     (((hd f).phead@h0).blink == null) /\
-     (((last f).ptail@h0).flink == null))
+    (fragment_length f > 0 ==>
+     (let a, b = match f with
+       | Frag1 p1 -> p1, p1
+       | Frag2 p1 p2 -> p1, p2
+       | Frag3 p1 _ p3 -> p1, p3 in
+      ((a.phead@h0).blink == null) /\
+      ((b.ptail@h0).flink == null)))
   }) :
-  Tot (d:dll t{dll_valid h0 d})
-  (decreases (length f)) =
+  Tot (d:dll t{dll_valid h0 d}) =
   match f with
-  | [] -> empty_list
-  | [p] -> tot_piece_to_dll h0 p
-  | p1 :: p2 :: ps ->
-    let p = piece_merge h0 p1 p2 in
-    let f' = p :: ps in
-    fragment_remains_aa_l f;
-    fragment_remains_aa_l (tl f);
-    // assert (fragment_valid h0 ps);
-    // assert (piece_aa p);
-    // assert (piece_valid h0 p);
-    single_piece_fragment_valid h0 p;
-    // assert (fragment_aa [p]);
-    // assert (fragment_aa ps);
-    piece_merge_fp0 h0 p1 p2;
-    // assert (loc_equiv (piece_fp0 p) (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2)));
-    loc_equiv_trans (fragment_fp0 [p]) (piece_fp0 p) (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2));
-    // assert (Mod.loc_disjoint (piece_fp0 p2) (fragment_fp0 ps));
-    // assert (Mod.loc_disjoint (piece_fp0 p1) (fragment_fp0 ps));
-    assert (Mod.loc_disjoint (fragment_fp0 ps)
-              (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2))); // OBSERVE
-    // assert (Mod.loc_disjoint (Mod.loc_union (piece_fp0 p1) (piece_fp0 p2)) (fragment_fp0 ps));
-    // assert (Mod.loc_disjoint (fragment_fp0 [p]) (fragment_fp0 ps));
-    fragment_append_aa [p] ps;
-    // assert (fragment_valid h0 f');
-    // assert (fragment_defragmentable h0 f');
-    // assert (length f' > 0);
-    // assert (((hd f').phead@h0).blink == null);
-    // assert (((last f').ptail@h0).flink == null);
-    tot_defragmentable_fragment_to_dll h0 f'
+  | Frag0 -> empty_list
+  | Frag1 p1 -> tot_piece_to_dll h0 p1
+  | Frag2 p1 p2 -> tot_piece_to_dll h0 (piece_merge h0 p1 p2)
+  | Frag3 p1 p2 p3 -> admit (); tot_piece_to_dll h0 (piece_merge h0 (piece_merge h0 p1 p2) p3)
 
 #reset-options
 
@@ -1278,14 +1257,14 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
         n1@h0 |> n2 /\ n1 <| n2@h0))
     (ensures (fun f ->
          fragment_valid h0 f /\
-         length f = 2 /\
+         fragment_length f = 2 /\
          loc_equiv (dll_fp0 d) (fragment_fp0 f))) =
   let split_nodes = elift2_p split_using d.nodes (hide n2) in
   lemma_split_using (reveal d.nodes) n2;
   let l1, l2 = (elift1 fst split_nodes), (elift1 snd split_nodes) in
   let p1 = { phead = d.lhead ; ptail = n1 ; pnodes = l1 } in
   let p2 = { phead = n2 ; ptail = d.ltail ; pnodes = l2 } in
-  let f = [p1 ; p2] in
+  let f = Frag2 p1 p2 in
   dll_fp0_is_nodelist_fp0 d;
   // assert (loc_equiv (dll_fp0 d) (nodelist_fp0 (reveal d.nodes)));
   nodelist_split_fp0_equiv (reveal l1) (reveal l2);
@@ -1603,16 +1582,16 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:pointer (node t)) :
     n <|= h;
     let h1 = ST.get () in
     //
-    let f = tot_dll_to_fragment h0 d in
+    let Frag1 p1 = tot_dll_to_fragment h0 d in
     let p = tot_node_to_piece h0 n in
-    let f' = append [p] f in
+    let f' = Frag2 p p1 in
     // assert (fragment_valid h1 [p]);
     // assert (fragment_ghostly_connections f);
     // assert (length f = 1);
     // assert (h1 `contains` (hd f).phead);
-    piece_remains_valid h0 h0' (Mod.loc_buffer n) (hd f);
+    piece_remains_valid h0 h0' (Mod.loc_buffer n) p1;
     // assert (piece_valid h0' (hd f));
-    piece_remains_valid_b h0' h1 (hd f);
+    piece_remains_valid_b h0' h1 p1;
     // assert (h1 `contains` (hd f).ptail);
     // assert (nodelist_contained h1 (reveal (hd f).pnodes));
     // assert (piece_contained h1 (hd f));
@@ -1621,7 +1600,7 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:pointer (node t)) :
     // assert (nodelist_conn h1 (reveal (f.[0]).pnodes));
     // assert (fragment_conn h1 f);
     // assert (fragment_valid h1 f);
-    fragment_append_valid h1 [p] f;
+    // fragment_append_valid h1 [p] f;
     // assert (fragment_valid h1 f');
     // assert (fragment_defragmentable h1 f');
     // assert (length f' > 0);
@@ -1666,12 +1645,12 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:pointer (node t)) :
     t =|> n;
     let h1 = ST.get () in
     //
-    let f = tot_dll_to_fragment h0 d in
+    let Frag1 p1 = tot_dll_to_fragment h0 d in
     let p = tot_node_to_piece h0 n in
-    let f' = append f [p] in
-    piece_remains_valid h0 h0' (Mod.loc_buffer n) (hd f);
-    piece_remains_valid_f h0' h1 (hd f);
-    fragment_append_valid h1 f [p];
+    let f' = Frag2 p1 p in
+    piece_remains_valid h0 h0' (Mod.loc_buffer n) p1;
+    piece_remains_valid_f h0' h1 p1;
+    // fragment_append_valid h1 f [p];
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     y
   )
@@ -1743,10 +1722,10 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
     // assert (e@h0 |> e2 /\ e <| e2@h0);
     let f = tot_dll_to_fragment_split h0 d e e2 in
     // assert (length f = 2);
-    let p1, p3 = f.[0], f.[1] in
+    let Frag2 p1 p3 = f in
     // assert ([p1 ; p3] == f);
     let p2 = tot_node_to_piece h0 n in
-    let f' = [p1 ; p2 ; p3] in
+    let f' = Frag3 p1 p2 p3 in
     // assert (Mod.modifies (Mod.loc_buffer n) h0 h0');
     // assert (piece_valid h0 p1);
     // assert (loc_equiv (dll_fp0 d) (fragment_fp0 f));
@@ -1766,17 +1745,17 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
     piece_remains_valid h0' h0'' (piece_fp0 p1) p3;
     piece_remains_valid h0'' h1 (piece_fp0 p3) p1;
     piece_remains_valid_b h0'' h1 p3;
-    fragment_append_valid h1 [p2] [p3];
+    // fragment_append_valid h1 [p2] [p3];
     // assert ([p2 ; p3] == append [p2] [p3]);
-    fragment_append_valid h1 [p1] [p2 ; p3];
+    // fragment_append_valid h1 [p1] [p2 ; p3];
     // assert (f' == append [p1] [p2 ; p3]);
     //
     // assert (fragment_valid h1 f');
-    assert (fragment_defragmentable h1 (tl f')); // OBSERVE
+    assert (fragment_defragmentable h1 (Frag2 p2 p3)); // OBSERVE
     // assert (fragment_defragmentable h1 f');
     // assert (length f' > 0);
     // assert (is_null ((hd f').phead@h1).blink);
-    unsnoc_is_last f';
+    // unsnoc_is_last f';
     // assert (last f' == p3);
     // assert (is_null ((last f').ptail@h1).flink);
     let y = tot_defragmentable_fragment_to_dll h1 f' in
@@ -1838,10 +1817,10 @@ let dll_remove_head (#t:Type) (d:dll t) :
     !<|= e2;
     let h1 = ST.get () in
     let f = tot_dll_to_fragment_split h0 d e e2 in
-    let [p1; p2] = f in
+    let Frag2 p1 p2 = f in
     // assert (p1.phead == e);
     // assert (p1.ptail == e);
-    let f' = [p2] in
+    let f' = Frag1 p2 in
     piece_remains_valid_b h0 h1 p2;
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     y
@@ -1874,10 +1853,10 @@ let dll_remove_tail (#t:Type) (d:dll t) :
     !=|> e1;
     let h1 = ST.get () in
     let f = tot_dll_to_fragment_split h0 d e1 e in
-    let [p1; p2] = f in
+    let Frag2 p1 p2 = f in
     // assert (p2.phead == e);
     // assert (p2.ptail == e);
-    let f' = [p1] in
+    let f' = Frag1 p1 in
     piece_remains_valid_f h0 h1 p1;
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     y
@@ -1925,14 +1904,14 @@ let dll_remove_node (#t:Type) (d:dll t) (e:pointer (node t)) :
     // assert (e1 `memP` reveal d.nodes);
     // assert (e1@h0 |> e);
     let f = tot_dll_to_fragment_split h0 d e1 e in
-    let [ p1; p2 ] = f in
+    let Frag2 p1 p2 = f in
     let p2' = tot_piece_tail h0 p2 e2 in
-    let f' = [ p1; p2' ] in
+    let f' = Frag2 p1 p2' in
     piece_remains_valid_f h0 h0' p1;
     piece_remains_valid h0' h1 (Mod.loc_buffer e2) p1;
     piece_remains_valid h0 h0' (Mod.loc_buffer e1) p2';
     piece_remains_valid_b h0' h1 p2';
-    fragment_append_valid h1 [p1] [p2'];
+    // fragment_append_valid h1 [p1] [p2'];
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     // assert (dll_valid h1 y);
     y
