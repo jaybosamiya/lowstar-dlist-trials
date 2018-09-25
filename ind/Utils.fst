@@ -6,9 +6,13 @@ module Utils
 open FStar.List.Tot
 open FStar.List.Pure
 
-let snoc (#t:Type) (a:list t) (b:t) : (c:list t{length c = length a + 1}) =
-  append_length a [b];
+let snoc (#t:Type) (a:list t) (b:t) : (c:list t) =
   append a [b]
+
+let lemma_snoc_length (#t:Type) (a:list t) (b:t) :
+  Lemma (length (snoc a b) = length a + 1)
+    [SMTPat (length (snoc a b))] =
+  append_length a [b]
 
 let rec lemma_splitAt (#t:Type) (n:nat) (l:list t) :
   Lemma (requires n <= length l)
