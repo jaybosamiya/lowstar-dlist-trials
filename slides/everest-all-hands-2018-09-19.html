@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Doubly Linked Lists in Low*</title>
+<style type="text/css">
+.underline { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/reveal.js/3.0.0/css/reveal.css"/>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/reveal.js/3.0.0/css/theme/simple.css" id="theme"/>
+
+
+<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+<script>
+    if( window.location.search.match( /print-pdf/gi ) ) {
+        var link = document.createElement( 'link' );
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = 'https://cdn.jsdelivr.net/reveal.js/3.0.0/css/print/pdf.css';
+        document.getElementsByTagName( 'head' )[0].appendChild( link );
+    }
+</script>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section id="sec-title-slide"><h1 class="title">Doubly Linked Lists in Low*</h1><h5 class="author"></h5><h5 class="date">Everest All Hands (Cambridge) 2018 Sep 19</h5>
+</section>
+
+<section>
+<section id="slide-org8b76c34">
+<h2 id="org8b76c34">Why DLists?</h2>
+<ul>
+<li class="fragment">Interestingly difficult to get <i>just right</i></li>
+<li class="fragment">Shows pain points in F* / Low* / Buffer / Lists / Seq</li>
+<li class="fragment">Allows for experimentation with different styles of proving, for a (very!) non-trivial data-structure</li>
+
+</ul>
+
+</section>
+</section>
+<section>
+<section id="slide-orgfe83d19">
+<h2 id="orgfe83d19">Latest Updates</h2>
+<ul>
+<li class="fragment">Working doubly linked list implementation of
+<ul>
+<li>Inserting elements <i>anywhere</i> into a DLL</li>
+<li>Removing elements <i>anywhere</i> into a DLL</li>
+
+</ul></li>
+<li class="fragment"><i>Anywhere</i> means first, or last, or middle</li>
+<li class="fragment">Proofs for all of the functions
+<ul>
+<li>Proves that "if a <i>valid</i> DLL comes in, then a <i>valid</i> dll comes out"</li>
+
+</ul></li>
+<li class="fragment">Code size: Currently 2.5k lines of implementation + proofs</li>
+
+</ul>
+
+</section>
+</section>
+<section>
+<section id="slide-org46f39e8">
+<h2 id="org46f39e8">Overview of Proof</h2>
+<ul>
+<li class="fragment">Definitions of <code>node t</code>, <code>nodelist t</code>, <code>piece t</code>, <code>fragment t</code></li>
+<li class="fragment">Validity conditions for each of these
+<ul>
+<li>Ghostly Connections</li>
+<li>Containment Properties</li>
+<li>Anti Aliasing Properties</li>
+<li>Connectivity Properties</li>
+
+</ul></li>
+<li class="fragment"><code>defragmentable</code> fragments</li>
+
+</ul>
+</section>
+<section >
+<ul>
+<li><code>tot_*_to_*</code></li>
+<li>(Finally!) <code>ST</code> functions
+<ul>
+<li class="fragment">Implement stateful updates ("low level") separate from "higher level" changes</li>
+<li class="fragment">The proof comes out of validity maintenance of each of the transformation steps</li>
+<li class="fragment">Move from <code>dll</code> -&gt; <code>fragment{defragmentable}</code> -&gt; <code>fragment</code> -&gt; <code>fragment{defragmentable}</code> -&gt; <code>dll</code></li>
+
+</ul></li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-org930c9f3">
+<h2 id="org930c9f3">Example of Proof</h2>
+<div class="org-src-container">
+
+<pre  class="src src-F#">let dll_insert_at_head (#t:Type) (d:dll t) (n:gpointer (node t)) :
+  StackInline (dll t)
+    (requires (fun h0 -&gt;
+	 (dll_valid h0 d) /\
+	 (h0 `contains` n) /\
+	 (node_not_in_dll h0 n d)))
+    (ensures (fun h0 y h1 -&gt;
+	 Mod.modifies (Mod.loc_union
+			 (Mod.loc_buffer n)
+			 (Mod.loc_buffer d.lhead)) h0 h1 /\
+	 dll_valid h1 y)) =
+  if is_null d.lhead then (
+    singleton_dll n
+</pre>
+</div>
+<p>
+&#x2026;
+</p>
+</section>
+<section >
+<p>
+&#x2026;
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-F#">) else (
+  let h = d.lhead in
+  //
+  let h0 = ST.get () in
+  !&lt;|= n;
+  n =|&gt; h;
+  let h0' = ST.get () in
+  n &lt;|= h;
+  let h1 = ST.get () in
+  //
+  let f = tot_dll_to_fragment h0 d in
+  let p = tot_node_to_piece h0 n in
+  let f' = append [p] f in
+  piece_remains_valid h0 h0' (Mod.loc_buffer n) (hd f);
+  piece_remains_valid_b h0' h1 (hd f);
+  fragment_append_valid h1 [p] f;
+  tot_defragmentable_fragment_to_dll h1 f'
+)
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-org85771a7">
+<h2 id="org85771a7">Example of PROOF</h2>
+<pre  class="example">
+let dll_insert_after (#t:Type) (d:dll t) (e:gpointer (node t))
+					 (n:gpointer (node t)) :
+  StackInline (dll t)
+    (requires (fun h0 -&gt;
+	 (dll_valid h0 d) /\
+	 (e `memP` reveal d.nodes) /\
+	 (h0 `contains` n) /\
+	 (node_not_in_dll h0 n d)))
+    (ensures (fun h0 y h1 -&gt;
+	 Mod.modifies (Mod.loc_union
+			 (Mod.loc_union
+			    (Mod.loc_buffer n)
+			    (Mod.loc_buffer d.ltail))
+			 (Mod.loc_union
+			    (Mod.loc_buffer e)
+			    (Mod.loc_buffer (e@h0).flink))) h0 h1 /\
+	 dll_valid h1 y)) =
+  let h0 = ST.get () in
+  // assert (length (reveal d.nodes) &gt; 0);
+  lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
+  extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
+  let e1 = (!*e).blink in
+  let e2 = (!*e).flink in
+  if is_null e2 then (
+    dll_insert_at_tail d n
+</pre>
+<p>
+&#x2026;
+</p>
+</section>
+<section >
+<p>
+&#x2026;
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-F#">) else (
+  extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e);
+  unsnoc_is_last (reveal d.nodes);
+  extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
+  extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e + 1);
+  if is_not_null e1 then (
+    extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
+    extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1)
+  ) else ();
+  e &lt;|= n;
+  // let h' = ST.get () in assert (h' `contains` e2); assert (Mod.loc_disjoint (Mod.loc_buffer n) (Mod.loc_buffer e2));
+  n =|&gt; e2;
+  let h0' = ST.get () in
+  // assert (is_not_null e1 ==&gt; e1 == (reveal d.nodes).[reveal d.nodes `index_of` e - 1]);
+  // assert (is_not_null e1 ==&gt; Mod.loc_includes (nodelist_fp0 (reveal d.nodes)) (Mod.loc_buffer e1));
+  // assert (is_not_null e1 ==&gt; Mod.loc_disjoint (Mod.loc_buffer n) (Mod.loc_buffer e1));
+  // assert (Mod.loc_disjoint (Mod.loc_buffer n) (Mod.loc_buffer e1));
+  Mod.modifies_buffer_elim e1 (Mod.loc_buffer n) h0 h0';
+  e =|&gt; n;
+  let h0'' = ST.get () in
+</pre>
+</div>
+<p>
+&#x2026;
+</p>
+</section>
+<section >
+<p>
+&#x2026;
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-F#">// assert (h0 `contains` e2);
+// assert (h0' `contains` e2);
+// assert (e2 == (reveal d.nodes).[reveal d.nodes `index_of` e + 1]);
+extract_nodelist_aa_r (reveal d.nodes) (reveal d.nodes `index_of` e);
+lemma_hd_r_split3 (reveal d.nodes) (reveal d.nodes `index_of` e);
+// assert (Mod.loc_includes (nodelist_fp0 (reveal d.nodes)) (nodelist_fp0 (let _,_,z = split3 (reveal d.nodes) (reveal d.nodes `index_of` e) in z)));
+// assert (Mod.loc_includes (nodelist_fp0 (let _,_,z = split3 (reveal d.nodes) (reveal d.nodes `index_of` e) in z)) (Mod.loc_buffer e2));
+// assert (Mod.loc_disjoint (Mod.loc_buffer e2) (Mod.loc_buffer e));
+// assert (Mod.modifies (Mod.loc_buffer e) h0' h0'');
+Mod.modifies_buffer_elim e2 (Mod.loc_buffer e) h0' h0'';
+// assert (h0'' `contains` e2);
+n &lt;|= e2;
+let h1 = ST.get () in
+//
+// assert (e `memP` reveal d.nodes);
+// assert (e2 `memP` reveal d.nodes);
+// assert (e@h0 |&gt; e2 /\ e &lt;| e2@h0);
+</pre>
+</div>
+<p>
+&#x2026;
+</p>
+</section>
+<section >
+<p>
+&#x2026;
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-F#">let f = tot_dll_to_fragment_split h0 d e e2 in
+// assert (length f = 2);
+let p1, p3 = f.[0], f.[1] in
+// assert ([p1 ; p3] == f);
+let p2 = tot_node_to_piece h0 n in
+let f' = [p1 ; p2 ; p3] in
+// assert (Mod.modifies (Mod.loc_buffer n) h0 h0');
+// assert (piece_valid h0 p1);
+// assert (loc_equiv (dll_fp0 d) (fragment_fp0 f));
+// assert (Mod.loc_disjoint (Mod.loc_buffer n) (dll_fp0 d));
+// assert (Mod.loc_includes (dll_fp0 d) (fragment_fp0 f));
+// assert (Mod.loc_includes (fragment_fp0 f) (piece_fp0 p1));
+Mod.loc_includes_trans (dll_fp0 d) (fragment_fp0 f) (piece_fp0 p1);
+// assert (Mod.loc_includes (dll_fp0 d) (piece_fp0 p1));
+// assert (Mod.loc_disjoint (Mod.loc_buffer n) (piece_fp0 p1));
+piece_remains_valid h0 h0' (Mod.loc_buffer n) p1;
+// assert (piece_valid h0 p3);
+</pre>
+</div>
+<p>
+&#x2026;
+</p>
+</section>
+<section >
+<p>
+&#x2026;
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-F#">Mod.loc_includes_trans (dll_fp0 d) (fragment_fp0 f) (piece_fp0 p3);
+// assert (Mod.loc_disjoint (Mod.loc_buffer n) (piece_fp0 p3));
+piece_remains_valid h0 h0' (Mod.loc_buffer n) p3;
+piece_remains_valid_f h0' h0'' p1;
+// assert (Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p3));
+piece_remains_valid h0' h0'' (piece_fp0 p1) p3;
+piece_remains_valid h0'' h1 (piece_fp0 p3) p1;
+piece_remains_valid_b h0'' h1 p3;
+fragment_append_valid h1 [p2] [p3];
+// assert ([p2 ; p3] == append [p2] [p3]);
+fragment_append_valid h1 [p1] [p2 ; p3];
+// assert (f' == append [p1] [p2 ; p3]);
+//
+</pre>
+</div>
+<p>
+&#x2026;
+</p>
+</section>
+<section >
+<p>
+&#x2026;
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-F#">  // assert (fragment_valid h1 f');
+  assert (fragment_defragmentable h1 (tl f')); // OBSERVE
+  // assert (fragment_defragmentable h1 f');
+  // assert (length f' &gt; 0);
+  // assert (is_null ((hd f').phead@h1).blink);
+  unsnoc_is_last f';
+  // assert (last f' == p3);
+  // assert (is_null ((last f').ptail@h1).flink);
+  let y = tot_defragmentable_fragment_to_dll h1 f' in
+  y
+)
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-org839cb4e">
+<h2 id="org839cb4e">Largest Pain Points</h2>
+<ul>
+<li class="fragment"><i>Lots</i> of time wasted on trying to use <code>seq</code> library
+<ul>
+<li>Current version uses <code>list</code> library, but with many "additions"
+<ul>
+<li>Should probably merge into <code>ulib</code></li>
+
+</ul></li>
+
+</ul></li>
+<li class="fragment">Proof performance issues
+<ul>
+<li class="fragment">Worked with Tahina in quashing a bunch of <code>buffer</code> performance issues
+<ul>
+<li>Thanks Tahina!</li>
+
+</ul></li>
+<li class="fragment">Quirks of normal vs abnormal usage of libraries</li>
+<li class="fragment">Hints sometimes taking <i>much</i> longer than without them
+<ul>
+<li>Yet to dig into this</li>
+
+</ul></li>
+
+</ul></li>
+
+</ul>
+</section>
+<section >
+<ul>
+<li>Weird hint failures
+<ul>
+<li>Most of them seem to have been quashed. Will discuss some in breakout sessions.</li>
+
+</ul></li>
+<li>Proof feels <i>very</i> "manual"
+<ul>
+<li>Previous versions of the proofs involved much more "let Z3 handle it", but were <i>much</i> worse wrt performance, and couldn't finish "middle insertion" in Low* setting</li>
+
+</ul></li>
+
+</ul>
+
+</section>
+</section>
+<section>
+<section id="slide-org628ee7a">
+<h2 id="org628ee7a">Future Directions</h2>
+<ul>
+<li class="fragment">Add into CI</li>
+<li class="fragment">Figure out the "weird" hint failures</li>
+<li class="fragment">Figure out the "<code>StackInline</code>" issue</li>
+<li class="fragment">Clean up remnants of "convenience interfaces"
+<ul>
+<li><code>gpointers</code> -&gt; <code>pointers</code> etc</li>
+
+</ul></li>
+<li class="fragment">Move "additional" lemmas etc for <code>list</code> into <code>ulib</code></li>
+<li class="fragment">Create a "nice interface" for doubly linked lists
+<ul>
+<li>This will allow addition into <code>ulib</code></li>
+
+</ul></li>
+
+</ul>
+</section>
+</section>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/reveal.js/3.0.0/lib/js/head.min.js"></script>
+<script src="https://cdn.jsdelivr.net/reveal.js/3.0.0/js/reveal.js"></script>
+
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+
+controls: true,
+progress: true,
+history: false,
+center: true,
+slideNumber: 'c',
+rollingLinks: false,
+keyboard: true,
+overview: true,
+
+theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+transition: Reveal.getQueryHash().transition || 'fade', // default/cube/page/concave/zoom/linear/fade/none
+transitionSpeed: 'default',
+multiplex: {
+    secret: '', // null if client
+    id: '', // id, obtained from socket.io server
+    url: '' // Location of socket.io server
+},
+
+// Optional libraries used to extend on reveal.js
+dependencies: [
+ { src: 'https://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+ { src: 'https://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+ { src: 'https://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }]
+});
+</script>
+</body>
+</html>
