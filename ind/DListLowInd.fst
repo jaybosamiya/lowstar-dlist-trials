@@ -8,8 +8,8 @@ FStar version tested:
    F* 0.9.7.0~dev
    platform=Linux_x86_64
    compiler=OCaml 4.05.0
-   date=2018-09-20T11:42:25+0100
-   commit=4e2c4861de643fdb830f53bf2fd7b2ed843b371f
+   date=2018-09-27T14:04:47-0400
+   commit=239dcd02e3bb8814029ad35f27408ff96f9c7a90
 *)
 
 open FStar
