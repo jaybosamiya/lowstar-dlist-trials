@@ -716,8 +716,8 @@ let rec nodelist_append_aa_l (#t:Type) (nl1 nl2:nodelist t) :
     nodelist_append_fp0 nl1 nl2';
     // assert (nodelist_aa_l nl2');
     assert (Mod.loc_includes (nodelist_fp0 nl2) (nodelist_fp0 nl2')); // OBSERVE
-    admit ();
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl2'));
+    lemma_unsnoc_is_last nl2;
     assert (Mod.loc_includes (nodelist_fp0 nl2) (Mod.loc_buffer n)); // OBSERVE
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl1));
     // assert (loc_equiv (nodelist_fp0 (append nl1 nl2')) (Mod.loc_union (nodelist_fp0 nl1) (nodelist_fp0 nl2')));
