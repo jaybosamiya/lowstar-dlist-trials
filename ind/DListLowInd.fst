@@ -1299,7 +1299,7 @@ let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
     lemma_unsnoc_is_last (fst (unsnoc nodes));
     // assert (last nl1 == nl1.[length nl1 - 1]);
     // assert (last nl1 == nl1.[length nodes - 2]);
-    lemma_index_fst_unsnoc nodes (length nodes - 2);
+    lemma_unsnoc_index nodes (length nodes - 2);
     // assert (last nl1 == nodes.[length nodes - 2]);
     // assert ((last (fst (unsnoc nodes)))@h0 |> (hd [snd (unsnoc nodes)]));
     // assert (Mod.loc_disjoint (nodelist_fp0 (fst (unsnoc nodes))) (Mod.loc_buffer p.ptail));
