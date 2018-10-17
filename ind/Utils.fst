@@ -47,8 +47,3 @@ let rec lemma_index_fst_unsnoc (#t:Type) (l:list t) (i:nat) :
     (requires (length l > 0 /\ i < length l - 1))
     (ensures (i < length (fst (unsnoc l)) /\ index (fst (unsnoc l)) i == index l i)) =
   T.lemma_unsnoc_index l i
-
-let rec lemma_splitAt_append (#t:Type) (l1 l2:list t) :
-  Lemma
-    (ensures (splitAt (length l1) (append l1 l2) == (l1, l2))) =
-  P.lemma_append_splitAt l1 l2
