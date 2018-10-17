@@ -8,9 +8,6 @@ module P =  FStar.List.Pure
 open FStar.List.Tot
 open FStar.List.Pure
 
-let unsnoc (#t:Type) (l:list t{length l <> 0}) : (r:(list t * t){l == snoc r}) =
-  T.unsnoc l
-
 let split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
   r:(list t * t * list t){
     let a, b, c = r in
