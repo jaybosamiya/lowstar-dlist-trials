@@ -2,14 +2,14 @@ module DListLowInd
 
 (*
 Status:
-   [X] Working
-   [ ] Broken
+   [ ] Working
+   [X] Broken
 FStar version tested:
    F* 0.9.7.0~dev
    platform=Linux_x86_64
    compiler=OCaml 4.05.0
-   date=2018-09-27T14:04:47-0400
-   commit=239dcd02e3bb8814029ad35f27408ff96f9c7a90
+   date=
+   commit=jay_list
 *)
 
 open FStar
