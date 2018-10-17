@@ -8,35 +8,12 @@ module P =  FStar.List.Pure
 open FStar.List.Tot
 open FStar.List.Pure
 
-let rec lemma_unsnoc_split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
-  Lemma
-    (requires (i <> length l - 1))
-    (ensures (
-        let a, b, c = split3 l i in lemma_split3_length l i;
-        length c > 0 /\ (
-         let xs, x = unsnoc l in
-         let ys, y = unsnoc c in
-         append a (b :: ys) == xs))) =
-  P.lemma_split3_unsnoc l i
-
 let rec lemma_splitAt_shorten_left
     (#t:Type) (l1 l2:list t) (i:nat{i <= length l1 /\ i <= length l2}) (j:nat{j <= i}) :
   Lemma
     (requires (fst (splitAt i l1) == fst (splitAt i l2)))
     (ensures (fst (splitAt j l1) == fst (splitAt j l2))) =
   P.lemma_splitAt_shorten_left l1 l2 i j
-
-let rec lemma_split3_unsnoc (#t:Type) (l:list t) (i:nat{i < length l}) :
-  Lemma
-    (requires (i <> length l - 1))
-    (ensures (
-        let xs, x = unsnoc l in
-        lemma_unsnoc_length l;
-        i < length xs /\ (
-            let a0, b0, c0 = split3 l i in
-            let a1, b1, c1 = split3 xs i in
-            a0 == a1 /\ b0 == b1))) =
-  P.lemma_unsnoc_split3 l i
 
 let rec lemma_last_append (#t:Type) (l1 l2:list t) :
   Lemma
