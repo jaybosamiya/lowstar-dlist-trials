@@ -8,12 +8,9 @@ module P =  FStar.List.Pure
 open T
 open P
 
-let snoc (#t:Type) (a:list t) (b:t) : (c:list t) =
-  T.snoc (a, b)
-
 let lemma_snoc_length (#t:Type) (a:list t) (b:t) :
-  Lemma (length (snoc a b) = length a + 1)
-    [SMTPat (length (snoc a b))] =
+  Lemma (length (snoc (a, b)) = length a + 1)
+    [SMTPat (length (snoc (a, b)))] =
   T.lemma_snoc_length (a, b)
 
 let rec lemma_splitAt (#t:Type) (n:nat) (l:list t) :
@@ -31,7 +28,7 @@ let rec lemma_index_splitAt (#t:Type) (i:nat) (l:list t) :
               length b > 0 /\ hd b == index l i)) =
   lemma_splitAt_index_hd i l
 
-let unsnoc (#t:Type) (l:list t{length l <> 0}) : (r:(list t * t){l == snoc (fst r) (snd r)}) =
+let unsnoc (#t:Type) (l:list t{length l <> 0}) : (r:(list t * t){l == snoc r}) =
   T.unsnoc l
 
 let split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
