@@ -62,9 +62,3 @@ let rec lemma_hd_r_split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
     (ensures (let a, b, c = split3 l i in
               length c > 0 ==> i + 1 < length l /\ hd c == index l (i + 1))) =
   P.lemma_split3_r_hd l i
-
-let rec lemma_indexed_implies_memP (#t:Type) (l:list t) (i:nat{i < length l}) :
-  Lemma
-    (ensures (index l i `memP` l))
-    [SMTPat (index l i `memP` l)] =
-  T.lemma_index_memP l i
