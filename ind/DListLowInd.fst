@@ -1201,7 +1201,7 @@ let lemma_dll_links_disjoint (#t:Type) (h0:heap) (d:dll t) (i:nat) :
   match nl with
   | [_] -> ()
   | _ ->
-    admit ();
+    lemma_unsnoc_length nl;
     let node_split = splitAt i nl in
     lemma_splitAt nl (fst node_split) (snd node_split) i;
     lemma_splitAt_index_hd i nl;
