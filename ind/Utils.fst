@@ -8,14 +8,6 @@ module P =  FStar.List.Pure
 open FStar.List.Tot
 open FStar.List.Pure
 
-let rec lemma_index_splitAt (#t:Type) (i:nat) (l:list t) :
-  Lemma
-    (requires (i < length l))
-    (ensures (let a, b = splitAt i l in
-              lemma_splitAt l a b i;
-              length b > 0 /\ hd b == index l i)) =
-  lemma_splitAt_index_hd i l
-
 let unsnoc (#t:Type) (l:list t{length l <> 0}) : (r:(list t * t){l == snoc r}) =
   T.unsnoc l
 
