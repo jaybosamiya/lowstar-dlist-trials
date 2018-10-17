@@ -8,13 +8,6 @@ module P =  FStar.List.Pure
 open FStar.List.Tot
 open FStar.List.Pure
 
-let rec lemma_splitAt_shorten_left
-    (#t:Type) (l1 l2:list t) (i:nat{i <= length l1 /\ i <= length l2}) (j:nat{j <= i}) :
-  Lemma
-    (requires (fst (splitAt i l1) == fst (splitAt i l2)))
-    (ensures (fst (splitAt j l1) == fst (splitAt j l2))) =
-  P.lemma_splitAt_shorten_left l1 l2 i j
-
 let rec lemma_last_append (#t:Type) (l1 l2:list t) :
   Lemma
     (requires (length l2 > 0))
