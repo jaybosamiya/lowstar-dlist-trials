@@ -8,17 +8,6 @@ module P =  FStar.List.Pure
 open FStar.List.Tot
 open FStar.List.Pure
 
-let split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
-  r:(list t * t * list t){
-    let a, b, c = r in
-    (l == append a (b :: c)) /\
-    (b == index l i) /\
-    (length a = i) /\ (length c = (length l - i) - 1)} =
-  P.lemma_split3_append l i;
-  P.lemma_split3_index l i;
-  P.lemma_split3_length l i;
-  T.split3 l i
-
 let lemma_split3_leftprefix (#t:Type) (l1:list t) (l2:list t) (i:nat{i < length l1 /\ i < length l2}) :
   Lemma
     (requires (fst (splitAt (i+1) l1) == fst (splitAt (i+1) l2)))
@@ -32,10 +21,11 @@ let rec lemma_unsnoc_split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
   Lemma
     (requires (i <> length l - 1))
     (ensures (
-        let a, b, c = split3 l i in
-        let xs, x = unsnoc l in
-        let ys, y = unsnoc c in
-        append a (b :: ys) == xs)) =
+        let a, b, c = split3 l i in lemma_split3_length l i;
+        length c > 0 /\ (
+         let xs, x = unsnoc l in
+         let ys, y = unsnoc c in
+         append a (b :: ys) == xs))) =
   P.lemma_split3_unsnoc l i
 
 let rec lemma_splitAt_shorten_left
@@ -109,7 +99,7 @@ let rec index_of (#t:Type) (l:list t) (x:t{x `memP` l}) :
 let rec lemma_hd_r_split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
   Lemma
     (ensures (let a, b, c = split3 l i in
-              length c > 0 ==> hd c == index l (i + 1))) =
+              length c > 0 ==> i + 1 < length l /\ hd c == index l (i + 1))) =
   P.lemma_split3_r_hd l i
 
 let rec lemma_indexed_implies_memP (#t:Type) (l:list t) (i:nat{i < length l}) :
