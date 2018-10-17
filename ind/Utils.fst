@@ -5,8 +5,8 @@ module Utils
 (** For lists *)
 module T = FStar.List.Tot
 module P =  FStar.List.Pure
-open T
-open P
+open FStar.List.Tot
+open FStar.List.Pure
 
 let lemma_snoc_length (#t:Type) (a:list t) (b:t) :
   Lemma (length (snoc (a, b)) = length a + 1)
