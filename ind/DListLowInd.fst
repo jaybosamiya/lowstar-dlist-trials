@@ -19,7 +19,6 @@ open FStar.Ghost
 open LowStar.ModifiesPat
 open FStar.List.Tot
 open FStar.List.Pure
-open Utils
 open LowStar.BufferOps
 module Mod = LowStar.Modifies
 module ST = FStar.HyperStack.ST
