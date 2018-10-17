@@ -799,7 +799,7 @@ let piece_merge (#t:Type) (h0:heap)
                Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p2)))
     (ensures (fun p -> piece_valid h0 p)) =
   let p = { phead = p1.phead ; ptail = p2.ptail ; pnodes = p1.pnodes ^@^ p2.pnodes } in
-  lemma_last_append (reveal p1.pnodes) (reveal p2.pnodes);
+  lemma_append_last (reveal p1.pnodes) (reveal p2.pnodes);
   nodelist_append_valid h0 (reveal p1.pnodes) (reveal p2.pnodes);
   p
 
@@ -1081,7 +1081,7 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
   lemma_unsnoc_is_last (reveal d.nodes);
   // assert (piece_ghostly_connections p1);
   // assert ( n2 == hd (reveal l2) );
-  lemma_last_append (reveal l1) (reveal l2);
+  lemma_append_last (reveal l1) (reveal l2);
   // assert ( last (reveal l2) == last (append (reveal l1) (reveal l2)) );
   // assert ( d.ltail == last (reveal l2) );
   // assert (piece_ghostly_connections p2);

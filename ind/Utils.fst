@@ -8,12 +8,6 @@ module P =  FStar.List.Pure
 open FStar.List.Tot
 open FStar.List.Pure
 
-let rec lemma_last_append (#t:Type) (l1 l2:list t) :
-  Lemma
-    (requires (length l2 > 0))
-    (ensures (last (l1 @ l2) == last l2)) =
-  T.lemma_append_last l1 l2
-
 let rec lemma_index_fst_unsnoc (#t:Type) (l:list t) (i:nat) :
   Lemma
     (requires (length l > 0 /\ i < length l - 1))
