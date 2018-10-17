@@ -1482,7 +1482,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
     // assert (h0' `contains` e2);
     // assert (e2 == (reveal d.nodes).[reveal d.nodes `index_of` e + 1]);
     extract_nodelist_aa_r (reveal d.nodes) (reveal d.nodes `index_of` e);
-    lemma_hd_r_split3 (reveal d.nodes) (reveal d.nodes `index_of` e);
+    lemma_split3_r_hd (reveal d.nodes) (reveal d.nodes `index_of` e);
     admit (); // broke via removal of [Utils.split3]
     // assert (Mod.loc_includes (nodelist_fp0 (reveal d.nodes)) (nodelist_fp0 (let _,_,z = split3 (reveal d.nodes) (reveal d.nodes `index_of` e) in z)));
     // assert (Mod.loc_includes (nodelist_fp0 (let _,_,z = split3 (reveal d.nodes) (reveal d.nodes `index_of` e) in z)) (Mod.loc_buffer e2));

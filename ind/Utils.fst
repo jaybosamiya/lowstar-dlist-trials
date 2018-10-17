@@ -56,9 +56,3 @@ let rec lemma_splitAt_append (#t:Type) (l1 l2:list t) :
 let rec index_of (#t:Type) (l:list t) (x:t{x `memP` l}) :
   GTot (i:nat{i < length l /\ index l i == x}) =
   T.index_of l x
-
-let rec lemma_hd_r_split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
-  Lemma
-    (ensures (let a, b, c = split3 l i in
-              length c > 0 ==> i + 1 < length l /\ hd c == index l (i + 1))) =
-  P.lemma_split3_r_hd l i
