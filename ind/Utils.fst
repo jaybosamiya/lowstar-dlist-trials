@@ -68,21 +68,3 @@ let rec lemma_indexed_implies_memP (#t:Type) (l:list t) (i:nat{i < length l}) :
     (ensures (index l i `memP` l))
     [SMTPat (index l i `memP` l)] =
   T.lemma_index_memP l i
-
-let rec lemma_splitAt_reindex_left (#t:Type) (i:nat) (l:list t) (j:nat) :
-  Lemma
-    (requires i <= length l /\ j < i)
-    (ensures (
-        let left, right = splitAt i l in
-        lemma_splitAt l left right i;
-        j < length left /\ index left j == index l j)) =
-  P.lemma_splitAt_reindex_left i l j
-
-let rec lemma_splitAt_reindex_right (#t:Type) (i:nat) (l:list t) (j:nat) :
-  Lemma
-    (requires i <= length l /\ j + i < length l)
-    (ensures (
-        let left, right = splitAt i l in
-        lemma_splitAt l left right i;
-        j < length right /\ index right j == index l (j + i))) =
-  P.lemma_splitAt_reindex_right i l j
