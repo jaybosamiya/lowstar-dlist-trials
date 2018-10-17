@@ -8,11 +8,6 @@ module P =  FStar.List.Pure
 open FStar.List.Tot
 open FStar.List.Pure
 
-let lemma_snoc_length (#t:Type) (a:list t) (b:t) :
-  Lemma (length (snoc (a, b)) = length a + 1)
-    [SMTPat (length (snoc (a, b)))] =
-  T.lemma_snoc_length (a, b)
-
 let rec lemma_splitAt (#t:Type) (n:nat) (l:list t) :
   Lemma (requires n <= length l)
     (ensures (let a, b = splitAt n l in
@@ -73,9 +68,11 @@ let rec lemma_split3_unsnoc (#t:Type) (l:list t) (i:nat{i < length l}) :
     (requires (i <> length l - 1))
     (ensures (
         let xs, x = unsnoc l in
-        let a0, b0, c0 = split3 l i in
-        let a1, b1, c1 = split3 xs i in
-        a0 == a1 /\ b0 == b1)) =
+        lemma_unsnoc_length l;
+        i < length xs /\ (
+            let a0, b0, c0 = split3 l i in
+            let a1, b1, c1 = split3 xs i in
+            a0 == a1 /\ b0 == b1))) =
   P.lemma_unsnoc_split3 l i
 
 let rec lemma_last_append (#t:Type) (l1 l2:list t) :
@@ -115,7 +112,7 @@ let rec lemma_split_using (#t:Type) (l:list t) (x:t{x `memP` l}) :
 let rec lemma_index_fst_unsnoc (#t:Type) (l:list t) (i:nat) :
   Lemma
     (requires (length l > 0 /\ i < length l - 1))
-    (ensures (index (fst (unsnoc l)) i == index l i)) =
+    (ensures (i < length (fst (unsnoc l)) /\ index (fst (unsnoc l)) i == index l i)) =
   T.lemma_unsnoc_index l i
 
 let rec lemma_splitAt_append (#t:Type) (l1 l2:list t) :
