@@ -3,7 +3,8 @@ module DListLowInd
 (*
 Status:
    [ ] Working
-   [X] Broken
+   [X] Working with [admit]s and [assume]s
+   [ ] Broken
 FStar version tested:
    F* 0.9.7.0~dev
    platform=Linux_x86_64
