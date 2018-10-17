@@ -8,15 +8,6 @@ module P =  FStar.List.Pure
 open FStar.List.Tot
 open FStar.List.Pure
 
-let lemma_split3_leftprefix (#t:Type) (l1:list t) (l2:list t) (i:nat{i < length l1 /\ i < length l2}) :
-  Lemma
-    (requires (fst (splitAt (i+1) l1) == fst (splitAt (i+1) l2)))
-    (ensures (
-        let a1, b1, c1 = split3 l1 i in
-        let a2, b2, c2 = split3 l2 i in
-        a1 == a2 /\ b1 == b2)) =
-  P.lemma_split3_on_same_leftprefix l1 l2 i
-
 let rec lemma_unsnoc_split3 (#t:Type) (l:list t) (i:nat{i < length l}) :
   Lemma
     (requires (i <> length l - 1))
