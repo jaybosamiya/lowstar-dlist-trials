@@ -18,6 +18,7 @@ open FStar.HyperStack.ST
 open FStar.Ghost
 open LowStar.ModifiesPat
 open FStar.List.Tot
+open FStar.List.Pure
 open Utils
 open LowStar.BufferOps
 module Mod = LowStar.Modifies
@@ -598,8 +599,8 @@ let rec nodelist_includes_r_fp0 (#t:Type) (nl:nodelist t) (i j:nat) :
         Mod.loc_includes (nodelist_fp0 a) (nodelist_fp0 b)))
     (decreases (j - i)) =
   if i = j then () else (
-    let _, a = splitAt i nl in lemma_splitAt i nl;
-    let _, b = splitAt j nl in lemma_splitAt j nl;
+    let temp, a = splitAt i nl in lemma_splitAt nl temp a i;
+    let temp, b = splitAt j nl in lemma_splitAt nl temp b j;
     if i = j - 1 then (
       List.Pure.Properties.splitAt_assoc i 1 nl;
       // assert (tl a == b);
@@ -607,7 +608,7 @@ let rec nodelist_includes_r_fp0 (#t:Type) (nl:nodelist t) (i j:nat) :
     ) else (
       nodelist_includes_r_fp0 nl i (j - 1);
       nodelist_includes_r_fp0 nl (j - 1) j;
-      let _, c = splitAt (j - 1) nl in lemma_splitAt (j - 1) nl;
+      let temp, c = splitAt (j - 1) nl in lemma_splitAt nl temp c (j - 1);
       Mod.loc_includes_trans (nodelist_fp0 a) (nodelist_fp0 c) (nodelist_fp0 b)
     )
   )
@@ -621,8 +622,8 @@ let rec nodelist_includes_l_fp0 (#t:Type) (nl:nodelist t) (i j:nat) :
        Mod.loc_includes (nodelist_fp0 b) (nodelist_fp0 a)))
     (decreases (j - i)) =
   if i = j then () else (
-    let a, a' = splitAt i nl in lemma_splitAt i nl;
-    let b, b' = splitAt j nl in lemma_splitAt j nl;
+    let a, a' = splitAt i nl in lemma_splitAt nl a a' i;
+    let b, b' = splitAt j nl in lemma_splitAt nl b b' j;
     if i = j - 1 then (
       List.Pure.Properties.splitAt_assoc i 1 nl;
       // assert (b == append a [hd a']);
@@ -633,7 +634,7 @@ let rec nodelist_includes_l_fp0 (#t:Type) (nl:nodelist t) (i j:nat) :
     ) else (
       nodelist_includes_l_fp0 nl i (j - 1);
       nodelist_includes_l_fp0 nl (j - 1) j;
-      let c, c' = splitAt (j - 1) nl in lemma_splitAt (j - 1) nl;
+      let c, c' = splitAt (j - 1) nl in lemma_splitAt nl c c' (j - 1);
       Mod.loc_includes_trans (nodelist_fp0 b) (nodelist_fp0 c) (nodelist_fp0 a)
     )
   )
@@ -1203,7 +1204,7 @@ let lemma_dll_links_disjoint (#t:Type) (h0:heap) (d:dll t) (i:nat) :
   | _ ->
     admit ();
     let node_split = splitAt i nl in
-    lemma_splitAt i nl;
+    lemma_splitAt nl (fst node_split) (snd node_split) i;
     lemma_index_splitAt i nl;
     let l1, x :: l2 = node_split in
     (if i = 0 then () else extract_nodelist_conn h0 nl (i-1));

@@ -8,18 +8,11 @@ module P =  FStar.List.Pure
 open FStar.List.Tot
 open FStar.List.Pure
 
-let rec lemma_splitAt (#t:Type) (n:nat) (l:list t) :
-  Lemma (requires n <= length l)
-    (ensures (let a, b = splitAt n l in
-              length a = n /\ length b = length l - n /\ append a b == l)) =
-  let a, b = splitAt n l in
-  P.lemma_splitAt l a b n
-
 let rec lemma_index_splitAt (#t:Type) (i:nat) (l:list t) :
   Lemma
     (requires (i < length l))
     (ensures (let a, b = splitAt i l in
-              lemma_splitAt i l;
+              lemma_splitAt l a b i;
               length b > 0 /\ hd b == index l i)) =
   lemma_splitAt_index_hd i l
 
@@ -141,7 +134,7 @@ let rec lemma_splitAt_reindex_left (#t:Type) (i:nat) (l:list t) (j:nat) :
     (requires i <= length l /\ j < i)
     (ensures (
         let left, right = splitAt i l in
-        lemma_splitAt i l;
+        lemma_splitAt l left right i;
         j < length left /\ index left j == index l j)) =
   P.lemma_splitAt_reindex_left i l j
 
@@ -150,6 +143,6 @@ let rec lemma_splitAt_reindex_right (#t:Type) (i:nat) (l:list t) (j:nat) :
     (requires i <= length l /\ j + i < length l)
     (ensures (
         let left, right = splitAt i l in
-        lemma_splitAt i l;
+        lemma_splitAt l left right i;
         j < length right /\ index right j == index l (j + i))) =
   P.lemma_splitAt_reindex_right i l j
