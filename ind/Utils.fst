@@ -52,7 +52,3 @@ let rec lemma_splitAt_append (#t:Type) (l1 l2:list t) :
   Lemma
     (ensures (splitAt (length l1) (append l1 l2) == (l1, l2))) =
   P.lemma_append_splitAt l1 l2
-
-let rec index_of (#t:Type) (l:list t) (x:t{x `memP` l}) :
-  GTot (i:nat{i < length l /\ index l i == x}) =
-  T.index_of l x
