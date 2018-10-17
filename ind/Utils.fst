@@ -14,34 +14,6 @@ let rec lemma_last_append (#t:Type) (l1 l2:list t) :
     (ensures (last (l1 @ l2) == last l2)) =
   T.lemma_append_last l1 l2
 
-let rec lemma_unsnoc_append (#t:Type) (l1 l2:list t) :
-  Lemma
-    (requires (length l2 > 0)) // the [length l2 = 0] is trivial
-    (ensures (
-        let as, a = unsnoc (l1 @ l2) in
-        let bs, b = unsnoc l2 in
-        as == l1 @ bs /\ a == b)) =
-  T.lemma_unsnoc_append l1 l2
-
-let rec lemma_unsnoc_is_last (#t:Type) (l:list t) :
-  Lemma
-    (requires (length l > 0))
-    (ensures (snd (unsnoc l) == last l /\ snd (unsnoc l) == index l (length l - 1))) =
-  T.lemma_unsnoc_is_last l
-
-let rec split_using (#t:Type) (l:list t) (x:t{x `memP` l}) :
-  GTot (list t * list t) =
-  T.split_using l x
-
-let rec lemma_split_using (#t:Type) (l:list t) (x:t{x `memP` l}) :
-  Lemma
-    (ensures (
-        let l1, l2 = split_using l x in
-        (length l2 > 0) /\
-        ~(x `memP` l1) /\ (hd l2 == x) /\
-        append l1 l2 == l)) =
-  T.lemma_split_using l x
-
 let rec lemma_index_fst_unsnoc (#t:Type) (l:list t) (i:nat) :
   Lemma
     (requires (length l > 0 /\ i < length l - 1))
