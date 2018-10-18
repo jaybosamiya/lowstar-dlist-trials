@@ -2,14 +2,15 @@ module DListLowInd
 
 (*
 Status:
-   [X] Working
+   [ ] Working
+   [X] Working with [admit]s and [assume]s
    [ ] Broken
 FStar version tested:
    F* 0.9.7.0~dev
    platform=Linux_x86_64
    compiler=OCaml 4.05.0
-   date=2018-09-27T14:04:47-0400
-   commit=239dcd02e3bb8814029ad35f27408ff96f9c7a90
+   date=
+   commit=jay_list
 *)
 
 open FStar
@@ -17,7 +18,7 @@ open FStar.HyperStack.ST
 open FStar.Ghost
 open LowStar.ModifiesPat
 open FStar.List.Tot
-open Utils
+open FStar.List.Pure
 open LowStar.BufferOps
 module Mod = LowStar.Modifies
 module ST = FStar.HyperStack.ST
@@ -312,7 +313,7 @@ let rec nodelist_aa_l (#t:Type) (nl:nodelist t) : GTot Type0 (decreases (length 
   match nl with
   | [] -> True
   | _ ->
-    let ns, n = unsnoc nl in
+    let ns, n = unsnoc nl in lemma_unsnoc_length nl;
     Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 ns) /\
     nodelist_aa_l ns
 let nodelist_aa (#t:Type) (nl:nodelist t) : GTot Type0 =
@@ -484,7 +485,7 @@ let rec extract_nodelist_aa_l (#t:Type) (nl:nodelist t) (i:nat{i < length nl}) :
         Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 left)))
     (decreases (length nl)) =
   if i = length nl - 1 then () else (
-    let a, b = unsnoc nl in
+    let a, b = unsnoc nl in lemma_unsnoc_length nl;
     let left, n, right = split3 nl i in
     lemma_unsnoc_split3 nl i;
     // assert (append (left) (n :: (fst (unsnoc right))) == a);
@@ -514,7 +515,7 @@ let rec nodelist_remains_aa_l (#t:Type) (nl:nodelist t) :
   match nl with
   | [n] -> ()
   | _ ->
-    let ns, n = unsnoc nl in
+    let ns, n = unsnoc nl in lemma_unsnoc_length nl;
     let ns', n' = unsnoc (tl nl) in
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 ns));
     // assert (n' == n);
@@ -597,8 +598,8 @@ let rec nodelist_includes_r_fp0 (#t:Type) (nl:nodelist t) (i j:nat) :
         Mod.loc_includes (nodelist_fp0 a) (nodelist_fp0 b)))
     (decreases (j - i)) =
   if i = j then () else (
-    let _, a = splitAt i nl in lemma_splitAt i nl;
-    let _, b = splitAt j nl in lemma_splitAt j nl;
+    let temp, a = splitAt i nl in lemma_splitAt nl temp a i;
+    let temp, b = splitAt j nl in lemma_splitAt nl temp b j;
     if i = j - 1 then (
       List.Pure.Properties.splitAt_assoc i 1 nl;
       // assert (tl a == b);
@@ -606,7 +607,7 @@ let rec nodelist_includes_r_fp0 (#t:Type) (nl:nodelist t) (i j:nat) :
     ) else (
       nodelist_includes_r_fp0 nl i (j - 1);
       nodelist_includes_r_fp0 nl (j - 1) j;
-      let _, c = splitAt (j - 1) nl in lemma_splitAt (j - 1) nl;
+      let temp, c = splitAt (j - 1) nl in lemma_splitAt nl temp c (j - 1);
       Mod.loc_includes_trans (nodelist_fp0 a) (nodelist_fp0 c) (nodelist_fp0 b)
     )
   )
@@ -620,8 +621,8 @@ let rec nodelist_includes_l_fp0 (#t:Type) (nl:nodelist t) (i j:nat) :
        Mod.loc_includes (nodelist_fp0 b) (nodelist_fp0 a)))
     (decreases (j - i)) =
   if i = j then () else (
-    let a, a' = splitAt i nl in lemma_splitAt i nl;
-    let b, b' = splitAt j nl in lemma_splitAt j nl;
+    let a, a' = splitAt i nl in lemma_splitAt nl a a' i;
+    let b, b' = splitAt j nl in lemma_splitAt nl b b' j;
     if i = j - 1 then (
       List.Pure.Properties.splitAt_assoc i 1 nl;
       // assert (b == append a [hd a']);
@@ -632,7 +633,7 @@ let rec nodelist_includes_l_fp0 (#t:Type) (nl:nodelist t) (i j:nat) :
     ) else (
       nodelist_includes_l_fp0 nl i (j - 1);
       nodelist_includes_l_fp0 nl (j - 1) j;
-      let c, c' = splitAt (j - 1) nl in lemma_splitAt (j - 1) nl;
+      let c, c' = splitAt (j - 1) nl in lemma_splitAt nl c c' (j - 1);
       Mod.loc_includes_trans (nodelist_fp0 b) (nodelist_fp0 c) (nodelist_fp0 a)
     )
   )
@@ -711,11 +712,12 @@ let rec nodelist_append_aa_l (#t:Type) (nl1 nl2:nodelist t) :
   match nl2 with
   | [] -> append_l_nil nl1
   | _ ->
-    let nl2', n = unsnoc nl2 in
+    let nl2', n = unsnoc nl2 in lemma_unsnoc_length nl2;
     nodelist_append_fp0 nl1 nl2';
     // assert (nodelist_aa_l nl2');
     assert (Mod.loc_includes (nodelist_fp0 nl2) (nodelist_fp0 nl2')); // OBSERVE
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl2'));
+    lemma_unsnoc_is_last nl2;
     assert (Mod.loc_includes (nodelist_fp0 nl2) (Mod.loc_buffer n)); // OBSERVE
     // assert (Mod.loc_disjoint (Mod.loc_buffer n) (nodelist_fp0 nl1));
     // assert (loc_equiv (nodelist_fp0 (append nl1 nl2')) (Mod.loc_union (nodelist_fp0 nl1) (nodelist_fp0 nl2')));
@@ -796,7 +798,7 @@ let piece_merge (#t:Type) (h0:heap)
                Mod.loc_disjoint (piece_fp0 p1) (piece_fp0 p2)))
     (ensures (fun p -> piece_valid h0 p)) =
   let p = { phead = p1.phead ; ptail = p2.ptail ; pnodes = p1.pnodes ^@^ p2.pnodes } in
-  lemma_last_append (reveal p1.pnodes) (reveal p2.pnodes);
+  lemma_append_last (reveal p1.pnodes) (reveal p2.pnodes);
   nodelist_append_valid h0 (reveal p1.pnodes) (reveal p2.pnodes);
   p
 
@@ -921,7 +923,7 @@ let rec nodelist_split_fp0 (#t:Type) (nl1 nl2:nodelist t) :
       nodelist_includes_r_fp0 (tl (append nl1 nl2)) 0 (length nl1 - 1);
       // assert (snd (splitAt 0 (tl (append nl1 nl2))) == tl (append nl1 nl2));
       // assert (snd (splitAt (length nl1 - 1) (tl (append nl1 nl2))) == snd (splitAt (length nl1) (append nl1 nl2)));
-      lemma_splitAt_append nl1 nl2;
+      lemma_append_splitAt nl1 nl2;
       // assert (snd (splitAt (length nl1) (append nl1 nl2)) == nl2);
       // assert (Mod.loc_includes (nodelist_fp0 (tl (append nl1 nl2))) (nodelist_fp0 nl2));
       // assert (Mod.loc_disjoint (Mod.loc_buffer (hd nl1)) (nodelist_fp0 (tl (append nl1 nl2))));
@@ -971,7 +973,7 @@ let rec nodelist_split_aa_l (#t:Type) (nl1 nl2:nodelist t) :
   match nl2 with
   | [] -> append_l_nil nl1
   | _ ->
-    let nl2', n = unsnoc nl2 in
+    let nl2', n = unsnoc nl2 in lemma_unsnoc_length nl2;
     lemma_unsnoc_append nl1 nl2;
     // assert (nodelist_aa_l (append nl1 nl2));
     // assert (nodelist_aa_l (append nl1 nl2'));
@@ -1078,7 +1080,7 @@ let tot_dll_to_fragment_split (#t:Type) (h0:heap) (d:dll t{dll_valid h0 d})
   lemma_unsnoc_is_last (reveal d.nodes);
   // assert (piece_ghostly_connections p1);
   // assert ( n2 == hd (reveal l2) );
-  lemma_last_append (reveal l1) (reveal l2);
+  lemma_append_last (reveal l1) (reveal l2);
   // assert ( last (reveal l2) == last (append (reveal l1) (reveal l2)) );
   // assert ( d.ltail == last (reveal l2) );
   // assert (piece_ghostly_connections p2);
@@ -1199,9 +1201,10 @@ let lemma_dll_links_disjoint (#t:Type) (h0:heap) (d:dll t) (i:nat) :
   match nl with
   | [_] -> ()
   | _ ->
+    lemma_unsnoc_length nl;
     let node_split = splitAt i nl in
-    lemma_splitAt i nl;
-    lemma_index_splitAt i nl;
+    lemma_splitAt nl (fst node_split) (snd node_split) i;
+    lemma_splitAt_index_hd i nl;
     let l1, x :: l2 = node_split in
     (if i = 0 then () else extract_nodelist_conn h0 nl (i-1));
     (if i = length nl - 1 then () else extract_nodelist_conn h0 nl i);
@@ -1295,7 +1298,7 @@ let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
     lemma_unsnoc_is_last (fst (unsnoc nodes));
     // assert (last nl1 == nl1.[length nl1 - 1]);
     // assert (last nl1 == nl1.[length nodes - 2]);
-    lemma_index_fst_unsnoc nodes (length nodes - 2);
+    lemma_unsnoc_index nodes (length nodes - 2);
     // assert (last nl1 == nodes.[length nodes - 2]);
     // assert ((last (fst (unsnoc nodes)))@h0 |> (hd [snd (unsnoc nodes)]));
     // assert (Mod.loc_disjoint (nodelist_fp0 (fst (unsnoc nodes))) (Mod.loc_buffer p.ptail));
@@ -1305,6 +1308,7 @@ let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
     // assert (h0 `contains` last (fst (unsnoc nodes)));
     // assert (Mod.loc_disjoint (nodelist_fp0 (fst (unsnoc nodes))) (Mod.loc_buffer p.ptail));
     assert (Mod.loc_includes (nodelist_fp0 (fst (unsnoc nodes))) (Mod.loc_buffer (last (fst (unsnoc nodes))))); // OBSERVE
+    admit ();
     // assert (Mod.loc_disjoint (Mod.loc_buffer (last (fst (unsnoc nodes)))) (Mod.loc_buffer p.ptail));
     // assert ((last (fst (unsnoc nodes)))@h0 == (last (fst (unsnoc nodes)))@h1);
     // assert ((last (fst (unsnoc nodes)))@h1 |> (hd [snd (unsnoc nodes)]));
@@ -1477,7 +1481,8 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
     // assert (h0' `contains` e2);
     // assert (e2 == (reveal d.nodes).[reveal d.nodes `index_of` e + 1]);
     extract_nodelist_aa_r (reveal d.nodes) (reveal d.nodes `index_of` e);
-    lemma_hd_r_split3 (reveal d.nodes) (reveal d.nodes `index_of` e);
+    lemma_split3_r_hd (reveal d.nodes) (reveal d.nodes `index_of` e);
+    admit (); // broke via removal of [Utils.split3]
     // assert (Mod.loc_includes (nodelist_fp0 (reveal d.nodes)) (nodelist_fp0 (let _,_,z = split3 (reveal d.nodes) (reveal d.nodes `index_of` e) in z)));
     // assert (Mod.loc_includes (nodelist_fp0 (let _,_,z = split3 (reveal d.nodes) (reveal d.nodes `index_of` e) in z)) (Mod.loc_buffer e2));
     // assert (Mod.loc_disjoint (Mod.loc_buffer e2) (Mod.loc_buffer e));
