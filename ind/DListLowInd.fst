@@ -1333,7 +1333,7 @@ let node_not_in_dll (#t:Type) (h0:heap) (n:pointer (node t)) (d:dll t) =
 
 /// Now for the actual ST operations that will be exposed :)
 
-#set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 0 --query_stats"
+#set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 0"
 
 let dll_insert_at_head (#t:Type) (d:dll t) (n:pointer (node t)) :
   StackInline (dll t)
@@ -1392,7 +1392,7 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:pointer (node t)) :
 
 #reset-options
 
-#set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 0 --query_stats"
+#set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 0"
 
 let dll_insert_at_tail (#t:Type) (d:dll t) (n:pointer (node t)) :
   StackInline (dll t)
@@ -1431,7 +1431,7 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:pointer (node t)) :
 
 #reset-options
 
-#set-options "--z3rlimit 1000 --initial_fuel 2 --initial_ifuel 2 --query_stats"
+#set-options "--z3rlimit 1000 --initial_fuel 2 --initial_ifuel 2"
 
 let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t)) :
   StackInline (dll t)
