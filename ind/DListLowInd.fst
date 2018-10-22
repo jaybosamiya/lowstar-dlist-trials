@@ -1662,8 +1662,7 @@ let dll_remove_node (#t:Type) (d:dll t) (e:pointer (node t)) :
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
   let e1 = (!*e).blink in
   let e2 = (!*e).flink in
-  assume (h0 `contains` e1);
-  assume (h0 `contains` e2);
+  lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
   if is_null e1 then (
     dll_remove_head d
   ) else if is_null e2 then (
