@@ -1566,7 +1566,7 @@ let dll_insert_before (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node 
   let h0 = ST.get () in
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
   let e1 = (!*e).blink in
-  assume (h0 `contains` e1);
+  lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
   if is_null e1 then (
     dll_insert_at_head d n
   ) else (
