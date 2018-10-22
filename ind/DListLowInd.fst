@@ -874,7 +874,7 @@ let single_piece_fragment_valid (#t:Type) (h0:heap) (p:piece t) :
     (requires (piece_valid h0 p))
     (ensures (fragment_valid h0 (Frag1 p))) = ()
 
-#set-options "--z3rlimit 10 --initial_ifuel 2"
+#set-options "--z3rlimit 5 --initial_ifuel 2"
 
 let tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
     fragment_valid h0 f /\
@@ -892,7 +892,10 @@ let tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
   | Frag0 -> empty_list
   | Frag1 p1 -> tot_piece_to_dll h0 p1
   | Frag2 p1 p2 -> tot_piece_to_dll h0 (piece_merge h0 p1 p2)
-  | Frag3 p1 p2 p3 -> admit (); tot_piece_to_dll h0 (piece_merge h0 (piece_merge h0 p1 p2) p3)
+  | Frag3 p1 p2 p3 ->
+    let p' = piece_merge h0 p1 p2 in
+    piece_merge_fp0 h0 p1 p2;
+    tot_piece_to_dll h0 (piece_merge h0 p' p3)
 
 #reset-options
 
