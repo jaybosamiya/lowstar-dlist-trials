@@ -1619,13 +1619,13 @@ let dll_remove_tail (#t:Type) (d:dll t) :
   let h0 = ST.get () in
   let e = d.ltail in
   let e1 = (!*e).blink in
-  assume (h0 `contains` e1);
+  lemma_dll_links_contained h0 d (length (reveal d.nodes) - 1);
+  lemma_unsnoc_is_last (reveal d.nodes);
   if is_null e1 then (
     empty_list
   ) else (
     extract_nodelist_contained h0 (reveal d.nodes) (length (reveal d.nodes) - 2);
     extract_nodelist_conn h0 (reveal d.nodes) (length (reveal d.nodes) - 2);
-    lemma_unsnoc_is_last (reveal d.nodes);
     // assert (e == (reveal d.nodes).[length (reveal d.nodes) - 1]);
     // assert (e1 == (reveal d.nodes).[length (reveal d.nodes) - 2]);
     !=|> e1;
