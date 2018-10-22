@@ -2,8 +2,8 @@ module DListLowInd
 
 (*
 Status:
-   [ ] Working
-   [X] Working with [admit]s and [assume]s
+   [X] Working
+   [ ] Working with [admit]s and [assume]s
    [ ] Broken
 FStar version tested:
    F* 0.9.7.0~dev
