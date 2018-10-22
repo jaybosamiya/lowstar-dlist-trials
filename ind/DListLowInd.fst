@@ -1488,8 +1488,8 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
     lemma_split3_append (reveal d.nodes) (reveal d.nodes `index_of` e);
     lemma_split3_index (reveal d.nodes) (reveal d.nodes `index_of` e);
     lemma_split3_length (reveal d.nodes) (reveal d.nodes `index_of` e);
-    assume (Mod.loc_includes (nodelist_fp0 (reveal d.nodes)) (nodelist_fp0 (let _,_,z = split3 (reveal d.nodes) (reveal d.nodes `index_of` e) in z))); // broke via removal of [Utils.split3]
-    assume (Mod.loc_includes (nodelist_fp0 (let _,_,z = split3 (reveal d.nodes) (reveal d.nodes `index_of` e) in z)) (Mod.loc_buffer e2)); // broke via removal of [Utils.split3]
+    // assert (Mod.loc_includes (nodelist_fp0 (reveal d.nodes)) (nodelist_fp0 (let _,_,z = split3 (reveal d.nodes) (reveal d.nodes `index_of` e) in z)));
+    // assert (Mod.loc_includes (nodelist_fp0 (let _,_,z = split3 (reveal d.nodes) (reveal d.nodes `index_of` e) in z)) (Mod.loc_buffer e2));
     // assert (Mod.loc_disjoint (Mod.loc_buffer e2) (Mod.loc_buffer e));
     // assert (Mod.modifies (Mod.loc_buffer e) h0' h0'');
     Mod.modifies_buffer_elim e2 (Mod.loc_buffer e) h0' h0'';
