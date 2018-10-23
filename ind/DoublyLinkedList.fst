@@ -51,6 +51,8 @@ unfold let (^@) (a:pointer_or_null 't{a =!= null}) (h0:heap) = B.get h0 a 0
 
 /// All the data structures
 
+#set-options "--__no_positivity"
+
 unopteq
 (** Node of a doubly linked list *)
 type node (t:Type0) = {
@@ -61,6 +63,8 @@ type node (t:Type0) = {
   (* payload *)
   p: t;
 }
+
+#reset-options
 
 private
 type nodelist t = list (pointer (node t))
