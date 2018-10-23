@@ -20,9 +20,11 @@ TODO
 ====
 
 [X] Update F* and see how much broke
+[X] Add License to Project
 [ ] Test with KreMLin
 [ ] Write interfaces to get it working with QUIC
 [ ] Think about making "modifies" postconditions stronger
 [ ] Figure out the StackInline issue that I had postponed until now
 [ ] Figure out why there are hint failures
 [ ] Figure out why the proof is so slow
+[ ] Update README
