@@ -1,18 +1,5 @@
 module DoublyLinkedList
 
-(*
-Status:
-   [X] Working
-   [ ] Working with [admit]s and [assume]s
-   [ ] Broken
-FStar version tested:
-   F* 0.9.7.0~dev
-   platform=Linux_x86_64
-   compiler=OCaml 4.05.0
-   date=2018-10-18T15:47:00-0400
-   commit=059db0c8f527948202ced33ed871c0aa4a0fa3a4
-*)
-
 open FStar
 open FStar.HyperStack.ST
 open FStar.Ghost
@@ -1697,15 +1684,3 @@ let dll_remove_node (#t:Type) (d:dll t) (e:pointer (node t)) :
     // assert (dll_valid h1 y);
     y
   )
-
-(*
-   TODO:
-
-   [X] Update F* and see how much broke
-   [ ] Test with KreMLin
-   [ ] Write interfaces to get it working with QUIC
-   [ ] Think about making "modifies" postconditions stronger
-   [ ] Figure out the StackInline issue that I had postponed until now
-   [ ] Figure out why there are hint failures
-   [ ] Figure out why the proof is so slow
-*)
