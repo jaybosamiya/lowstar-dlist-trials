@@ -92,4 +92,4 @@ all temporary files form the directory.
 
 ## License
 
-To be decided
+[Apache License, Version 2.0](LICENSE.txt)
