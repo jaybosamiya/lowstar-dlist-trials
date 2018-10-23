@@ -1,4 +1,4 @@
-FSTAR := fstar.exe --query_stats --__no_positivity --use_hints --record_hints --cache_checked_modules
+FSTAR := fstar.exe --query_stats --use_hints --record_hints --cache_checked_modules
 
 # List of everything
 all: DoublyLinkedList
