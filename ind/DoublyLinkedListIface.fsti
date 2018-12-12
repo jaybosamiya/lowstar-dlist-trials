@@ -56,6 +56,39 @@ val node_of (v:'a) :
     (requires (fun h0 -> True))
     (ensures (fun h0 n h1 -> h0 == h1 /\ v == g_node_val h0 n)) // TODO: Check if these postconditions actually hold
 
+/// Viewing ghostly state of a DoublyLinkedList as a list
+
+val as_list (h:HS.mem) (d:pdll 'a) : GTot (list (pnode 'a))
+
+/// Creating an empty DoublyLinkedList, and quickly accessing the head
+/// and tail of a DoublyLinkedList
+
+val dll_new (u:unit)  :
+  HST.StackInline (pdll 'a)
+    (requires (fun h0 -> True))
+    (ensures (fun h0 d h1 ->
+         h0 == h1 /\
+         dll_valid h1 d /\
+         as_list h1 d == [])) // TODO: Check if these postconditions actually hold
+
+val dll_head (d:pdll 'a) :
+  HST.StackInline (pnode 'a)
+    (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
+    (ensures (fun h0 n h1 ->
+         h0 == h1 /\
+         dll_valid h1 d /\
+         as_list h0 d == as_list h1 d /\
+         n == L.hd (as_list h0 d))) // TODO: Check if these postconditions actually hold
+
+val dll_tail (d:pdll 'a) :
+  HST.StackInline (pnode 'a)
+    (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
+    (ensures (fun h0 n h1 ->
+         h0 == h1 /\
+         dll_valid h1 d /\
+         as_list h0 d == as_list h1 d /\
+         n == snd (L.unsnoc (as_list h0 d)))) // TODO: Check if these postconditions actually hold
+
 /// DoublyLinkedList operations on standard [list]s instead
 
 let l_insert_start (l:list 'a) (x:'a) : GTot (list 'a) =
@@ -85,10 +118,6 @@ let l_remove_mid (l:list 'a{L.length l > 0}) (x:'a {x `L.memP` l}) : GTot (list 
   let l1, x0 :: l2 = L.lemma_split_using l x; L.split_using l x in
   assert (x == x0);
   l1 `L.append` l2
-
-/// Viewing ghostly state of a list
-
-val as_list (h:HS.mem) (d:pdll 'a) : GTot (list (pnode 'a))
 
 /// Footprint of nodes and lists
 
