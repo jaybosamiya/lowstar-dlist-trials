@@ -68,6 +68,18 @@ let node_of v =
 let as_list h d =
   G.reveal (d@h).DLL.nodes
 
+/// Creating an empty DoublyLinkedList, and quickly accessing the head
+/// and tail of a DoublyLinkedList
+
+let dll_new () =
+  admit () // TODO: Write this
+
+let dll_head d =
+  admit () // TODO: Write this
+
+let dll_tail d =
+  admit () // TODO: Write this
+
 /// Footprint of nodes and lists
 
 let fp_node n = B.loc_buffer n
