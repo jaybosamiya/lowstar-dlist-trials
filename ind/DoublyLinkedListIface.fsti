@@ -76,8 +76,8 @@ val as_list (h:HS.mem) (d:pdll 'a) : GTot (list (pnode 'a))
 
 /// Footprint of nodes and lists
 
-val fp_node (n:pnode 'a) : B.loc
-val fp_dll (d:pdll 'a) : B.loc
+val fp_node (n:pnode 'a) : GTot B.loc
+val fp_dll (d:pdll 'a) : GTot B.loc
 
 /// Stateful DoublyLinkedList operations
 ///
