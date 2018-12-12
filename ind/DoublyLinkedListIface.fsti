@@ -33,7 +33,7 @@ val g_node_val (h:HS.mem) (n:pnode 'a) : GTot 'a
 val node_val (n:pnode 'a) :
   HST.StackInline 'a
     (requires (fun h0 -> node_valid h0 n))
-    (ensures (fun h0 v h1 -> h0 == h1 /\ v == g_node_val h0 n)) // TODO: Check if these postconditions actually hold
+    (ensures (fun h0 v h1 -> h0 == h1 /\ v == g_node_val h0 n))
 
 val node_of (v:'a) :
   HST.StackInline (pnode 'a)
