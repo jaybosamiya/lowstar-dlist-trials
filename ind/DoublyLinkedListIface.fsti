@@ -2,7 +2,6 @@ module DoublyLinkedListIface
 
 module HS = FStar.HyperStack
 module HST = FStar.HyperStack.ST
-module G = FStar.Ghost
 module L = FStar.List.Tot
 module B = LowStar.Buffer
 
