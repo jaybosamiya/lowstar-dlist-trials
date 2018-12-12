@@ -75,10 +75,12 @@ let dll_new () =
   B.alloca DLL.empty_list 1ul
 
 let dll_head d =
-  admit () // TODO: Write this
+  (!*d).DLL.lhead
 
 let dll_tail d =
-  admit () // TODO: Write this
+  let h0 = HST.get () in
+  L.lemma_unsnoc_is_last (as_list h0 d);
+  (!*d).DLL.ltail
 
 /// Footprint of nodes and lists
 

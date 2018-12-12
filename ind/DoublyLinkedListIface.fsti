@@ -75,10 +75,11 @@ val dll_head (d:pdll 'a) :
   HST.StackInline (pnode 'a)
     (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
     (ensures (fun h0 n h1 ->
-         h0 == h1 /\
+         B.modifies B.loc_none h0 h1 /\
          dll_valid h1 d /\
+         // node_valid h1 n /\ TODO: Need to prove this
          as_list h0 d == as_list h1 d /\
-         n == L.hd (as_list h0 d))) // TODO: Check if these postconditions actually hold
+         n == L.hd (as_list h0 d)))
 
 val dll_tail (d:pdll 'a) :
   HST.StackInline (pnode 'a)
@@ -86,8 +87,9 @@ val dll_tail (d:pdll 'a) :
     (ensures (fun h0 n h1 ->
          h0 == h1 /\
          dll_valid h1 d /\
+         // node_valid h1 n /\ TODO: Need to prove this
          as_list h0 d == as_list h1 d /\
-         n == snd (L.unsnoc (as_list h0 d)))) // TODO: Check if these postconditions actually hold
+         n == snd (L.unsnoc (as_list h0 d))))
 
 /// DoublyLinkedList operations on standard [list]s instead
 
