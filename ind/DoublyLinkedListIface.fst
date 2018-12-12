@@ -44,7 +44,7 @@ let dll a = DLL.dll a
 
 /// Abstract Validity Predicates
 
-let node_valid h n = squash (B.live h n) // XXX: why do I need to squash here?
+let node_valid h n = True /\ B.live h n // XXX: why do I need the True here?
 
 let dll_valid h d =
   B.live h d /\
@@ -67,6 +67,19 @@ let node_of v =
 
 let as_list h d =
   G.reveal (d@h).DLL.nodes
+
+/// Auxiliary useful lemma: If a dll is valid, then all nodes inside
+/// it are valid. Should auto-trigger at the right places.
+
+let _auto_dll_valid_implies_node_valid (h:HS.mem) (d:pdll 'a) (n:pnode 'a) :
+  Lemma
+    (requires (dll_valid h d /\ n `L.memP` as_list h d))
+    (ensures (node_valid h n))
+    [SMTPat (dll_valid h d);
+     SMTPat (node_valid h n);
+     SMTPat (n `L.memP` as_list h d)] =
+  let pos = L.index_of (as_list h d) n in
+  DLL.extract_nodelist_contained h (as_list h d) pos
 
 /// Creating an empty DoublyLinkedList, and quickly accessing the head
 /// and tail of a DoublyLinkedList
