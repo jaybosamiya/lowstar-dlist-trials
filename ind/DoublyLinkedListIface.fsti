@@ -185,3 +185,15 @@ val node_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:pnode 
                B.loc_disjoint (fp_node n) l))
     (ensures (node_valid h1 n))
     [SMTPat (node_valid h0 n); SMTPat (node_valid h1 n); SMTPat (B.loc_disjoint (fp_node n) l)]
+
+/// Properties of nodes inside and outside lists
+///
+/// These are lemmas that you shouldn't really need to refer to
+/// manually. If you do, it is (likely) a bug wrt the patterns, and
+/// you should ask someone who knows about how this library works to
+/// look at things.
+
+// TODO: Write about the following
+// + If node is in valid list, it is also valid
+// + If node is in list, fp is included
+// + If node is not in list, fp is disjoint
