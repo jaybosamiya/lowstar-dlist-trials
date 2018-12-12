@@ -1,0 +1,4 @@
+*.fsti linguist-language=fstar
+*.fst linguist-language=fstar
+*.checked linguist-generated=true
+*.hints linguist-generated=true
