@@ -105,11 +105,11 @@ let fp_dll d = B.loc_buffer d
 /// code. The rest of this interface lets you talk about these
 /// operations easily.
 
-let dll_insert_start d n =
+let dll_insert_at_head d n =
   admit (); // TODO: Need to prove a bunch of things to make this happen
   d *= DLL.dll_insert_at_head (!*d) n
 
-let dll_insert_end d n =
+let dll_insert_at_tail d n =
   admit (); // TODO: Need to prove a bunch of things to make this happen
   d *= DLL.dll_insert_at_tail (!*d) n
 
@@ -121,11 +121,11 @@ let dll_insert_after n' d n =
   admit (); // TODO: Need to prove a bunch of things to make this happen
   d *= DLL.dll_insert_after (!*d) n' n
 
-let dll_remove_start d =
+let dll_remove_head d =
   admit (); // TODO: Need to prove a bunch of things to make this happen
   d *= DLL.dll_remove_head (!*d)
 
-let dll_remove_end d =
+let dll_remove_tail d =
   admit (); // TODO: Need to prove a bunch of things to make this happen
   d *= DLL.dll_remove_tail (!*d)
 

@@ -95,10 +95,10 @@ val dll_tail (d:pdll 'a) :
 
 /// DoublyLinkedList operations on standard [list]s instead
 
-let l_insert_start (l:list 'a) (x:'a) : GTot (list 'a) =
+let l_insert_at_head (l:list 'a) (x:'a) : GTot (list 'a) =
   x :: l
 
-let l_insert_end (l:list 'a) (x:'a) : GTot (list 'a) =
+let l_insert_at_tail (l:list 'a) (x:'a) : GTot (list 'a) =
   L.snoc (l, x)
 
 let l_insert_before (x0:'a) (l:list 'a{x0 `L.memP` l}) (x:'a) : GTot (list 'a) =
@@ -110,11 +110,11 @@ let l_insert_after (x0:'a) (l:list 'a{x0 `L.memP` l}) (x:'a) : GTot (list 'a) =
   assert (x0 == x1);
   l1 `L.append` (x0 :: (x :: l2))
 
-let l_remove_start (l:list 'a{L.length l > 0}) : GTot (list 'a) =
+let l_remove_head (l:list 'a{L.length l > 0}) : GTot (list 'a) =
   match l with
   | _ :: l' -> l'
 
-let l_remove_end (l:list 'a{L.length l > 0}) : GTot (list 'a) =
+let l_remove_tail (l:list 'a{L.length l > 0}) : GTot (list 'a) =
   let l', _ = L.unsnoc l in
   l'
 
@@ -134,23 +134,23 @@ val fp_dll (d:pdll 'a) : GTot B.loc
 /// code. The rest of this interface lets you talk about these
 /// operations easily.
 
-val dll_insert_start (d:pdll 'a) (n:pnode 'a) :
+val dll_insert_at_head (d:pdll 'a) (n:pnode 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n))
     (ensures (fun h0 () h1 ->
          B.modifies (B.loc_union (fp_dll d) (fp_node n)) h0 h1 /\
          dll_valid h1 d /\ node_valid h1 n /\
          g_node_val h0 n == g_node_val h1 n /\
-         as_list h1 d == l_insert_start (as_list h0 d) n))
+         as_list h1 d == l_insert_at_head (as_list h0 d) n))
 
-val dll_insert_end (d:pdll 'a) (n:pnode 'a) :
+val dll_insert_at_tail (d:pdll 'a) (n:pnode 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n))
     (ensures (fun h0 () h1 ->
          B.modifies (B.loc_union (fp_dll d) (fp_node n)) h0 h1 /\
          dll_valid h1 d /\ node_valid h1 n /\
          g_node_val h0 n == g_node_val h1 n /\
-         as_list h1 d == l_insert_end (as_list h0 d) n))
+         as_list h1 d == l_insert_at_tail (as_list h0 d) n))
 
 val dll_insert_before (n':pnode 'a) (d:pdll 'a) (n:pnode 'a) :
   HST.Stack unit
@@ -172,21 +172,21 @@ val dll_insert_after (n':pnode 'a) (d:pdll 'a) (n:pnode 'a) :
          g_node_val h0 n' == g_node_val h1 n' /\
          as_list h1 d == l_insert_after n' (as_list h0 d) n))
 
-val dll_remove_start (d:pdll 'a) :
+val dll_remove_head (d:pdll 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll d) h0 h1 /\
          dll_valid h1 d /\
-         as_list h1 d == l_remove_start (as_list h0 d)))
+         as_list h1 d == l_remove_head (as_list h0 d)))
 
-val dll_remove_end (d:pdll 'a) :
+val dll_remove_tail (d:pdll 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll d) h0 h1 /\
          dll_valid h1 d /\
-         as_list h1 d == l_remove_end (as_list h0 d)))
+         as_list h1 d == l_remove_tail (as_list h0 d)))
 
 val dll_remove_mid (d:pdll 'a) (n:pnode 'a) :
   HST.Stack unit
