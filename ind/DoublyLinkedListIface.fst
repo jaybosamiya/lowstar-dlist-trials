@@ -106,8 +106,17 @@ let fp_dll d = B.loc_buffer d
 /// operations easily.
 
 let dll_insert_at_head d n =
-  admit (); // TODO: Need to prove a bunch of things to make this happen
-  d *= DLL.dll_insert_at_head (!*d) n
+  let h0 = HST.get () in
+  assume (DLL.node_not_in_dll h0 n (d@h0));
+  assume (HS.is_stack_region (HS.get_tip h0));
+  d *= DLL.dll_insert_at_head (!*d) n;
+  let h1 = HST.get () in
+  assume (B.modifies (B.loc_union (fp_dll d) (fp_node n)) h0 h1);
+  assume (dll_valid h1 d);
+  assume (g_node_val h0 n == g_node_val h1 n);
+  assume (as_list h1 d == l_insert_at_head (as_list h0 d) n);
+  assume (HST.equal_domains h0 h1);
+  ()
 
 let dll_insert_at_tail d n =
   admit (); // TODO: Need to prove a bunch of things to make this happen
