@@ -67,9 +67,9 @@ val dll_new (u:unit)  :
   HST.StackInline (pdll 'a)
     (requires (fun h0 -> True))
     (ensures (fun h0 d h1 ->
-         h0 == h1 /\
+         B.modifies B.loc_none h0 h1 /\
          dll_valid h1 d /\
-         as_list h1 d == [])) // TODO: Check if these postconditions actually hold
+         as_list h1 d == []))
 
 val dll_head (d:pdll 'a) :
   HST.StackInline (pnode 'a)

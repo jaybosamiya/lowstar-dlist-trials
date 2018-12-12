@@ -72,7 +72,7 @@ let as_list h d =
 /// and tail of a DoublyLinkedList
 
 let dll_new () =
-  admit () // TODO: Write this
+  B.alloca DLL.empty_list 1ul
 
 let dll_head d =
   admit () // TODO: Write this
