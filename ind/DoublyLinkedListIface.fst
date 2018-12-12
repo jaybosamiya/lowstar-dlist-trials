@@ -99,12 +99,7 @@ let dll_tail d =
 
 let fp_node n = B.loc_buffer n
 
-let fp_dll d =
-  admit () // TODO: Figure out how I am going to write about the
-           // footprint of a doubly linked list, because I need to
-           // include the elements as well, but I cannot dereference
-           // without having the heap, but if I take the heap, then
-           // validity maintenance is a headache
+let fp_dll d = B.loc_buffer d
 
 /// Stateful DoublyLinkedList operations
 ///
