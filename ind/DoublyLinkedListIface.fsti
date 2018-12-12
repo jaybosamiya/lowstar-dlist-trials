@@ -54,7 +54,9 @@ val node_val (n:pnode 'a) :
 val node_of (v:'a) :
   HST.StackInline (pnode 'a)
     (requires (fun h0 -> True))
-    (ensures (fun h0 n h1 -> h0 == h1 /\ v == g_node_val h0 n)) // TODO: Check if these postconditions actually hold
+    (ensures (fun h0 n h1 ->
+         B.modifies B.loc_none h0 h1 /\
+         v == g_node_val h1 n))
 
 /// Viewing ghostly state of a DoublyLinkedList as a list
 

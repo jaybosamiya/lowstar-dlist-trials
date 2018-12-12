@@ -59,8 +59,6 @@ let node_val n =
   (!*n).DLL.p
 
 let node_of v =
-  admit (); // TODO: Update the fsti. It doesn't allow an alloca
-            // otherwise due to h0 == h1 requirement.
   B.alloca (DLL.empty_node v) 1ul
 
 /// Viewing ghostly state of a list
