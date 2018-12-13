@@ -99,7 +99,9 @@ let dll_tail d =
   L.lemma_unsnoc_is_last (as_list h0 d);
   (!*d).DLL.ltail
 
-/// Abstract DoublyLinkedList Footprint
+/// Abstract node and list footprints
+
+let fp_node n = B.loc_buffer n
 
 let fp_dll h d = B.loc_buffer d // TODO: Fix this
 

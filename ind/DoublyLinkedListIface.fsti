@@ -116,7 +116,9 @@ let l_remove_mid (l:list 'a{L.length l > 0}) (x:'a {x `L.memP` l}) : GTot (list 
   assert (x == x0);
   l1 `L.append` l2
 
-/// Abstract DoublyLinkedList Footprint
+/// Abstract node and list footprints
+
+val fp_node (n:node 'a) : GTot B.loc
 
 val fp_dll (h:HS.mem) (d:dll 'a) : GTot B.loc
 
