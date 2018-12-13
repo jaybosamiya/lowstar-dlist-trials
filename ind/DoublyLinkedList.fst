@@ -1335,10 +1335,8 @@ let piece_remains_valid_f (#t:Type) (h0 h1:heap) (p:piece t) :
 /// Testing is a node is within a dll or not
 
 let node_not_in_dll (#t:Type) (h0:heap) (n:pointer (node t)) (d:dll t) =
-  let m1 = Mod.loc_union (Mod.loc_buffer n)
-      (Mod.loc_union (node_fp_b (n@h0)) (node_fp_f (n@h0))) in
-  let m2 = Mod.loc_union (dll_fp0 d) (Mod.loc_union
-                                        (dll_fp_f h0 d) (dll_fp_b h0 d)) in
+  let m1 = Mod.loc_buffer n in
+  let m2 = dll_fp0 d in
   Mod.loc_disjoint m1 m2
 
 /// Now for the actual ST operations that will be exposed :)
