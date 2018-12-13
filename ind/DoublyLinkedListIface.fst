@@ -38,9 +38,15 @@ unfold let (@) (a:B.pointer 't) (h0:HS.mem) = B.get h0 a 0
 unfold let (^@) (a:B.pointer_or_null 't{a =!= B.null}) (h0:HS.mem) = B.get h0 a 0
 
 /// Abstract types defined by this library
+///
+/// Note: Somehow confusingly, a node in the iface is a pointer to a
+/// real node, and a dll in the iface is a pointer to a real
+/// dll. Fortunately though, most users of the library will never even
+/// be looking inside the implementation, and thus hopefully it won't
+/// be confusing.
 
-let node a = DLL.node a
-let dll a = DLL.dll a
+let node a = B.pointer (DLL.node a)
+let dll a = B.pointer (DLL.dll a)
 
 /// Abstract Validity Predicates
 
@@ -69,7 +75,7 @@ let as_list h d =
 /// Auxiliary useful lemma: If a dll is valid, then all nodes inside
 /// it are valid. Should auto-trigger at the right places.
 
-let _auto_dll_valid_implies_node_valid (h:HS.mem) (d:pdll 'a) (n:pnode 'a) :
+let _auto_dll_valid_implies_node_valid (h:HS.mem) (d:dll 'a) (n:node 'a) :
   Lemma
     (requires (dll_valid h d /\ n `L.memP` as_list h d))
     (ensures (node_valid h n))

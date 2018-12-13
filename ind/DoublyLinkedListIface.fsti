@@ -29,30 +29,23 @@ val node (a:Type0) : Type0
 (** A doublylinkedlist of elements of type [a] *)
 val dll (a:Type0) : Type0
 
-/// Type aliases
-
-(** Pointer to node *)
-unfold let pnode (a:Type0) = B.pointer (node a)
-(** Pointer to doubly linked list *)
-unfold let pdll (a:Type0) = B.pointer (dll a)
-
 /// Abstract Validity Predicates
 
-val node_valid (h:HS.mem) (n:pnode 'a) : prop
+val node_valid (h:HS.mem) (n:node 'a) : prop
 
-val dll_valid (h:HS.mem) (d:pdll 'a) : prop
+val dll_valid (h:HS.mem) (d:dll 'a) : prop
 
 /// Getters and setters for [node]s
 
-val g_node_val (h:HS.mem) (n:pnode 'a) : GTot 'a
+val g_node_val (h:HS.mem) (n:node 'a) : GTot 'a
 
-val node_val (n:pnode 'a) :
+val node_val (n:node 'a) :
   HST.StackInline 'a
     (requires (fun h0 -> node_valid h0 n))
     (ensures (fun h0 v h1 -> h0 == h1 /\ v == g_node_val h0 n))
 
 val node_of (v:'a) :
-  HST.StackInline (pnode 'a)
+  HST.StackInline (node 'a)
     (requires (fun h0 -> True))
     (ensures (fun h0 n h1 ->
          B.modifies B.loc_none h0 h1 /\
@@ -60,21 +53,21 @@ val node_of (v:'a) :
 
 /// Viewing ghostly state of a DoublyLinkedList as a list
 
-val as_list (h:HS.mem) (d:pdll 'a) : GTot (list (pnode 'a))
+val as_list (h:HS.mem) (d:dll 'a) : GTot (list (node 'a))
 
 /// Creating an empty DoublyLinkedList, and quickly accessing the head
 /// and tail of a DoublyLinkedList
 
 val dll_new (u:unit)  :
-  HST.StackInline (pdll 'a)
+  HST.StackInline (dll 'a)
     (requires (fun h0 -> True))
     (ensures (fun h0 d h1 ->
          B.modifies B.loc_none h0 h1 /\
          dll_valid h1 d /\
          as_list h1 d == []))
 
-val dll_head (d:pdll 'a) :
-  HST.StackInline (pnode 'a)
+val dll_head (d:dll 'a) :
+  HST.StackInline (node 'a)
     (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
     (ensures (fun h0 n h1 ->
          B.modifies B.loc_none h0 h1 /\
@@ -83,8 +76,8 @@ val dll_head (d:pdll 'a) :
          as_list h0 d == as_list h1 d /\
          n == L.hd (as_list h0 d)))
 
-val dll_tail (d:pdll 'a) :
-  HST.StackInline (pnode 'a)
+val dll_tail (d:dll 'a) :
+  HST.StackInline (node 'a)
     (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
     (ensures (fun h0 n h1 ->
          h0 == h1 /\
@@ -125,8 +118,8 @@ let l_remove_mid (l:list 'a{L.length l > 0}) (x:'a {x `L.memP` l}) : GTot (list 
 
 /// Footprint of nodes and lists
 
-val fp_node (n:pnode 'a) : GTot B.loc
-val fp_dll (d:pdll 'a) : GTot B.loc
+val fp_node (n:node 'a) : GTot B.loc
+val fp_dll (d:dll 'a) : GTot B.loc
 
 /// Stateful DoublyLinkedList operations
 ///
@@ -134,7 +127,7 @@ val fp_dll (d:pdll 'a) : GTot B.loc
 /// code. The rest of this interface lets you talk about these
 /// operations easily.
 
-val dll_insert_at_head (d:pdll 'a) (n:pnode 'a) :
+val dll_insert_at_head (d:dll 'a) (n:node 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n))
     (ensures (fun h0 () h1 ->
@@ -143,7 +136,7 @@ val dll_insert_at_head (d:pdll 'a) (n:pnode 'a) :
          g_node_val h0 n == g_node_val h1 n /\
          as_list h1 d == l_insert_at_head (as_list h0 d) n))
 
-val dll_insert_at_tail (d:pdll 'a) (n:pnode 'a) :
+val dll_insert_at_tail (d:dll 'a) (n:node 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n))
     (ensures (fun h0 () h1 ->
@@ -152,7 +145,7 @@ val dll_insert_at_tail (d:pdll 'a) (n:pnode 'a) :
          g_node_val h0 n == g_node_val h1 n /\
          as_list h1 d == l_insert_at_tail (as_list h0 d) n))
 
-val dll_insert_before (n':pnode 'a) (d:pdll 'a) (n:pnode 'a) :
+val dll_insert_before (n':node 'a) (d:dll 'a) (n:node 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ n' `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
@@ -162,7 +155,7 @@ val dll_insert_before (n':pnode 'a) (d:pdll 'a) (n:pnode 'a) :
          g_node_val h0 n' == g_node_val h1 n' /\
          as_list h1 d == l_insert_before n' (as_list h0 d) n))
 
-val dll_insert_after (n':pnode 'a) (d:pdll 'a) (n:pnode 'a) :
+val dll_insert_after (n':node 'a) (d:dll 'a) (n:node 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ n' `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
@@ -172,7 +165,7 @@ val dll_insert_after (n':pnode 'a) (d:pdll 'a) (n:pnode 'a) :
          g_node_val h0 n' == g_node_val h1 n' /\
          as_list h1 d == l_insert_after n' (as_list h0 d) n))
 
-val dll_remove_head (d:pdll 'a) :
+val dll_remove_head (d:dll 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
     (ensures (fun h0 () h1 ->
@@ -180,7 +173,7 @@ val dll_remove_head (d:pdll 'a) :
          dll_valid h1 d /\
          as_list h1 d == l_remove_head (as_list h0 d)))
 
-val dll_remove_tail (d:pdll 'a) :
+val dll_remove_tail (d:dll 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
     (ensures (fun h0 () h1 ->
@@ -188,7 +181,7 @@ val dll_remove_tail (d:pdll 'a) :
          dll_valid h1 d /\
          as_list h1 d == l_remove_tail (as_list h0 d)))
 
-val dll_remove_mid (d:pdll 'a) (n:pnode 'a) :
+val dll_remove_mid (d:dll 'a) (n:node 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ n `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
@@ -203,7 +196,7 @@ val dll_remove_mid (d:pdll 'a) (n:pnode 'a) :
 /// you should ask someone who knows about how this library works to
 /// look at things.
 
-val dll_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:pdll 'a) :
+val dll_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:dll 'a) :
   Lemma
     (requires (dll_valid h0 d /\
                B.modifies l h0 h1 /\
@@ -211,7 +204,7 @@ val dll_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:pdll 'a
     (ensures (dll_valid h1 d))
     [SMTPat (dll_valid h0 d); SMTPat (dll_valid h1 d); SMTPat (B.loc_disjoint (fp_dll d) l)]
 
-val node_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:pnode 'a) :
+val node_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:node 'a) :
   Lemma
     (requires (node_valid h0 n /\
                B.modifies l h0 h1 /\
