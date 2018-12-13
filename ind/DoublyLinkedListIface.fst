@@ -99,11 +99,9 @@ let dll_tail d =
   L.lemma_unsnoc_is_last (as_list h0 d);
   (!*d).DLL.ltail
 
-/// Footprint of nodes and lists
+/// Abstract DoublyLinkedList Footprint
 
-let fp_node n = B.loc_buffer n
-
-let fp_dll d = B.loc_buffer d
+let fp_dll h d = B.loc_buffer d // TODO: Fix this
 
 /// Stateful DoublyLinkedList operations
 ///
@@ -117,7 +115,7 @@ let dll_insert_at_head d n =
   assume (HS.is_stack_region (HS.get_tip h0));
   d *= DLL.dll_insert_at_head (!*d) n;
   let h1 = HST.get () in
-  assume (B.modifies (B.loc_union (fp_dll d) (fp_node n)) h0 h1);
+  assume (B.modifies (fp_dll h0 d) h0 h1);
   assume (dll_valid h1 d);
   assume (g_node_val h0 n == g_node_val h1 n);
   assume (as_list h1 d == l_insert_at_head (as_list h0 d) n);
@@ -155,8 +153,8 @@ let dll_remove_mid d n =
 /// you should ask someone who knows about how this library works to
 /// look at things.
 
-let dll_remains_valid_upon_staying_unchanged h0 h1 l d =
-  admit () // TODO: Need to prove a bunch of things to make this happen
+// let dll_remains_valid_upon_staying_unchanged h0 h1 l d =
+//   admit () // TODO: Need to prove a bunch of things to make this happen
 
-let node_remains_valid_upon_staying_unchanged h0 h1 l n =
-  admit () // TODO: Need to prove a bunch of things to make this happen
+// let node_remains_valid_upon_staying_unchanged h0 h1 l n =
+//   admit () // TODO: Need to prove a bunch of things to make this happen

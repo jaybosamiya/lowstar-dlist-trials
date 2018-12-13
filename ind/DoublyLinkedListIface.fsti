@@ -116,10 +116,9 @@ let l_remove_mid (l:list 'a{L.length l > 0}) (x:'a {x `L.memP` l}) : GTot (list 
   assert (x == x0);
   l1 `L.append` l2
 
-/// Footprint of nodes and lists
+/// Abstract DoublyLinkedList Footprint
 
-val fp_node (n:node 'a) : GTot B.loc
-val fp_dll (d:dll 'a) : GTot B.loc
+val fp_dll (h:HS.mem) (d:dll 'a) : GTot B.loc
 
 /// Stateful DoublyLinkedList operations
 ///
@@ -127,11 +126,14 @@ val fp_dll (d:dll 'a) : GTot B.loc
 /// code. The rest of this interface lets you talk about these
 /// operations easily.
 
+// TODO: Connect [fp_dll h0 d] and [fp_dll h1 d] in these.
+// TODO: Check if the modifies clauses are correct.
+
 val dll_insert_at_head (d:dll 'a) (n:node 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n))
     (ensures (fun h0 () h1 ->
-         B.modifies (B.loc_union (fp_dll d) (fp_node n)) h0 h1 /\
+         B.modifies (fp_dll h0 d) h0 h1 /\
          dll_valid h1 d /\ node_valid h1 n /\
          g_node_val h0 n == g_node_val h1 n /\
          as_list h1 d == l_insert_at_head (as_list h0 d) n))
@@ -140,7 +142,7 @@ val dll_insert_at_tail (d:dll 'a) (n:node 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n))
     (ensures (fun h0 () h1 ->
-         B.modifies (B.loc_union (fp_dll d) (fp_node n)) h0 h1 /\
+         B.modifies (fp_dll h0 d) h0 h1 /\
          dll_valid h1 d /\ node_valid h1 n /\
          g_node_val h0 n == g_node_val h1 n /\
          as_list h1 d == l_insert_at_tail (as_list h0 d) n))
@@ -149,7 +151,7 @@ val dll_insert_before (n':node 'a) (d:dll 'a) (n:node 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ n' `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
-         B.modifies (B.loc_union (B.loc_union (fp_dll d) (fp_node n)) (fp_node n')) h0 h1 /\
+         B.modifies (fp_dll h0 d) h0 h1 /\
          dll_valid h1 d /\ node_valid h1 n /\
          g_node_val h0 n == g_node_val h1 n /\
          g_node_val h0 n' == g_node_val h1 n' /\
@@ -159,7 +161,7 @@ val dll_insert_after (n':node 'a) (d:dll 'a) (n:node 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ n' `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
-         B.modifies (B.loc_union (B.loc_union (fp_dll d) (fp_node n)) (fp_node n')) h0 h1 /\
+         B.modifies (fp_dll h0 d) h0 h1 /\
          dll_valid h1 d /\ node_valid h1 n /\
          g_node_val h0 n == g_node_val h1 n /\
          g_node_val h0 n' == g_node_val h1 n' /\
@@ -169,7 +171,7 @@ val dll_remove_head (d:dll 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
     (ensures (fun h0 () h1 ->
-         B.modifies (fp_dll d) h0 h1 /\
+         B.modifies (fp_dll h0 d) h0 h1 /\
          dll_valid h1 d /\
          as_list h1 d == l_remove_head (as_list h0 d)))
 
@@ -177,7 +179,7 @@ val dll_remove_tail (d:dll 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
     (ensures (fun h0 () h1 ->
-         B.modifies (fp_dll d) h0 h1 /\
+         B.modifies (fp_dll h0 d) h0 h1 /\
          dll_valid h1 d /\
          as_list h1 d == l_remove_tail (as_list h0 d)))
 
@@ -185,7 +187,7 @@ val dll_remove_mid (d:dll 'a) (n:node 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ n `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
-         B.modifies (fp_dll d) h0 h1 /\
+         B.modifies (fp_dll h0 d) h0 h1 /\
          dll_valid h1 d /\
          as_list h1 d == l_remove_mid (as_list h0 d) n))
 
@@ -196,21 +198,21 @@ val dll_remove_mid (d:dll 'a) (n:node 'a) :
 /// you should ask someone who knows about how this library works to
 /// look at things.
 
-val dll_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:dll 'a) :
-  Lemma
-    (requires (dll_valid h0 d /\
-               B.modifies l h0 h1 /\
-               B.loc_disjoint (fp_dll d) l))
-    (ensures (dll_valid h1 d))
-    [SMTPat (dll_valid h0 d); SMTPat (dll_valid h1 d); SMTPat (B.loc_disjoint (fp_dll d) l)]
+// val dll_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:dll 'a) :
+//   Lemma
+//     (requires (dll_valid h0 d /\
+//                B.modifies l h0 h1 /\
+//                B.loc_disjoint (fp_dll h0 d) l))
+//     (ensures (dll_valid h1 d))
+//     [SMTPat (dll_valid h0 d); SMTPat (dll_valid h1 d); SMTPat (B.loc_disjoint (fp_dll h0 d) l)]
 
-val node_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:node 'a) :
-  Lemma
-    (requires (node_valid h0 n /\
-               B.modifies l h0 h1 /\
-               B.loc_disjoint (fp_node n) l))
-    (ensures (node_valid h1 n))
-    [SMTPat (node_valid h0 n); SMTPat (node_valid h1 n); SMTPat (B.loc_disjoint (fp_node n) l)]
+// val node_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:node 'a) :
+//   Lemma
+//     (requires (node_valid h0 n /\
+//                B.modifies l h0 h1 /\
+//                B.loc_disjoint (fp_node h0 n) l))
+//     (ensures (node_valid h1 h0 n))
+//     [SMTPat (node_valid h0 n); SMTPat (node_valid h1 n); SMTPat (B.loc_disjoint (fp_node n) l)]
 
 /// Properties of nodes inside and outside lists
 ///
