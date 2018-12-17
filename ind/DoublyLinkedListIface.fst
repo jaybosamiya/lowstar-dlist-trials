@@ -99,6 +99,24 @@ let dll_tail d =
   L.lemma_unsnoc_is_last (as_list h0 d);
   (!*d).DLL.ltail
 
+/// Moving forwards or backwards in a list
+
+let next_node d n =
+  let h0 = HST.get () in
+  assume (node_valid h0 n);
+  let n' = (!*n).DLL.flink in
+  assume (n' =!= B.null);
+  assume (n' == L.index (as_list h0 d) (L.index_of (as_list h0 d) n + 1));
+  n'
+
+let prev_node d n =
+  let h0 = HST.get () in
+  assume (node_valid h0 n);
+  let n' = (!*n).DLL.blink in
+  assume (n' =!= B.null);
+  assume (n' == L.index (as_list h0 d) (L.index_of (as_list h0 d) n - 1));
+  n'
+
 /// Abstract node and list footprints
 
 let fp_node n = B.loc_buffer n

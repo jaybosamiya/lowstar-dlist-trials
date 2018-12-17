@@ -86,6 +86,32 @@ val dll_tail (d:dll 'a) :
          as_list h0 d == as_list h1 d /\
          n == snd (L.unsnoc (as_list h0 d))))
 
+/// Moving forwards or backwards in a list
+
+val next_node (d:dll 'a) (n:node 'a) :
+  HST.StackInline (node 'a)
+    (requires (fun h0 ->
+         dll_valid h0 d /\
+         n `L.memP` as_list h0 d /\
+         L.index_of (as_list h0 d) n < L.length (as_list h0 d) - 1))
+    (ensures (fun h0 n' h1 ->
+         h0 == h1 /\
+         dll_valid h1 d /\
+         as_list h0 d == as_list h1 d /\
+         n' == L.index (as_list h0 d) (L.index_of (as_list h0 d) n + 1)))
+
+val prev_node (d:dll 'a) (n:node 'a) :
+  HST.StackInline (node 'a)
+    (requires (fun h0 ->
+         dll_valid h0 d /\
+         n `L.memP` as_list h0 d /\
+         L.index_of (as_list h0 d) n > 0))
+    (ensures (fun h0 n' h1 ->
+         h0 == h1 /\
+         dll_valid h1 d /\
+         as_list h0 d == as_list h1 d /\
+         n' == L.index (as_list h0 d) (L.index_of (as_list h0 d) n - 1)))
+
 /// DoublyLinkedList operations on standard [list]s instead
 
 let l_insert_at_head (l:list 'a) (x:'a) : GTot (list 'a) =
