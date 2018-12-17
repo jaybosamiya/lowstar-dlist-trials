@@ -72,19 +72,6 @@ let node_of v =
 let as_list h d =
   G.reveal (d@h).DLL.nodes
 
-/// Auxiliary useful lemma: If a dll is valid, then all nodes inside
-/// it are valid. Should auto-trigger at the right places.
-
-let _auto_dll_valid_implies_node_valid (h:HS.mem) (d:dll 'a) (n:node 'a) :
-  Lemma
-    (requires (dll_valid h d /\ n `L.memP` as_list h d))
-    (ensures (node_valid h n))
-    [SMTPat (dll_valid h d);
-     SMTPat (node_valid h n);
-     SMTPat (n `L.memP` as_list h d)] =
-  let pos = L.index_of (as_list h d) n in
-  DLL.extract_nodelist_contained h (as_list h d) pos
-
 /// Creating an empty DoublyLinkedList, and quickly accessing the head
 /// and tail of a DoublyLinkedList
 
@@ -180,3 +167,14 @@ let dll_remove_mid d n =
 
 // let node_remains_valid_upon_staying_unchanged h0 h1 l n =
 //   admit () // TODO: Need to prove a bunch of things to make this happen
+
+/// Properties of nodes inside and outside lists
+///
+/// These are lemmas that you shouldn't really need to refer to
+/// manually. If you do, it is (likely) a bug wrt the patterns, and
+/// you should ask someone who knows about how this library works to
+/// look at things.
+
+let _auto_node_in_valid_dll_is_valid h d n =
+  let pos = L.index_of (as_list h d) n in
+  DLL.extract_nodelist_contained h (as_list h d) pos
