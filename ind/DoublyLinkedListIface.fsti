@@ -254,11 +254,6 @@ val dll_remove_mid (d:dll 'a) (n:node 'a) :
 /// you should ask someone who knows about how this library works to
 /// look at things.
 
-// TODO: Write about the following
-// + If node is in valid list, it is also valid
-// + If node is in list, fp is included
-// + If node is not in list, fp is disjoint
-
 val _auto_node_in_valid_dll_is_valid (h:HS.mem) (d:dll 'a) (n:node 'a) :
   Lemma
     (requires (dll_valid h d /\ n `L.memP` as_list h d))
@@ -266,3 +261,7 @@ val _auto_node_in_valid_dll_is_valid (h:HS.mem) (d:dll 'a) (n:node 'a) :
     [SMTPat (dll_valid h d);
      SMTPat (n `L.memP` as_list h d);
      SMTPat (node_valid h n)]
+
+// TODO: Write about the following
+// + If node is in list, fp is included
+// + If node is not in list, fp is disjoint
