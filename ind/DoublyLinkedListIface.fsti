@@ -55,6 +55,7 @@ val node_of (v:'a) :
     (requires (fun h0 -> True))
     (ensures (fun h0 n h1 ->
          B.modifies B.loc_none h0 h1 /\
+         B.fresh_loc (fp_node n) h0 h1 /\
          node_valid h1 n /\
          v == g_node_val h1 n))
 
@@ -70,6 +71,7 @@ val dll_new (u:unit)  :
     (requires (fun h0 -> True))
     (ensures (fun h0 d h1 ->
          B.modifies B.loc_none h0 h1 /\
+         B.fresh_loc (fp_dll h1 d) h0 h1 /\
          dll_valid h1 d /\
          as_list h1 d == []))
 
