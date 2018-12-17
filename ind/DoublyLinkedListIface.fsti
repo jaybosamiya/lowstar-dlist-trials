@@ -128,14 +128,14 @@ val fp_dll (h:HS.mem) (d:dll 'a) : GTot B.loc
 /// code. The rest of this interface lets you talk about these
 /// operations easily.
 
-// TODO: Connect [fp_dll h0 d] and [fp_dll h1 d] in these.
 // TODO: Check if the modifies clauses are correct.
 
 val dll_insert_at_head (d:dll 'a) (n:node 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n))
     (ensures (fun h0 () h1 ->
-         B.modifies (fp_dll h0 d) h0 h1 /\
+         B.modifies (fp_dll h1 d) h0 h1 /\
+         fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
          g_node_val h0 n == g_node_val h1 n /\
          as_list h1 d == l_insert_at_head (as_list h0 d) n))
@@ -144,7 +144,8 @@ val dll_insert_at_tail (d:dll 'a) (n:node 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n))
     (ensures (fun h0 () h1 ->
-         B.modifies (fp_dll h0 d) h0 h1 /\
+         B.modifies (fp_dll h1 d) h0 h1 /\
+         fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
          g_node_val h0 n == g_node_val h1 n /\
          as_list h1 d == l_insert_at_tail (as_list h0 d) n))
@@ -153,7 +154,8 @@ val dll_insert_before (n':node 'a) (d:dll 'a) (n:node 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ n' `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
-         B.modifies (fp_dll h0 d) h0 h1 /\
+         B.modifies (fp_dll h1 d) h0 h1 /\
+         fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
          g_node_val h0 n == g_node_val h1 n /\
          g_node_val h0 n' == g_node_val h1 n' /\
@@ -163,11 +165,15 @@ val dll_insert_after (n':node 'a) (d:dll 'a) (n:node 'a) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ n' `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
-         B.modifies (fp_dll h0 d) h0 h1 /\
+         B.modifies (fp_dll h1 d) h0 h1 /\
+         fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
          g_node_val h0 n == g_node_val h1 n /\
          g_node_val h0 n' == g_node_val h1 n' /\
          as_list h1 d == l_insert_after n' (as_list h0 d) n))
+
+// TODO: Connect [fp_dll h0 d] and [fp_dll h1 d] in these.
+// TODO: Check if the modifies clauses are correct.
 
 val dll_remove_head (d:dll 'a) :
   HST.Stack unit

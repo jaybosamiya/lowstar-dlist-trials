@@ -103,7 +103,8 @@ let dll_tail d =
 
 let fp_node n = B.loc_buffer n
 
-let fp_dll h d = B.loc_buffer d // TODO: Fix this
+let fp_dll h d =
+  B.loc_union (B.loc_buffer d) (DLL.dll_fp0 (d@h)) // TODO: Fix this
 
 /// Stateful DoublyLinkedList operations
 ///
@@ -117,7 +118,8 @@ let dll_insert_at_head d n =
   assume (HS.is_stack_region (HS.get_tip h0));
   d *= DLL.dll_insert_at_head (!*d) n;
   let h1 = HST.get () in
-  assume (B.modifies (fp_dll h0 d) h0 h1);
+  assume (B.modifies (fp_dll h1 d) h0 h1);
+  assume (fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n));
   assume (dll_valid h1 d);
   assume (g_node_val h0 n == g_node_val h1 n);
   assume (as_list h1 d == l_insert_at_head (as_list h0 d) n);
