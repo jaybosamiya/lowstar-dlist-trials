@@ -126,7 +126,6 @@ let prev_node d n =
 
 let dll_insert_at_head d n =
   let h0 = HST.get () in
-  assume (DLL.node_not_in_dll h0 n (d@h0));
   assume (HS.is_stack_region (HS.get_tip h0));
   d *= DLL.dll_insert_at_head (!*d) n;
   let h1 = HST.get () in
