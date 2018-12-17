@@ -163,7 +163,7 @@ let l_remove_mid (l:list 'a{L.length l > 0}) (x:'a {x `L.memP` l}) : GTot (list 
 
 val dll_insert_at_head (d:dll 'a) (n:node 'a) :
   HST.Stack unit
-    (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n))
+    (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ (fp_node n `B.loc_disjoint` fp_dll h0 d)))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
@@ -173,7 +173,7 @@ val dll_insert_at_head (d:dll 'a) (n:node 'a) :
 
 val dll_insert_at_tail (d:dll 'a) (n:node 'a) :
   HST.Stack unit
-    (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n))
+    (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ (fp_node n `B.loc_disjoint` fp_dll h0 d)))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
@@ -183,7 +183,7 @@ val dll_insert_at_tail (d:dll 'a) (n:node 'a) :
 
 val dll_insert_before (n':node 'a) (d:dll 'a) (n:node 'a) :
   HST.Stack unit
-    (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ n' `L.memP` as_list h0 d))
+    (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ (fp_node n `B.loc_disjoint` fp_dll h0 d) /\ n' `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
@@ -194,7 +194,7 @@ val dll_insert_before (n':node 'a) (d:dll 'a) (n:node 'a) :
 
 val dll_insert_after (n':node 'a) (d:dll 'a) (n:node 'a) :
   HST.Stack unit
-    (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ n' `L.memP` as_list h0 d))
+    (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ (fp_node n `B.loc_disjoint` fp_dll h0 d) /\ n' `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
