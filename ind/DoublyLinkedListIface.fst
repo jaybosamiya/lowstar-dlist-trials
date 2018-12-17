@@ -93,7 +93,7 @@ let dll_tail d =
   L.lemma_unsnoc_is_last (as_list h0 d);
   (!*d).DLL.ltail
 
-/// Useful auxiliary lemma
+/// Useful auxiliary lemmas
 
 (** If a node is inside a valid list, then the node is valid. *)
 val lemma_node_in_valid_dll_is_valid (h:HS.mem) (d:dll 'a) (n:node 'a) :
@@ -103,6 +103,19 @@ val lemma_node_in_valid_dll_is_valid (h:HS.mem) (d:dll 'a) (n:node 'a) :
 let lemma_node_in_valid_dll_is_valid h d n =
   let pos = L.index_of (as_list h d) n in
   DLL.extract_nodelist_contained h (as_list h d) pos
+
+(** If a new frame is pushed, then a dll remains valid and unchanged. *)
+val _auto_dll_valid_and_unchanged_through_push (h0 h1:HS.mem) (d:dll 'a) :
+  Lemma
+    (requires (dll_valid h0 d /\ HS.fresh_frame h0 h1))
+    (ensures (dll_valid h1 d /\ d@h0 == d@h1))
+    [SMTPat (dll_valid h0 d);
+     SMTPat (HS.fresh_frame h0 h1)]
+let _auto_dll_valid_and_unchanged_through_push h0 h1 d =
+  B.fresh_frame_modifies h0 h1;
+  assume (dll_valid h1 d) // TODO: Prove this
+
+// TODO: Figure out for pop
 
 /// Moving forwards or backwards in a list
 
