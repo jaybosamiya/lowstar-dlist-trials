@@ -108,19 +108,15 @@ let lemma_node_in_valid_dll_is_valid h d n =
 
 let next_node d n =
   let h0 = HST.get () in
-  assume (node_valid h0 n);
-  let n' = (!*n).DLL.flink in
-  assume (n' =!= B.null);
-  assume (n' == L.index (as_list h0 d) (L.index_of (as_list h0 d) n + 1));
-  n'
+  lemma_node_in_valid_dll_is_valid h0 d n;
+  DLL.extract_nodelist_conn h0 (as_list h0 d) (L.index_of (as_list h0 d) n);
+  (!*n).DLL.flink
 
 let prev_node d n =
   let h0 = HST.get () in
-  assume (node_valid h0 n);
-  let n' = (!*n).DLL.blink in
-  assume (n' =!= B.null);
-  assume (n' == L.index (as_list h0 d) (L.index_of (as_list h0 d) n - 1));
-  n'
+  lemma_node_in_valid_dll_is_valid h0 d n;
+  DLL.extract_nodelist_conn h0 (as_list h0 d) (L.index_of (as_list h0 d) n - 1);
+  (!*n).DLL.blink
 
 /// Stateful DoublyLinkedList operations
 ///
