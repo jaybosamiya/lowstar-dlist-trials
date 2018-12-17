@@ -35,6 +35,12 @@ val node_valid (h:HS.mem) (n:node 'a) : prop
 
 val dll_valid (h:HS.mem) (d:dll 'a) : prop
 
+/// Abstract node and list footprints
+
+val fp_node (n:node 'a) : GTot B.loc
+
+val fp_dll (h:HS.mem) (d:dll 'a) : GTot B.loc
+
 /// Getters and setters for [node]s
 
 val g_node_val (h:HS.mem) (n:node 'a) : GTot 'a
@@ -144,12 +150,6 @@ let l_remove_mid (l:list 'a{L.length l > 0}) (x:'a {x `L.memP` l}) : GTot (list 
   let l1, x0 :: l2 = L.lemma_split_using l x; L.split_using l x in
   assert (x == x0);
   l1 `L.append` l2
-
-/// Abstract node and list footprints
-
-val fp_node (n:node 'a) : GTot B.loc
-
-val fp_dll (h:HS.mem) (d:dll 'a) : GTot B.loc
 
 /// Stateful DoublyLinkedList operations
 ///

@@ -56,6 +56,13 @@ let dll_valid h d =
   B.live h d /\
   DLL.dll_valid h (d@h)
 
+/// Abstract node and list footprints
+
+let fp_node n = B.loc_buffer n
+
+let fp_dll h d =
+  B.loc_union (B.loc_buffer d) (DLL.dll_fp0 (d@h)) // TODO: Fix this
+
 /// Getters and setters for [node]s
 
 let g_node_val h n =
@@ -103,13 +110,6 @@ let prev_node d n =
   assume (n' =!= B.null);
   assume (n' == L.index (as_list h0 d) (L.index_of (as_list h0 d) n - 1));
   n'
-
-/// Abstract node and list footprints
-
-let fp_node n = B.loc_buffer n
-
-let fp_dll h d =
-  B.loc_union (B.loc_buffer d) (DLL.dll_fp0 (d@h)) // TODO: Fix this
 
 /// Stateful DoublyLinkedList operations
 ///
