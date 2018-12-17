@@ -175,6 +175,14 @@ let dll_remove_mid d n =
 /// you should ask someone who knows about how this library works to
 /// look at things.
 
+val _auto_node_in_valid_dll_is_valid (h:HS.mem) (d:dll 'a) (n:node 'a) :
+  Lemma
+    (requires (dll_valid h d /\ n `L.memP` as_list h d))
+    (ensures (node_valid h n))
+    [SMTPat (dll_valid h d);
+     SMTPat (n `L.memP` as_list h d);
+     SMTPat (node_valid h n)]
+  // TODO: Figure out if I should really be keeping this here
 let _auto_node_in_valid_dll_is_valid h d n =
   let pos = L.index_of (as_list h d) n in
   DLL.extract_nodelist_contained h (as_list h d) pos

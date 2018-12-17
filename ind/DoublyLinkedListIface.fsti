@@ -73,6 +73,7 @@ val dll_head (d:dll 'a) :
     (ensures (fun h0 n h1 ->
          B.modifies B.loc_none h0 h1 /\
          dll_valid h1 d /\
+         node_valid h1 n /\
          as_list h0 d == as_list h1 d /\
          n == L.hd (as_list h0 d)))
 
@@ -82,6 +83,7 @@ val dll_tail (d:dll 'a) :
     (ensures (fun h0 n h1 ->
          h0 == h1 /\
          dll_valid h1 d /\
+         node_valid h1 n /\
          as_list h0 d == as_list h1 d /\
          n == snd (L.unsnoc (as_list h0 d))))
 
@@ -96,6 +98,7 @@ val next_node (d:dll 'a) (n:node 'a) :
     (ensures (fun h0 n' h1 ->
          h0 == h1 /\
          dll_valid h1 d /\
+         node_valid h1 n /\
          as_list h0 d == as_list h1 d /\
          n' == L.index (as_list h0 d) (L.index_of (as_list h0 d) n + 1)))
 
@@ -108,6 +111,7 @@ val prev_node (d:dll 'a) (n:node 'a) :
     (ensures (fun h0 n' h1 ->
          h0 == h1 /\
          dll_valid h1 d /\
+         node_valid h1 n /\
          as_list h0 d == as_list h1 d /\
          n' == L.index (as_list h0 d) (L.index_of (as_list h0 d) n - 1)))
 
@@ -161,7 +165,7 @@ val dll_insert_at_head (d:dll 'a) (n:node 'a) :
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
-         dll_valid h1 d /\
+         dll_valid h1 d /\ node_valid h1 n /\
          g_node_val h0 n == g_node_val h1 n /\
          as_list h1 d == l_insert_at_head (as_list h0 d) n))
 
@@ -171,7 +175,7 @@ val dll_insert_at_tail (d:dll 'a) (n:node 'a) :
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
-         dll_valid h1 d /\
+         dll_valid h1 d /\ node_valid h1 n /\
          g_node_val h0 n == g_node_val h1 n /\
          as_list h1 d == l_insert_at_tail (as_list h0 d) n))
 
@@ -181,7 +185,7 @@ val dll_insert_before (n':node 'a) (d:dll 'a) (n:node 'a) :
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
-         dll_valid h1 d /\
+         dll_valid h1 d /\ node_valid h1 n /\
          g_node_val h0 n == g_node_val h1 n /\
          g_node_val h0 n' == g_node_val h1 n' /\
          as_list h1 d == l_insert_before n' (as_list h0 d) n))
@@ -192,7 +196,7 @@ val dll_insert_after (n':node 'a) (d:dll 'a) (n:node 'a) :
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
-         dll_valid h1 d /\
+         dll_valid h1 d /\ node_valid h1 n /\
          g_node_val h0 n == g_node_val h1 n /\
          g_node_val h0 n' == g_node_val h1 n' /\
          as_list h1 d == l_insert_after n' (as_list h0 d) n))
@@ -253,14 +257,6 @@ val dll_remove_mid (d:dll 'a) (n:node 'a) :
 /// manually. If you do, it is (likely) a bug wrt the patterns, and
 /// you should ask someone who knows about how this library works to
 /// look at things.
-
-val _auto_node_in_valid_dll_is_valid (h:HS.mem) (d:dll 'a) (n:node 'a) :
-  Lemma
-    (requires (dll_valid h d /\ n `L.memP` as_list h d))
-    (ensures (node_valid h n))
-    [SMTPat (dll_valid h d);
-     SMTPat (n `L.memP` as_list h d);
-     SMTPat (node_valid h n)]
 
 // TODO: Write about the following
 // + If node is in list, fp is included
