@@ -125,8 +125,8 @@ let prev_node d n =
 /// operations easily.
 
 let dll_insert_at_head d n =
+  HST.push_frame ();
   let h0 = HST.get () in
-  assume (HS.is_stack_region (HS.get_tip h0));
   d *= DLL.dll_insert_at_head (!*d) n;
   let h1 = HST.get () in
   assume (B.modifies (fp_dll h1 d) h0 h1);
@@ -135,7 +135,8 @@ let dll_insert_at_head d n =
   assume (g_node_val h0 n == g_node_val h1 n);
   assume (as_list h1 d == l_insert_at_head (as_list h0 d) n);
   assume (HST.equal_domains h0 h1);
-  ()
+  HST.pop_frame ();
+  admit ()
 
 let dll_insert_at_tail d n =
   admit (); // TODO: Need to prove a bunch of things to make this happen
