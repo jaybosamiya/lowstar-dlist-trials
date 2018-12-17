@@ -49,6 +49,7 @@ val node_of (v:'a) :
     (requires (fun h0 -> True))
     (ensures (fun h0 n h1 ->
          B.modifies B.loc_none h0 h1 /\
+         node_valid h1 n /\
          v == g_node_val h1 n))
 
 /// Viewing ghostly state of a DoublyLinkedList as a list
@@ -72,7 +73,6 @@ val dll_head (d:dll 'a) :
     (ensures (fun h0 n h1 ->
          B.modifies B.loc_none h0 h1 /\
          dll_valid h1 d /\
-         node_valid h1 n /\
          as_list h0 d == as_list h1 d /\
          n == L.hd (as_list h0 d)))
 
@@ -82,7 +82,6 @@ val dll_tail (d:dll 'a) :
     (ensures (fun h0 n h1 ->
          h0 == h1 /\
          dll_valid h1 d /\
-         node_valid h1 n /\
          as_list h0 d == as_list h1 d /\
          n == snd (L.unsnoc (as_list h0 d))))
 
@@ -162,7 +161,7 @@ val dll_insert_at_head (d:dll 'a) (n:node 'a) :
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
-         dll_valid h1 d /\ node_valid h1 n /\
+         dll_valid h1 d /\
          g_node_val h0 n == g_node_val h1 n /\
          as_list h1 d == l_insert_at_head (as_list h0 d) n))
 
@@ -172,7 +171,7 @@ val dll_insert_at_tail (d:dll 'a) (n:node 'a) :
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
-         dll_valid h1 d /\ node_valid h1 n /\
+         dll_valid h1 d /\
          g_node_val h0 n == g_node_val h1 n /\
          as_list h1 d == l_insert_at_tail (as_list h0 d) n))
 
@@ -182,7 +181,7 @@ val dll_insert_before (n':node 'a) (d:dll 'a) (n:node 'a) :
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
-         dll_valid h1 d /\ node_valid h1 n /\
+         dll_valid h1 d /\
          g_node_val h0 n == g_node_val h1 n /\
          g_node_val h0 n' == g_node_val h1 n' /\
          as_list h1 d == l_insert_before n' (as_list h0 d) n))
@@ -193,7 +192,7 @@ val dll_insert_after (n':node 'a) (d:dll 'a) (n:node 'a) :
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
-         dll_valid h1 d /\ node_valid h1 n /\
+         dll_valid h1 d /\
          g_node_val h0 n == g_node_val h1 n /\
          g_node_val h0 n' == g_node_val h1 n' /\
          as_list h1 d == l_insert_after n' (as_list h0 d) n))
