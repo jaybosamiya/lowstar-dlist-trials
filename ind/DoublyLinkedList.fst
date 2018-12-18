@@ -1143,7 +1143,8 @@ let singleton_dll (#t:Type) (n:pointer (node t)) :
         (h0 `contains` n)))
     (ensures (fun h0 d h1 ->
          Mod.modifies (Mod.loc_buffer n) h0 h1 /\
-         dll_valid h1 d)) =
+         dll_valid h1 d /\
+         reveal d.nodes == [n])) =
   !=|> n;
   !<|= n;
   tot_node_to_dll (ST.get ()) n
