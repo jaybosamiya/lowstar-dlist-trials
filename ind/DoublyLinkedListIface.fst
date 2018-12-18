@@ -54,7 +54,8 @@ let node_valid h n = True /\ B.live h n // XXX: why do I need the True here?
 
 let dll_valid h d =
   B.live h d /\
-  DLL.dll_valid h (d@h)
+  DLL.dll_valid h (d@h) /\
+  B.loc_buffer d `B.loc_disjoint` DLL.dll_fp0 (d@h)
 
 /// Abstract node and list footprints
 
@@ -248,7 +249,6 @@ let dll_insert_at_head d n =
   let h0 = HST.get () in
   d *= DLL.dll_insert_at_head (!*d) n;
   let h1 = HST.get () in
-  assume (B.loc_buffer d `B.loc_disjoint` DLL.dll_fp0 (d@h0));
   assume (fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n));
   assume (g_node_val h0 n == g_node_val h1 n);
   assume (as_list h1 d == l_insert_at_head (as_list h0 d) n);
