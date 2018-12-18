@@ -167,7 +167,9 @@ val _auto_dll_modified_with_push_pop (h0 h1:HS.mem) (d:dll 'a) (h2 h3:HS.mem) :
   Lemma
     (requires (dll_valid h0 d /\
                HS.fresh_frame h0 h1 /\
-               B.modifies (B.loc_union (fp_dll h1 d) (fp_dll h2 d)) h1 h2 /\
+               B.modifies (B.loc_union (fp_dll h0 d) (fp_dll h3 d)) h1 h2 /\
+               B.loc_disjoint (fp_dll h0 d) (B.loc_region_only false (HS.get_tip h2)) /\
+               B.loc_disjoint (fp_dll h3 d) (B.loc_region_only false (HS.get_tip h2)) /\
                HS.get_tip h1 == HS.get_tip h2 /\
                dll_valid h2 d /\
                HS.popped h2 h3))
@@ -179,9 +181,17 @@ val _auto_dll_modified_with_push_pop (h0 h1:HS.mem) (d:dll 'a) (h2 h3:HS.mem) :
 let _auto_dll_modified_with_push_pop h0 h1 d h2 h3 =
   let loc = B.loc_region_only false (HS.get_tip h2) in
   B.popped_modifies h2 h3;
-  assume (B.loc_disjoint loc (fp_dll h2 d));
   _lemma_nodelist_contained_in_unmodified_mem h2 h3 loc (as_list h3 d);
   _lemma_nodelist_conn_in_unmodified_mem h2 h3 loc (as_list h3 d)
+
+val _auto_dll_fp_disjoint_from_push (h0 h1:HS.mem) (d:dll 'a) :
+  Lemma
+    (requires (dll_valid h0 d /\ HS.fresh_frame h0 h1))
+    (ensures (B.loc_disjoint (fp_dll h0 d) (B.loc_region_only false (HS.get_tip h1))))
+    [SMTPat (dll_valid h0 d);
+     SMTPat (HS.fresh_frame h0 h1)]
+let _auto_dll_fp_disjoint_from_push h0 h1 d =
+  admit () // TODO: Prove
 
 /// Moving forwards or backwards in a list
 
