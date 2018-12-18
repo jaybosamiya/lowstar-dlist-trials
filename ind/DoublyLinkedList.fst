@@ -1340,6 +1340,15 @@ let node_not_in_dll (#t:Type) (h0:heap) (n:pointer (node t)) (d:dll t) =
   let m2 = dll_fp0 d in
   Mod.loc_disjoint m1 m2
 
+/// An empty dll has no nodes
+
+let _auto_empty_dll (#t:Type) (h0:heap) (d:dll t) :
+  Lemma
+    (requires (dll_valid h0 d /\ (d.lhead == null \/ d.ltail == null)))
+    (ensures (reveal d.nodes == []))
+    [SMTPat (dll_valid h0 d);
+     SMTPat (reveal d.nodes)] = ()
+
 /// Now for the actual ST operations that will be exposed :)
 
 #set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 0"
