@@ -161,6 +161,28 @@ let _auto_dll_valid_and_unchanged_through_pop h0 h1 d =
   _lemma_nodelist_contained_in_unmodified_mem h0 h1 loc (as_list h1 d);
   _lemma_nodelist_conn_in_unmodified_mem h0 h1 loc (as_list h1 d)
 
+(** If stack discipline is followed, then a valid modification inside
+    a push-pop pair is also valid outside of it. *)
+val _auto_dll_modified_with_push_pop (h0 h1:HS.mem) (d:dll 'a) (h2 h3:HS.mem) :
+  Lemma
+    (requires (dll_valid h0 d /\
+               HS.fresh_frame h0 h1 /\
+               B.modifies (B.loc_union (fp_dll h1 d) (fp_dll h2 d)) h1 h2 /\
+               HS.get_tip h1 == HS.get_tip h2 /\
+               dll_valid h2 d /\
+               HS.popped h2 h3))
+    (ensures (dll_valid h3 d))
+    [SMTPat (HS.fresh_frame h0 h1);
+     SMTPat (HS.popped h2 h3);
+     SMTPat (dll_valid h3 d)]
+
+let _auto_dll_modified_with_push_pop h0 h1 d h2 h3 =
+  assert (DLL.dll_valid h2 (d@h2));
+  assert (d@h2 == d@h3);
+  assert (DLL.dll_valid h2 (d@h3));
+  assume (DLL.dll_valid h3 (d@h3));
+  ()
+
 /// Moving forwards or backwards in a list
 
 let next_node d n =
@@ -181,6 +203,8 @@ let prev_node d n =
 /// code. The rest of this interface lets you talk about these
 /// operations easily.
 
+#set-options "--z3rlimit 20 --max_fuel 2 --max_ifuel 1"
+
 let dll_insert_at_head d n =
   HST.push_frame ();
   let h0 = HST.get () in
@@ -191,8 +215,9 @@ let dll_insert_at_head d n =
   assume (dll_valid h1 d);
   assume (g_node_val h0 n == g_node_val h1 n);
   assume (as_list h1 d == l_insert_at_head (as_list h0 d) n);
-  HST.pop_frame ();
-  admit ()
+  HST.pop_frame ()
+
+#reset-options
 
 let dll_insert_at_tail d n =
   admit (); // TODO: Need to prove a bunch of things to make this happen
