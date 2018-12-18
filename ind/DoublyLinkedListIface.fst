@@ -104,6 +104,33 @@ let lemma_node_in_valid_dll_is_valid h d n =
   let pos = L.index_of (as_list h d) n in
   DLL.extract_nodelist_contained h (as_list h d) pos
 
+(** Aux lemma *)
+val _lemma_nodelist_contained_in_unmodified_mem (h0 h1:HS.mem) (nl:list (node 'a)) :
+  Lemma
+    (requires (B.modifies B.loc_none h0 h1 /\
+              (DLL.nodelist_contained0 h0 nl)))
+    (ensures (DLL.nodelist_contained0 h1 nl))
+let rec _lemma_nodelist_contained_in_unmodified_mem h0 h1 nl =
+  match nl with
+  | [] -> ()
+  | n :: ns ->
+    _lemma_nodelist_contained_in_unmodified_mem h0 h1 ns
+
+(** Aux lemma *)
+val _lemma_nodelist_conn_in_unmodified_mem (h0 h1:HS.mem) (nl:list (node 'a)) :
+  Lemma
+    (requires (B.modifies B.loc_none h0 h1 /\
+               DLL.nodelist_contained0 h0 nl /\
+              (DLL.nodelist_conn h0 nl)))
+    (ensures (DLL.nodelist_conn h1 nl))
+let rec _lemma_nodelist_conn_in_unmodified_mem h0 h1 nl =
+  match nl with
+  | [] -> ()
+  | n1 :: rest -> match rest with
+    | [] -> ()
+    | n2 :: ns ->
+      _lemma_nodelist_conn_in_unmodified_mem h0 h1 rest
+
 (** If a new frame is pushed, then a dll remains valid and unchanged. *)
 val _auto_dll_valid_and_unchanged_through_push (h0 h1:HS.mem) (d:dll 'a) :
   Lemma
@@ -113,7 +140,8 @@ val _auto_dll_valid_and_unchanged_through_push (h0 h1:HS.mem) (d:dll 'a) :
      SMTPat (HS.fresh_frame h0 h1)]
 let _auto_dll_valid_and_unchanged_through_push h0 h1 d =
   B.fresh_frame_modifies h0 h1;
-  assume (dll_valid h1 d) // TODO: Prove this
+  _lemma_nodelist_contained_in_unmodified_mem h0 h1 (as_list h1 d);
+  _lemma_nodelist_conn_in_unmodified_mem h0 h1 (as_list h1 d)
 
 // TODO: Figure out for pop
 
