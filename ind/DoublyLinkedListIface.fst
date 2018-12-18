@@ -177,11 +177,11 @@ val _auto_dll_modified_with_push_pop (h0 h1:HS.mem) (d:dll 'a) (h2 h3:HS.mem) :
      SMTPat (dll_valid h3 d)]
 
 let _auto_dll_modified_with_push_pop h0 h1 d h2 h3 =
-  assert (DLL.dll_valid h2 (d@h2));
-  assert (d@h2 == d@h3);
-  assert (DLL.dll_valid h2 (d@h3));
-  assume (DLL.dll_valid h3 (d@h3));
-  ()
+  let loc = B.loc_region_only false (HS.get_tip h2) in
+  B.popped_modifies h2 h3;
+  assume (B.loc_disjoint loc (fp_dll h2 d));
+  _lemma_nodelist_contained_in_unmodified_mem h2 h3 loc (as_list h3 d);
+  _lemma_nodelist_conn_in_unmodified_mem h2 h3 loc (as_list h3 d)
 
 /// Moving forwards or backwards in a list
 
