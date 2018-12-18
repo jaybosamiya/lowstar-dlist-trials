@@ -250,7 +250,7 @@ let dll_insert_at_head d n =
   d *= DLL.dll_insert_at_head (!*d) n;
   let h1 = HST.get () in
   assume (fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n));
-  assume (g_node_val h0 n == g_node_val h1 n);
+  assume (g_node_val h0 n == g_node_val h1 n); // TODO: We want some kind of a "stability" predicate that ensures that all nodes have the same [g_node_val] once they've been created
   assume (as_list h1 d == l_insert_at_head (as_list h0 d) n);
   HST.pop_frame ()
 
