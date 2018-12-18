@@ -1368,7 +1368,6 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:pointer (node t)) :
   if is_null d.lhead then (
     singleton_dll n
   ) else (
-    admit (); // TODO: Prove (reveal y.nodes == n :: reveal d.nodes)
     let h = d.lhead in
     //
     let h0 = ST.get () in
