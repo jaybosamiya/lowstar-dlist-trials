@@ -133,6 +133,18 @@ let rec _lemma_nodelist_conn_in_unmodified_mem h0 h1 s nl =
     | n2 :: ns ->
       _lemma_nodelist_conn_in_unmodified_mem h0 h1 s rest
 
+(** Aux lemma *)
+val _lemma_nodelist_disjoint_in_push (h0 h1:HS.mem) (nl:list (node 'a)) :
+  Lemma
+    (requires (HS.fresh_frame h0 h1 /\
+               DLL.nodelist_contained0 h0 nl))
+    (ensures (DLL.nodelist_fp0 nl `B.loc_disjoint` (B.loc_region_only false (HS.get_tip h1))))
+let rec _lemma_nodelist_disjoint_in_push h0 h1 nl =
+  match nl with
+  | [] -> ()
+  | n :: ns ->
+    _lemma_nodelist_disjoint_in_push h0 h1 ns
+
 (** If a new frame is pushed, then a dll remains valid and unchanged. *)
 val _auto_dll_valid_and_unchanged_through_push (h0 h1:HS.mem) (d:dll 'a) :
   Lemma
@@ -177,13 +189,13 @@ val _auto_dll_modified_with_push_pop (h0 h1:HS.mem) (d:dll 'a) (h2 h3:HS.mem) :
     [SMTPat (HS.fresh_frame h0 h1);
      SMTPat (HS.popped h2 h3);
      SMTPat (dll_valid h3 d)]
-
 let _auto_dll_modified_with_push_pop h0 h1 d h2 h3 =
   let loc = B.loc_region_only false (HS.get_tip h2) in
   B.popped_modifies h2 h3;
   _lemma_nodelist_contained_in_unmodified_mem h2 h3 loc (as_list h3 d);
   _lemma_nodelist_conn_in_unmodified_mem h2 h3 loc (as_list h3 d)
 
+(** If a new frame is pushed, the the dll's fp is disjoint from what just got pushed. *)
 val _auto_dll_fp_disjoint_from_push (h0 h1:HS.mem) (d:dll 'a) :
   Lemma
     (requires (dll_valid h0 d /\ HS.fresh_frame h0 h1))
@@ -191,7 +203,7 @@ val _auto_dll_fp_disjoint_from_push (h0 h1:HS.mem) (d:dll 'a) :
     [SMTPat (dll_valid h0 d);
      SMTPat (HS.fresh_frame h0 h1)]
 let _auto_dll_fp_disjoint_from_push h0 h1 d =
-  admit () // TODO: Prove
+  _lemma_nodelist_disjoint_in_push h0 h1 (G.reveal (d@h0).DLL.nodes)
 
 /// Moving forwards or backwards in a list
 
