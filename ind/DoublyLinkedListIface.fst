@@ -232,7 +232,6 @@ let dll_insert_at_head d n =
   let h0 = HST.get () in
   d *= DLL.dll_insert_at_head (!*d) n;
   let h1 = HST.get () in
-  assume (B.modifies (fp_dll h1 d) h0 h1);
   assume (fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n));
   assume (dll_valid h1 d);
   assume (g_node_val h0 n == g_node_val h1 n);
