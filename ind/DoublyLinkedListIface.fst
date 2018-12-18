@@ -205,6 +205,22 @@ val _auto_dll_fp_disjoint_from_push (h0 h1:HS.mem) (d:dll 'a) :
 let _auto_dll_fp_disjoint_from_push h0 h1 d =
   _lemma_nodelist_disjoint_in_push h0 h1 (G.reveal (d@h0).DLL.nodes)
 
+(** If a valid dll is placed into a pointer, it stays valid *)
+val _auto_dll_assign_valid_stays_valid (h0 h1:HS.mem) (d:dll 'a) (d2:DLL.dll 'a) :
+  Lemma
+    (requires (DLL.dll_valid h0 d2 /\
+               B.modifies (B.loc_buffer d) h0 h1 /\
+               B.loc_buffer d `B.loc_disjoint` DLL.dll_fp0 d2 /\
+               B.live h0 d /\
+               d@h1 == d2))
+    (ensures (dll_valid h1 d))
+    [SMTPat (DLL.dll_valid h0 d2);
+     SMTPat (B.modifies (B.loc_buffer d) h0 h1);
+     SMTPat (dll_valid h1 d)]
+let _auto_dll_assign_valid_stays_valid h0 h1 d d2 =
+  _lemma_nodelist_conn_in_unmodified_mem h0 h1 (B.loc_buffer d) (G.reveal d2.DLL.nodes);
+  _lemma_nodelist_contained_in_unmodified_mem h0 h1 (B.loc_buffer d) (G.reveal d2.DLL.nodes)
+
 /// Moving forwards or backwards in a list
 
 let next_node d n =
@@ -232,8 +248,8 @@ let dll_insert_at_head d n =
   let h0 = HST.get () in
   d *= DLL.dll_insert_at_head (!*d) n;
   let h1 = HST.get () in
+  assume (B.loc_buffer d `B.loc_disjoint` DLL.dll_fp0 (d@h0));
   assume (fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n));
-  assume (dll_valid h1 d);
   assume (g_node_val h0 n == g_node_val h1 n);
   assume (as_list h1 d == l_insert_at_head (as_list h0 d) n);
   HST.pop_frame ()
