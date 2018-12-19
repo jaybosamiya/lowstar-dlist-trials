@@ -78,10 +78,13 @@ let node_of v =
 /// Abstract Predicate to help "recall" that [g_node_val] remains
 /// unchanged for nodes, across multiple [mem]s
 
+let _aux_unchanged_node_vals t h0 h1 (n:node t) =
+  (B.live h0 n ==>
+   (g_node_val h0 n == g_node_val h1 n /\ B.live h1 n))
+
 let unchanged_node_vals t h0 h1 =
   (forall (n:node t). {:pattern (g_node_val h1 n) \/ (B.live h1 n)}
-     (B.live h0 n ==>
-      (g_node_val h0 n == g_node_val h1 n /\ B.live h1 n)))
+     _aux_unchanged_node_vals t h0 h1 n)
 
 /// Viewing ghostly state of a list
 
