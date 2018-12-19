@@ -236,14 +236,19 @@ let _auto_dll_assign_valid_stays_valid h0 h1 d d2 =
 (** If [unchanged_node_vals] is true, then it remains true through a push-pop. *)
 val _auto_unchanged_node_vals_through_push_pop (h0 h1:HS.mem) (t:Type0) (h2 h3:HS.mem) :
   Lemma
-    (requires (unchanged_node_vals t h1 h2 /\ HS.fresh_frame h0 h1 /\ HS.popped h2 h3))
+    (requires (unchanged_node_vals t h1 h2 /\
+               HS.fresh_frame h0 h1 /\ HS.popped h2 h3 /\
+               HS.get_tip h1 == HS.get_tip h2))
     (ensures (unchanged_node_vals t h0 h3))
     [SMTPat (unchanged_node_vals t h0 h3);
      SMTPat (HS.fresh_frame h0 h1);
      SMTPat (HS.popped h2 h3)]
 let _auto_unchanged_node_vals_through_push_pop h0 h1 t h2 h3 =
   // assert (unchanged_node_vals t h0 h1);
-  assume (unchanged_node_vals t h2 h3)
+  let loc = B.loc_region_only false (HS.get_tip h2) in
+  B.popped_modifies h2 h3;
+  FStar.Classical.forall_intro_sub #_ #(_aux_unchanged_node_vals t h0 h3)
+    (fun n -> assert (_aux_unchanged_node_vals t h0 h2 n)) // OBSERVE
 
 /// Moving forwards or backwards in a list
 
