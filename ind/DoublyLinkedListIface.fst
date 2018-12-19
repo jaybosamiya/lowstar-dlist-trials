@@ -273,27 +273,27 @@ let dll_insert_at_head #t d n =
 
 #reset-options
 
-let dll_insert_at_tail d n =
+let dll_insert_at_tail #t d n =
   admit (); // TODO: Need to prove a bunch of things to make this happen
   d *= DLL.dll_insert_at_tail (!*d) n
 
-let dll_insert_before n' d n =
+let dll_insert_before #t n' d n =
   admit (); // TODO: Need to prove a bunch of things to make this happen
   d *= DLL.dll_insert_before (!*d) n' n
 
-let dll_insert_after n' d n =
+let dll_insert_after #t n' d n =
   admit (); // TODO: Need to prove a bunch of things to make this happen
   d *= DLL.dll_insert_after (!*d) n' n
 
-let dll_remove_head d =
+let dll_remove_head #t d =
   admit (); // TODO: Need to prove a bunch of things to make this happen
   d *= DLL.dll_remove_head (!*d)
 
-let dll_remove_tail d =
+let dll_remove_tail #t d =
   admit (); // TODO: Need to prove a bunch of things to make this happen
   d *= DLL.dll_remove_tail (!*d)
 
-let dll_remove_mid d n =
+let dll_remove_mid #t d n =
   admit (); // TODO: Need to prove a bunch of things to make this happen
   d *= DLL.dll_remove_node (!*d) n
 

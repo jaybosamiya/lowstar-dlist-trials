@@ -176,63 +176,64 @@ val dll_insert_at_head (#t:Type0) (d:dll t) (n:node t) :
          unchanged_node_vals t h0 h1 /\
          as_list h1 d == l_insert_at_head (as_list h0 d) n))
 
-val dll_insert_at_tail (d:dll 'a) (n:node 'a) :
+val dll_insert_at_tail (#t:Type0) (d:dll t) (n:node t) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ (fp_node n `B.loc_disjoint` fp_dll h0 d)))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
-         g_node_val h0 n == g_node_val h1 n /\
+         unchanged_node_vals t h0 h1 /\
          as_list h1 d == l_insert_at_tail (as_list h0 d) n))
 
-val dll_insert_before (n':node 'a) (d:dll 'a) (n:node 'a) :
+val dll_insert_before (#t:Type0) (n':node t) (d:dll t) (n:node t) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ (fp_node n `B.loc_disjoint` fp_dll h0 d) /\ n' `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
-         g_node_val h0 n == g_node_val h1 n /\
-         g_node_val h0 n' == g_node_val h1 n' /\
+         unchanged_node_vals t h0 h1 /\
          as_list h1 d == l_insert_before n' (as_list h0 d) n))
 
-val dll_insert_after (n':node 'a) (d:dll 'a) (n:node 'a) :
+val dll_insert_after (#t:Type0) (n':node t) (d:dll t) (n:node t) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ (fp_node n `B.loc_disjoint` fp_dll h0 d) /\ n' `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
-         g_node_val h0 n == g_node_val h1 n /\
-         g_node_val h0 n' == g_node_val h1 n' /\
+         unchanged_node_vals t h0 h1 /\
          as_list h1 d == l_insert_after n' (as_list h0 d) n))
 
 // TODO: Connect [fp_dll h0 d] and [fp_dll h1 d] in these.
 // TODO: Check if the modifies clauses are correct.
 
-val dll_remove_head (d:dll 'a) :
+val dll_remove_head (#t:Type0) (d:dll t) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h0 d) h0 h1 /\
          dll_valid h1 d /\
+         unchanged_node_vals t h0 h1 /\
          as_list h1 d == l_remove_head (as_list h0 d)))
 
-val dll_remove_tail (d:dll 'a) :
+val dll_remove_tail (#t:Type0) (d:dll t) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h0 d) h0 h1 /\
          dll_valid h1 d /\
+         unchanged_node_vals t h0 h1 /\
          as_list h1 d == l_remove_tail (as_list h0 d)))
 
-val dll_remove_mid (d:dll 'a) (n:node 'a) :
+val dll_remove_mid (#t:Type0) (d:dll t) (n:node t) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ n `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h0 d) h0 h1 /\
          dll_valid h1 d /\
+         unchanged_node_vals t h0 h1 /\
          as_list h1 d == l_remove_mid (as_list h0 d) n))
 
 /// Automatic validity maintenance
