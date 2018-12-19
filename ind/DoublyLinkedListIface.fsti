@@ -59,6 +59,11 @@ val node_of (v:'a) :
          node_valid h1 n /\
          v == g_node_val h1 n))
 
+/// Abstract Predicate to help "recall" that [g_node_val] remains
+/// unchanged for nodes, across multiple [mem]s
+
+val unchanged_node_vals (t:Type0) (h0 h1:HS.mem) : GTot prop
+
 /// Viewing ghostly state of a DoublyLinkedList as a list
 
 val as_list (h:HS.mem) (d:dll 'a) : GTot (list (node 'a))

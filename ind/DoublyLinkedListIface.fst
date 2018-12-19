@@ -75,6 +75,13 @@ let node_val n =
 let node_of v =
   B.alloca (DLL.empty_node v) 1ul
 
+/// Abstract Predicate to help "recall" that [g_node_val] remains
+/// unchanged for nodes, across multiple [mem]s
+
+let unchanged_node_vals t h0 h1 =
+  (forall (n:node t). {:pattern (g_node_val h0 n); (g_node_val h1 n)}
+     g_node_val h0 n == g_node_val h1 n)
+
 /// Viewing ghostly state of a list
 
 let as_list h d =
