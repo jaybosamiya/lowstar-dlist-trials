@@ -229,6 +229,17 @@ let _auto_dll_assign_valid_stays_valid h0 h1 d d2 =
   _lemma_nodelist_conn_in_unmodified_mem h0 h1 (B.loc_buffer d) (G.reveal d2.DLL.nodes);
   _lemma_nodelist_contained_in_unmodified_mem h0 h1 (B.loc_buffer d) (G.reveal d2.DLL.nodes)
 
+(** If [unchanged_node_vals] is true, then it remains true through a push-pop. *)
+val _auto_unchanged_node_vals_through_push_pop (h0 h1:HS.mem) (t:Type0) (h2 h3:HS.mem) :
+  Lemma
+    (requires (unchanged_node_vals t h1 h2 /\ HS.fresh_frame h0 h1 /\ HS.popped h2 h3))
+    (ensures (unchanged_node_vals t h0 h3))
+    [SMTPat (unchanged_node_vals t h0 h3);
+     SMTPat (HS.fresh_frame h0 h1);
+     SMTPat (HS.popped h2 h3)]
+let _auto_unchanged_node_vals_through_push_pop h0 h1 t h2 h3 =
+  admit ()
+
 /// Moving forwards or backwards in a list
 
 let next_node d n =
