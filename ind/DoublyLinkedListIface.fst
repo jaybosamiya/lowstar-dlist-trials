@@ -79,7 +79,7 @@ let node_of v =
 /// unchanged for nodes, across multiple [mem]s
 
 let unchanged_node_vals t h0 h1 =
-  (forall (n:node t). {:pattern (g_node_val h0 n); (g_node_val h1 n)}
+  (forall (n:node t). {:pattern (g_node_val h1 n)}
      g_node_val h0 n == g_node_val h1 n)
 
 /// Viewing ghostly state of a list
@@ -238,7 +238,8 @@ val _auto_unchanged_node_vals_through_push_pop (h0 h1:HS.mem) (t:Type0) (h2 h3:H
      SMTPat (HS.fresh_frame h0 h1);
      SMTPat (HS.popped h2 h3)]
 let _auto_unchanged_node_vals_through_push_pop h0 h1 t h2 h3 =
-  admit ()
+  assume (unchanged_node_vals t h0 h1);
+  assume (unchanged_node_vals t h2 h3)
 
 /// Moving forwards or backwards in a list
 
