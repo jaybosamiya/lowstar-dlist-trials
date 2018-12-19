@@ -262,13 +262,13 @@ let prev_node d n =
 
 #set-options "--z3rlimit 20 --max_fuel 2 --max_ifuel 1"
 
-let dll_insert_at_head d n =
+let dll_insert_at_head #t d n =
   HST.push_frame ();
   let h0 = HST.get () in
   d *= DLL.dll_insert_at_head (!*d) n;
   let h1 = HST.get () in
   assume (fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n));
-  assume (g_node_val h0 n == g_node_val h1 n); // TODO: We want some kind of a "stability" predicate that ensures that all nodes have the same [g_node_val] once they've been created
+  assume (unchanged_node_vals t h0 h1);
   HST.pop_frame ()
 
 #reset-options

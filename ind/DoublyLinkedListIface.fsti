@@ -166,14 +166,14 @@ let l_remove_mid (l:list 'a{L.length l > 0}) (x:'a {x `L.memP` l}) : GTot (list 
 
 // TODO: Check if the modifies clauses are correct.
 
-val dll_insert_at_head (d:dll 'a) (n:node 'a) :
+val dll_insert_at_head (#t:Type0) (d:dll t) (n:node t) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ (fp_node n `B.loc_disjoint` fp_dll h0 d)))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
-         g_node_val h0 n == g_node_val h1 n /\
+         unchanged_node_vals t h0 h1 /\
          as_list h1 d == l_insert_at_head (as_list h0 d) n))
 
 val dll_insert_at_tail (d:dll 'a) (n:node 'a) :
