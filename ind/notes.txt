@@ -11,8 +11,8 @@ FStar version tested
 F* 0.9.7.0~dev
 platform=Linux_x86_64
 compiler=OCaml 4.05.0
-date=2018-10-22T11:19:54-0400
-commit=49558b4044f3d22e6473e8b2adb3c03f367ef607
+date=2018-12-18T18:12:03-0500
+commit=30801ec5bb7dfa867ef166d74b9b2684cb1f5db1
 ```
 
 
