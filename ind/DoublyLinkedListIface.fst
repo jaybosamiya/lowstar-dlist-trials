@@ -277,7 +277,6 @@ let dll_insert_at_head #t d n =
   let h0 = HST.get () in
   d *= DLL.dll_insert_at_head (!*d) n;
   let h1 = HST.get () in
-  assume (fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n));
   assume (unchanged_node_vals t h0 h1);
   HST.pop_frame ()
 
