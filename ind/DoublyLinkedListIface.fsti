@@ -158,6 +158,11 @@ let l_remove_mid (l:list 'a{L.length l > 0}) (x:'a {x `L.memP` l}) : GTot (list 
   assert (x == x0);
   l1 `L.append` l2
 
+/// Useful "shortform" for equivalence of [loc]s
+
+let loc_equiv (a b:B.loc) =
+  B.loc_includes a b /\ B.loc_includes b a
+
 /// Stateful DoublyLinkedList operations
 ///
 /// These are most likely what you want to be using when writing
@@ -171,7 +176,7 @@ val dll_insert_at_head (#t:Type0) (d:dll t) (n:node t) :
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ (fp_node n `B.loc_disjoint` fp_dll h0 d)))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
-         fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
+         fp_dll h1 d `loc_equiv` B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
          unchanged_node_vals t h0 h1 /\
          as_list h1 d == l_insert_at_head (as_list h0 d) n))
@@ -181,7 +186,7 @@ val dll_insert_at_tail (#t:Type0) (d:dll t) (n:node t) :
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ (fp_node n `B.loc_disjoint` fp_dll h0 d)))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
-         fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
+         fp_dll h1 d `loc_equiv` B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
          unchanged_node_vals t h0 h1 /\
          as_list h1 d == l_insert_at_tail (as_list h0 d) n))
@@ -191,7 +196,7 @@ val dll_insert_before (#t:Type0) (n':node t) (d:dll t) (n:node t) :
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ (fp_node n `B.loc_disjoint` fp_dll h0 d) /\ n' `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
-         fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
+         fp_dll h1 d `loc_equiv` B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
          unchanged_node_vals t h0 h1 /\
          as_list h1 d == l_insert_before n' (as_list h0 d) n))
@@ -201,7 +206,7 @@ val dll_insert_after (#t:Type0) (n':node t) (d:dll t) (n:node t) :
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ (fp_node n `B.loc_disjoint` fp_dll h0 d) /\ n' `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h1 d) h0 h1 /\
-         fp_dll h1 d == B.loc_union (fp_dll h0 d) (fp_node n) /\
+         fp_dll h1 d `loc_equiv` B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
          unchanged_node_vals t h0 h1 /\
          as_list h1 d == l_insert_after n' (as_list h0 d) n))
