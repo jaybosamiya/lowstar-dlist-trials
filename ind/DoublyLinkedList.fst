@@ -411,6 +411,11 @@ let unchanged_node_val h0 h1 n =
   (h0 `contains` n ==>
    ((n@h0).p == (n@h1).p /\ h1 `contains` n))
 
+let rec unchanged_node_vals (h0 h1:HS.mem) (ns:nodelist 'a) : GTot prop =
+  match ns with
+  | [] -> True
+  | n :: ns' -> unchanged_node_val h0 h1 n /\ unchanged_node_vals h0 h1 ns'
+
 /// Useful operations on nodes
 
 let ( =|> ) (#t:Type) (a:pointer (node t)) (b:pointer (node t)) : StackInline unit
