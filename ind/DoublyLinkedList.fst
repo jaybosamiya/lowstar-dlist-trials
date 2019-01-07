@@ -405,6 +405,12 @@ let fragment_valid (#t:Type) (h0:heap) (f:fragment t) : GTot Type0 =
   fragment_aa f /\
   fragment_conn h0 f
 
+/// Talk about payloads of nodes remaining constant
+
+let unchanged_node_val h0 h1 n =
+  (h0 `contains` n ==>
+   ((n@h0).p == (n@h1).p /\ h1 `contains` n))
+
 /// Useful operations on nodes
 
 let ( =|> ) (#t:Type) (a:pointer (node t)) (b:pointer (node t)) : StackInline unit
@@ -413,8 +419,7 @@ let ( =|> ) (#t:Type) (a:pointer (node t)) (b:pointer (node t)) : StackInline un
          Mod.loc_disjoint (Mod.loc_buffer a) (Mod.loc_buffer b)))
     (ensures (fun h0 _ h1 ->
          Mod.modifies (Mod.loc_buffer a) h0 h1 /\
-         h1 `contains` a /\
-         (a@h0).p == (a@h1).p /\
+         unchanged_node_val h0 h1 a /\
          (a@h0).blink == (a@h1).blink /\
          b@h0 == b@h1 /\
          (a@h1) |> b)) =
@@ -426,9 +431,8 @@ let ( <|= ) (#t:Type) (a:pointer (node t)) (b:pointer (node t)) : StackInline un
          Mod.loc_disjoint (Mod.loc_buffer a) (Mod.loc_buffer b)))
     (ensures (fun h0 _ h1 ->
          Mod.modifies (Mod.loc_buffer b) h0 h1 /\
-         h1 `contains` b /\
          a@h0 == a@h1 /\
-         (b@h0).p == (b@h1).p /\
+         unchanged_node_val h0 h1 b /\
          (b@h0).flink == (b@h1).flink /\
          a <| (b@h1))) =
   b *= { !*b with blink = a }
@@ -437,8 +441,7 @@ let ( !=|> ) (#t:Type) (a:pointer (node t)) : StackInline unit
     (requires (fun h0 -> h0 `contains` a))
     (ensures (fun h0 _ h1 ->
          Mod.modifies (Mod.loc_buffer a) h0 h1 /\
-         h1 `contains` a /\
-         (a@h0).p == (a@h1).p /\
+         unchanged_node_val h0 h1 a /\
          (a@h0).blink == (a@h1).blink /\
          (a@h1).flink == null)) =
   a *= { !*a with flink = null }
@@ -447,8 +450,7 @@ let ( !<|= ) (#t:Type) (a:pointer (node t)) : StackInline unit
     (requires (fun h0 -> h0 `contains` a))
     (ensures (fun h0 _ h1 ->
          Mod.modifies (Mod.loc_buffer a) h0 h1 /\
-         h1 `contains` a /\
-         (a@h0).p == (a@h1).p /\
+         unchanged_node_val h0 h1 a /\
          (a@h0).flink == (a@h1).flink /\
          (a@h1).blink == null)) =
   a *= { !*a with blink = null }
