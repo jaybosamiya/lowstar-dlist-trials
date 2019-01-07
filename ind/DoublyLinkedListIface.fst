@@ -291,6 +291,39 @@ let _auto_pred_nl_disjoint_push h0 h1 d =
   in
   aux (as_list h0 d)
 
+(** The impl version of [unchanged_node_vals] is same as iface one *)
+let rec _auto_unchanged_node_vals_DLL (h0 h1:HS.mem) (ns:list (node 'a)) :
+  Lemma
+    (requires (DLL.unchanged_node_vals h0 h1 ns))
+    (ensures (unchanged_node_vals h0 h1 ns))
+    [SMTPat (unchanged_node_vals h0 h1 ns)] =
+  match ns with
+  | [] -> ()
+  | _ :: ns' -> _auto_unchanged_node_vals_DLL h0 h1 ns'
+
+(** If a valid dll is placed into a pointer, its nodes stay unchanged *)
+val _auto_unchanged_node_vals_stays_valid (h0 h1:HS.mem) (d:dll 'a) (d2:DLL.dll 'a) :
+  Lemma
+    (requires (DLL.dll_valid h0 d2 /\
+               B.modifies (B.loc_buffer d) h0 h1 /\
+               B.loc_buffer d `B.loc_disjoint` DLL.dll_fp0 d2 /\
+               B.live h0 d /\
+               d@h1 == d2))
+    (ensures (unchanged_node_vals h0 h1 (as_list h1 d)))
+    [SMTPat (DLL.dll_valid h0 d2);
+     SMTPat (B.modifies (B.loc_buffer d) h0 h1);
+     SMTPat (unchanged_node_vals h0 h1 (as_list h1 d))]
+let _auto_unchanged_node_vals_stays_valid h0 h1 d d2 =
+  let rec aux nl : Lemma
+    (requires (
+       B.modifies (B.loc_buffer d) h0 h1 /\
+       DLL.nodelist_fp0 nl `B.loc_disjoint` B.loc_buffer d))
+    (ensures (unchanged_node_vals h0 h1 nl)) =
+    match nl with
+    | [] -> ()
+    | n :: ns -> aux ns in
+  aux (as_list h1 d)
+
 /// Moving forwards or backwards in a list
 
 let next_node d n =
