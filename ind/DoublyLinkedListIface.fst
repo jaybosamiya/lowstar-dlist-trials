@@ -78,13 +78,9 @@ let node_of v =
 /// Abstract Predicate to help "recall" that [g_node_val] remains
 /// unchanged for nodes, across multiple [mem]s
 
-let _aux_unchanged_node_vals t h0 h1 (n:node t) =
+let unchanged_node_val h0 h1 n =
   (B.live h0 n ==>
    (g_node_val h0 n == g_node_val h1 n /\ B.live h1 n))
-
-let unchanged_node_vals t h0 h1 =
-  (forall (n:node t). {:pattern (g_node_val h1 n) \/ (B.live h1 n)}
-     _aux_unchanged_node_vals t h0 h1 n)
 
 /// Viewing ghostly state of a list
 
@@ -233,22 +229,67 @@ let _auto_dll_assign_valid_stays_valid h0 h1 d d2 =
   _lemma_nodelist_conn_in_unmodified_mem h0 h1 (B.loc_buffer d) (G.reveal d2.DLL.nodes);
   _lemma_nodelist_contained_in_unmodified_mem h0 h1 (B.loc_buffer d) (G.reveal d2.DLL.nodes)
 
-(** If [unchanged_node_vals] is true, then it remains true through a push-pop. *)
-val _auto_unchanged_node_vals_through_push_pop (h0 h1:HS.mem) (t:Type0) (h2 h3:HS.mem) :
+(** [unchanged_node_vals] is transitive *)
+let rec _lemma_unchanged_node_vals_transitive (h0 h1 h2:HS.mem) (ns:list (node 'a)) :
   Lemma
-    (requires (unchanged_node_vals t h1 h2 /\
+    (requires (
+        (unchanged_node_vals h0 h1 ns) /\
+        (unchanged_node_vals h1 h2 ns)))
+    (ensures (
+        (unchanged_node_vals h0 h2 ns))) =
+  match ns with
+  | [] -> ()
+  | _ :: ns' -> _lemma_unchanged_node_vals_transitive h0 h1 h2 ns'
+
+(** Auxiliary predicate: node list is disjoint from region *)
+let rec _pred_nl_disjoint (h:HS.mem) (ns:list (node 'a)) =
+  match ns with
+  | [] -> True
+  | n :: ns' ->
+    (B.loc_disjoint (B.loc_buffer n) (B.loc_region_only false (HS.get_tip h))) /\
+    _pred_nl_disjoint h ns'
+
+(** If [unchanged_node_vals] is true, then it remains true through a push-pop. *)
+val _auto_unchanged_node_vals_through_push_pop (h0 h1:HS.mem) (ns:list (node 'a)) (h2 h3:HS.mem) :
+  Lemma
+    (requires (unchanged_node_vals h1 h2 ns /\
                HS.fresh_frame h0 h1 /\ HS.popped h2 h3 /\
+               _pred_nl_disjoint h1 ns /\
                HS.get_tip h1 == HS.get_tip h2))
-    (ensures (unchanged_node_vals t h0 h3))
-    [SMTPat (unchanged_node_vals t h0 h3);
+    (ensures (
+        unchanged_node_vals h0 h1 ns /\ // used only for proof. not necessary outside
+        unchanged_node_vals h2 h3 ns /\ // used only for proof. not necessary outside
+        unchanged_node_vals h0 h3 ns))
+    [SMTPat (unchanged_node_vals h0 h3 ns);
      SMTPat (HS.fresh_frame h0 h1);
      SMTPat (HS.popped h2 h3)]
-let _auto_unchanged_node_vals_through_push_pop h0 h1 t h2 h3 =
-  // assert (unchanged_node_vals t h0 h1);
-  let loc = B.loc_region_only false (HS.get_tip h2) in
-  B.popped_modifies h2 h3;
-  FStar.Classical.forall_intro_sub #_ #(_aux_unchanged_node_vals t h0 h3)
-    (fun n -> assert (_aux_unchanged_node_vals t h0 h2 n)) // OBSERVE
+let rec _auto_unchanged_node_vals_through_push_pop h0 h1 ns h2 h3 =
+  match ns with
+  | [] -> ()
+  | n :: ns' ->
+    _auto_unchanged_node_vals_through_push_pop h0 h1 ns' h2 h3;
+    // assert (unchanged_node_vals h0 h1 ns);
+    // assert (unchanged_node_vals h2 h3 ns);
+    B.popped_modifies h2 h3
+
+(** If a valid dll has a frame pushed, [_pred_nl_disjoint] stays true *)
+val _auto_pred_nl_disjoint_push (h0 h1:HS.mem) (d:dll 'a) :
+  Lemma
+    (requires (dll_valid h0 d /\ HS.fresh_frame h0 h1))
+    (ensures (_pred_nl_disjoint h1 (as_list h1 d)))
+    [SMTPat (dll_valid h0 d);
+     SMTPat (HS.fresh_frame h0 h1)]
+let _auto_pred_nl_disjoint_push h0 h1 d =
+  let loc = B.loc_region_only false (HS.get_tip h1) in
+  let rec aux (ns:list (node 'a)) :
+    Lemma
+      (requires (DLL.nodelist_contained h0 ns /\ HS.fresh_frame h0 h1))
+      (ensures (_pred_nl_disjoint h1 ns)) =
+    match ns with
+    | [] -> ()
+    | n :: ns' -> aux ns'
+  in
+  aux (as_list h0 d)
 
 /// Moving forwards or backwards in a list
 
@@ -277,7 +318,7 @@ let dll_insert_at_head #t d n =
   let h0 = HST.get () in
   d *= DLL.dll_insert_at_head (!*d) n;
   let h1 = HST.get () in
-  assume (unchanged_node_vals t h0 h1);
+  assume (unchanged_node_vals h0 h1 (as_list h1 d));
   HST.pop_frame ()
 
 #reset-options

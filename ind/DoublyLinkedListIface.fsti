@@ -62,7 +62,12 @@ val node_of (v:'a) :
 /// Abstract Predicate to help "recall" that [g_node_val] remains
 /// unchanged for nodes, across multiple [mem]s
 
-val unchanged_node_vals (t:Type0) (h0 h1:HS.mem) : GTot prop
+val unchanged_node_val (h0 h1:HS.mem) (n:node 'a) : GTot prop
+
+let rec unchanged_node_vals (h0 h1:HS.mem) (ns:list (node 'a)) : GTot prop =
+  match ns with
+  | [] -> True
+  | n :: ns' -> unchanged_node_val h0 h1 n /\ unchanged_node_vals h0 h1 ns'
 
 /// Viewing ghostly state of a DoublyLinkedList as a list
 
@@ -178,7 +183,7 @@ val dll_insert_at_head (#t:Type0) (d:dll t) (n:node t) :
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d `loc_equiv` B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
-         unchanged_node_vals t h0 h1 /\
+         unchanged_node_vals h0 h1 (as_list h1 d) /\
          as_list h1 d == l_insert_at_head (as_list h0 d) n))
 
 val dll_insert_at_tail (#t:Type0) (d:dll t) (n:node t) :
@@ -188,7 +193,7 @@ val dll_insert_at_tail (#t:Type0) (d:dll t) (n:node t) :
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d `loc_equiv` B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
-         unchanged_node_vals t h0 h1 /\
+         unchanged_node_vals h0 h1 (as_list h1 d) /\
          as_list h1 d == l_insert_at_tail (as_list h0 d) n))
 
 val dll_insert_before (#t:Type0) (n':node t) (d:dll t) (n:node t) :
@@ -198,7 +203,7 @@ val dll_insert_before (#t:Type0) (n':node t) (d:dll t) (n:node t) :
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d `loc_equiv` B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
-         unchanged_node_vals t h0 h1 /\
+         unchanged_node_vals h0 h1 (as_list h1 d) /\
          as_list h1 d == l_insert_before n' (as_list h0 d) n))
 
 val dll_insert_after (#t:Type0) (n':node t) (d:dll t) (n:node t) :
@@ -208,7 +213,7 @@ val dll_insert_after (#t:Type0) (n':node t) (d:dll t) (n:node t) :
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d `loc_equiv` B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
-         unchanged_node_vals t h0 h1 /\
+         unchanged_node_vals h0 h1 (as_list h1 d) /\
          as_list h1 d == l_insert_after n' (as_list h0 d) n))
 
 // TODO: Connect [fp_dll h0 d] and [fp_dll h1 d] in these.
@@ -220,7 +225,7 @@ val dll_remove_head (#t:Type0) (d:dll t) :
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h0 d) h0 h1 /\
          dll_valid h1 d /\
-         unchanged_node_vals t h0 h1 /\
+         unchanged_node_vals h0 h1 (as_list h0 d) /\
          as_list h1 d == l_remove_head (as_list h0 d)))
 
 val dll_remove_tail (#t:Type0) (d:dll t) :
@@ -229,7 +234,7 @@ val dll_remove_tail (#t:Type0) (d:dll t) :
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h0 d) h0 h1 /\
          dll_valid h1 d /\
-         unchanged_node_vals t h0 h1 /\
+         unchanged_node_vals h0 h1 (as_list h0 d) /\
          as_list h1 d == l_remove_tail (as_list h0 d)))
 
 val dll_remove_mid (#t:Type0) (d:dll t) (n:node t) :
@@ -238,7 +243,7 @@ val dll_remove_mid (#t:Type0) (d:dll t) (n:node t) :
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h0 d) h0 h1 /\
          dll_valid h1 d /\
-         unchanged_node_vals t h0 h1 /\
+         unchanged_node_vals h0 h1 (as_list h0 d) /\
          as_list h1 d == l_remove_mid (as_list h0 d) n))
 
 /// Automatic validity maintenance
