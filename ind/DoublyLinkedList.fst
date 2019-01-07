@@ -1151,6 +1151,7 @@ let singleton_dll (#t:Type) (n:pointer (node t)) :
     (ensures (fun h0 d h1 ->
          Mod.modifies (Mod.loc_buffer n) h0 h1 /\
          dll_valid h1 d /\
+         unchanged_node_vals h0 h1 (reveal d.nodes) /\
          reveal d.nodes == [n])) =
   !=|> n;
   !<|= n;
