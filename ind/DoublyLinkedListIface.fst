@@ -349,9 +349,11 @@ let prev_node d n =
 let dll_insert_at_head #t d n =
   HST.push_frame ();
   let h0 = HST.get () in
-  d *= DLL.dll_insert_at_head (!*d) n;
+  let y = DLL.dll_insert_at_head (!*d) n in
+  let h' = HST.get () in
+  d *= y;
   let h1 = HST.get () in
-  assume (unchanged_node_vals h0 h1 (as_list h1 d));
+  _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d);
   HST.pop_frame ()
 
 #reset-options
