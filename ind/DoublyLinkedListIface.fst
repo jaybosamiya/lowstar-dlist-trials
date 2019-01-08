@@ -395,6 +395,16 @@ let auto_dll_remains_valid_upon_staying_unchanged h0 h1 l d =
 let auto_node_remains_valid_upon_staying_unchanged h0 h1 l n =
   admit () // TODO: Need to prove a bunch of things to make this happen
 
+/// Automatic footprint maintenance
+///
+/// These are lemmas that you shouldn't really need to refer to
+/// manually. If you do, it is (likely) a bug wrt the patterns, and
+/// you should ask someone who knows about how this library works to
+/// look at things.
+
+let auto_dll_fp_upon_staying_unchanged h0 h1 l d =
+  admit () // TODO: Need to prove a bunch of things to make this happen
+
 /// Properties of nodes inside and outside lists
 ///
 /// These are lemmas that you shouldn't really need to refer to
