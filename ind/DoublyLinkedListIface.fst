@@ -392,8 +392,7 @@ let dll_remove_mid #t d n =
 let auto_dll_remains_valid_upon_staying_unchanged h0 h1 l d =
   admit () // TODO: Need to prove a bunch of things to make this happen
 
-let auto_node_remains_valid_upon_staying_unchanged h0 h1 l n =
-  admit () // TODO: Need to prove a bunch of things to make this happen
+let auto_node_remains_valid_upon_staying_unchanged h0 h1 l n = ()
 
 /// Automatic footprint maintenance
 ///
@@ -402,8 +401,7 @@ let auto_node_remains_valid_upon_staying_unchanged h0 h1 l n =
 /// you should ask someone who knows about how this library works to
 /// look at things.
 
-let auto_dll_fp_upon_staying_unchanged h0 h1 l d =
-  admit () // TODO: Need to prove a bunch of things to make this happen
+let auto_dll_fp_upon_staying_unchanged h0 h1 l d = ()
 
 /// Properties of nodes inside and outside lists
 ///
