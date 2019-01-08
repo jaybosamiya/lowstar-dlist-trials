@@ -390,7 +390,8 @@ let dll_remove_mid #t d n =
 /// look at things.
 
 let auto_dll_remains_valid_upon_staying_unchanged h0 h1 l d =
-  admit () // TODO: Need to prove a bunch of things to make this happen
+  _lemma_nodelist_contained_in_unmodified_mem h0 h1 l (as_list h1 d);
+  _lemma_nodelist_conn_in_unmodified_mem h0 h1 l (as_list h1 d)
 
 let auto_node_remains_valid_upon_staying_unchanged h0 h1 l n = ()
 
