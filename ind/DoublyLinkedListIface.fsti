@@ -284,6 +284,36 @@ val auto_dll_fp_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:dll 'a) :
     (ensures (fp_dll h1 d == fp_dll h0 d))
     [SMTPat (fp_dll h1 d); SMTPat (dll_valid h1 d); SMTPat (B.modifies l h0 h1)]
 
+/// Automatic value maintenance
+///
+/// These are lemmas that you shouldn't really need to refer to
+/// manually. If you do, it is (likely) a bug wrt the patterns, and
+/// you should ask someone who knows about how this library works to
+/// look at things.
+
+val auto_dll_as_list_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:dll 'a) :
+  Lemma
+    (requires (dll_valid h0 d /\
+               B.modifies l h0 h1 /\
+               B.loc_disjoint (fp_dll h0 d) l))
+    (ensures (as_list h1 d == as_list h0 d))
+    [SMTPat (as_list h1 d); SMTPat (dll_valid h0 d); SMTPat (B.modifies l h0 h1)]
+
+val auto_node_val_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:node 'a) :
+  Lemma
+    (requires (node_valid h0 n /\
+               B.modifies l h0 h1 /\
+               B.loc_disjoint (fp_node n) l))
+    (ensures (g_node_val h1 n == g_node_val h0 n))
+    [SMTPat (g_node_val h1 n); SMTPat (node_valid h0 n); SMTPat (B.modifies l h0 h1)]
+
+val auto_node_val_unchanged_staying_unchanged (h0 h1:HS.mem) (n:node 'a) :
+  Lemma
+    (requires (node_valid h0 n /\
+               unchanged_node_val h0 h1 n))
+    (ensures (g_node_val h1 n == g_node_val h0 n))
+    [SMTPat (g_node_val h1 n); SMTPat (node_valid h0 n); SMTPat (unchanged_node_val h0 h1 n)]
+
 /// Properties of nodes inside and outside lists
 ///
 /// These are lemmas that you shouldn't really need to refer to
