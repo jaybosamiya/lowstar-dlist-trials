@@ -282,7 +282,7 @@ val auto_dll_fp_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:dll 'a) :
                B.modifies l h0 h1 /\
                B.loc_disjoint (fp_dll h0 d) l))
     (ensures (fp_dll h1 d == fp_dll h0 d))
-    [SMTPat (fp_dll h1 d); SMTPat (dll_valid h1 d); SMTPat (B.modifies l h0 h1)]
+    [SMTPat (fp_dll h1 d); SMTPat (dll_valid h0 d); SMTPat (B.modifies l h0 h1)]
 
 /// Automatic value maintenance
 ///
