@@ -1422,7 +1422,7 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:pointer (node t)) :
 
 #reset-options
 
-#set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 0"
+#set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 1"
 
 let dll_insert_at_tail (#t:Type) (d:dll t) (n:pointer (node t)) :
   StackInline (dll t)
@@ -1434,7 +1434,9 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:pointer (node t)) :
          Mod.modifies (Mod.loc_union
                          (Mod.loc_buffer n)
                          (Mod.loc_buffer d.ltail)) h0 h1 /\
-         dll_valid h1 y)) =
+         dll_valid h1 y /\
+         unchanged_node_vals h0 h1 (reveal y.nodes) /\
+         reveal y.nodes == snoc (reveal d.nodes, n))) =
   if is_null d.lhead then (
     singleton_dll n
   ) else (
@@ -1450,12 +1452,17 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:pointer (node t)) :
     t =|> n;
     let h1 = ST.get () in
     //
+    let rec unchanged_payload nl : Lemma (unchanged_node_vals h0 h1 nl) =
+      if (length nl = 0) then () else unchanged_payload (tl nl) in
+    unchanged_payload (reveal d.nodes);
+    //
     let Frag1 p1 = tot_dll_to_fragment h0 d in
     let p = tot_node_to_piece h0 n in
     let f' = Frag2 p1 p in
     piece_remains_valid h0 h0' (Mod.loc_buffer n) p1;
     piece_remains_valid_f h0' h1 p1;
     let y = tot_defragmentable_fragment_to_dll h1 f' in
+    unchanged_payload (reveal y.nodes);
     y
   )
 
