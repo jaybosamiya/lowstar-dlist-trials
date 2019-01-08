@@ -321,6 +321,12 @@ val auto_node_val_unchanged_staying_unchanged (h0 h1:HS.mem) (n:node 'a) :
 /// you should ask someone who knows about how this library works to
 /// look at things.
 
-// TODO: Write about the following
-// + If node is in list, fp is included
-// + If node is not in list, fp is disjoint
+val auto_node_in_list_is_included (h0:HS.mem) (n:node 'a) (d:dll 'a) :
+  Lemma
+    (requires (dll_valid h0 d /\
+               node_valid h0 n /\
+               n `L.memP` as_list h0 d))
+    (ensures (B.loc_includes (fp_dll h0 d) (fp_node n)))
+    [SMTPat (B.loc_includes (fp_dll h0 d) (fp_node n));
+     SMTPat (dll_valid h0 d);
+     SMTPat (node_valid h0 n)]
