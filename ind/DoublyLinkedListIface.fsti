@@ -174,8 +174,6 @@ let loc_equiv (a b:B.loc) =
 /// code. The rest of this interface lets you talk about these
 /// operations easily.
 
-// TODO: Check if the modifies clauses are correct.
-
 val dll_insert_at_head (#t:Type0) (d:dll t) (n:node t) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ node_valid h0 n /\ (fp_node n `B.loc_disjoint` fp_dll h0 d)))
@@ -217,7 +215,6 @@ val dll_insert_after (#t:Type0) (n':node t) (d:dll t) (n:node t) :
          as_list h1 d == l_insert_after n' (as_list h0 d) n))
 
 // TODO: Connect [fp_dll h0 d] and [fp_dll h1 d] in these.
-// TODO: Check if the modifies clauses are correct.
 
 val dll_remove_head (#t:Type0) (d:dll t) :
   HST.Stack unit

@@ -62,7 +62,7 @@ let dll_valid h d =
 let fp_node n = B.loc_buffer n
 
 let fp_dll h d =
-  B.loc_union (B.loc_buffer d) (DLL.dll_fp0 (d@h)) // TODO: Fix this
+  B.loc_union (B.loc_buffer d) (DLL.dll_fp0 (d@h))
 
 /// Getters and setters for [node]s
 
