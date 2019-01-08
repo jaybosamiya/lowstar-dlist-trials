@@ -261,13 +261,13 @@ val auto_dll_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:dl
     (ensures (dll_valid h1 d))
     [SMTPat (dll_valid h0 d); SMTPat (dll_valid h1 d); SMTPat (B.modifies l h0 h1)]
 
-// val auto_node_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:node 'a) :
-//   Lemma
-//     (requires (node_valid h0 n /\
-//                B.modifies l h0 h1 /\
-//                B.loc_disjoint (fp_node h0 n) l))
-//     (ensures (node_valid h1 h0 n))
-//     [SMTPat (node_valid h0 n); SMTPat (node_valid h1 n); SMTPat (B.loc_disjoint (fp_node n) l)]
+val auto_node_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:node 'a) :
+  Lemma
+    (requires (node_valid h0 n /\
+               B.modifies l h0 h1 /\
+               B.loc_disjoint (fp_node n) l))
+    (ensures (node_valid h1 n))
+    [SMTPat (node_valid h0 n); SMTPat (node_valid h1 n); SMTPat (B.modifies l h0 h1)]
 
 /// Properties of nodes inside and outside lists
 ///
