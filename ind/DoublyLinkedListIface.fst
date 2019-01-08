@@ -356,9 +356,27 @@ let dll_insert_at_head #t d n =
 
 #reset-options
 
+#set-options "--z3rlimit 40 --max_fuel 2 --max_ifuel 1"
+
 let dll_insert_at_tail #t d n =
-  admit (); // TODO: Need to prove a bunch of things to make this happen
-  d *= DLL.dll_insert_at_tail (!*d) n
+  let h00 = HST.get () in // temp
+  HST.push_frame ();
+  let h0 = HST.get () in
+  let y = DLL.dll_insert_at_tail (!*d) n in
+  let h' = HST.get () in
+  d *= y;
+  let h1 = HST.get () in
+  HST.pop_frame ();
+  let h11 = HST.get () in // temp
+  // assert (B.modifies (fp_dll h11 d) h00 h11);
+  assume (fp_dll h11 d `loc_equiv` B.loc_union (fp_dll h00 d) (fp_node n));
+  assume (dll_valid h11 d);
+  // assert (node_valid h11 n);
+  assume (unchanged_node_vals h00 h11 (as_list h11 d));
+  // assert (as_list h11 d == l_insert_at_tail (as_list h00 d) n);
+  ()
+
+#reset-options
 
 let dll_insert_before #t n' d n =
   admit (); // TODO: Need to prove a bunch of things to make this happen
