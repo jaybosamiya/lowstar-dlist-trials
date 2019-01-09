@@ -241,11 +241,7 @@ let rec _lemma_unchanged_node_vals_transitive (h0 h1 h2:HS.mem) (ns:list (node '
 
 (** Auxiliary predicate: node list is disjoint from region *)
 let rec _pred_nl_disjoint (h:HS.mem) (ns:list (node 'a)) =
-  match ns with
-  | [] -> True
-  | n :: ns' ->
-    (B.loc_disjoint (B.loc_buffer n) (B.loc_region_only false (HS.get_tip h))) /\
-    _pred_nl_disjoint h ns'
+  DLL.nodelist_fp0 ns `B.loc_disjoint` B.loc_region_only false (HS.get_tip h)
 
 (** If [unchanged_node_vals] is true, then it remains true through a push-pop. *)
 val _auto_unchanged_node_vals_through_push_pop (h0 h1:HS.mem) (ns:list (node 'a)) (h2 h3:HS.mem) :
