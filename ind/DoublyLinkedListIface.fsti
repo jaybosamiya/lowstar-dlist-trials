@@ -266,6 +266,13 @@ val auto_node_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:n
     (ensures (node_valid h1 n))
     [SMTPat (node_valid h0 n); SMTPat (node_valid h1 n); SMTPat (B.modifies l h0 h1)]
 
+val auto_node_remains_unchanged_upon_staying_unchanged_val (h0 h1:HS.mem) (n:node 'a) :
+  Lemma
+    (requires (node_valid h0 n /\
+               unchanged_node_val h0 h1 n))
+    (ensures (node_valid h1 n))
+    [SMTPat (node_valid h1 n); SMTPat (node_valid h0 n); SMTPat (unchanged_node_val h0 h1 n)]
+
 /// Automatic footprint maintenance
 ///
 /// These are lemmas that you shouldn't really need to refer to

@@ -400,6 +400,8 @@ let auto_dll_remains_valid_upon_staying_unchanged h0 h1 l d =
 
 let auto_node_remains_valid_upon_staying_unchanged h0 h1 l n = ()
 
+let auto_node_remains_unchanged_upon_staying_unchanged_val h0 h1 n = ()
+
 /// Automatic footprint maintenance
 ///
 /// These are lemmas that you shouldn't really need to refer to
