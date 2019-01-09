@@ -901,14 +901,17 @@ let tot_defragmentable_fragment_to_dll (#t:Type) (h0:heap) (f:fragment t{
       ((a.phead@h0).blink == null) /\
       ((b.ptail@h0).flink == null)))
   }) :
-  Tot (d:dll t{dll_valid h0 d}) =
+  Tot (d:dll t{dll_valid h0 d /\ dll_fp0 d `loc_equiv` fragment_fp0 f}) =
   match f with
   | Frag0 -> empty_list
   | Frag1 p1 -> tot_piece_to_dll h0 p1
-  | Frag2 p1 p2 -> tot_piece_to_dll h0 (piece_merge h0 p1 p2)
-  | Frag3 p1 p2 p3 ->
-    let p' = piece_merge h0 p1 p2 in
+  | Frag2 p1 p2 ->
     piece_merge_fp0 h0 p1 p2;
+    tot_piece_to_dll h0 (piece_merge h0 p1 p2)
+  | Frag3 p1 p2 p3 ->
+    piece_merge_fp0 h0 p1 p2;
+    let p' = piece_merge h0 p1 p2 in
+    piece_merge_fp0 h0 p' p3;
     tot_piece_to_dll h0 (piece_merge h0 p' p3)
 
 #reset-options
