@@ -17,6 +17,7 @@ let main () : HST.Stack (unit) (fun _ -> True) (fun _ _ _ -> True) =
   let h0 = HST.get () in
   let n1' = dll_head d in
   let t = node_val n1' in
-  assert (node_valid h0 n1);
+  assert (node_valid h0 n1); // OBSERVE
+                             // TODO: Maybe improve triggers to not need this OBSERVE?
   assert (t == 1ul);
   HST.pop_frame ()
