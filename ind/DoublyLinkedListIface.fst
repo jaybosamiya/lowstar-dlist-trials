@@ -361,7 +361,7 @@ let dll_insert_at_tail #t d n =
   let h' = HST.get () in
   d *= y;
   let h1 = HST.get () in
-  assume (_pred_nl_disjoint h0 (as_list h1 d));
+  assert (_pred_nl_disjoint h0 (as_list h1 d)); // OBSERVE
   _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d);
   HST.pop_frame ()
 
