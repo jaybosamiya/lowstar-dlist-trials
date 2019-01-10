@@ -1360,6 +1360,43 @@ let _auto_empty_dll (#t:Type) (h0:heap) (d:dll t) :
     [SMTPat (dll_valid h0 d);
      SMTPat (reveal d.nodes)] = ()
 
+/// Be able to easily reason about unchanged payloads
+
+let rec aux_unchanged_payload #t h0 h1 h n0 (nl:nodelist t) :
+  Lemma
+    (requires (Mod.modifies (Mod.loc_buffer n0) h0 h1 /\
+               (n0@h0).p == (n0@h1).p /\
+               (h == h0 \/ h == h1) /\
+               (nodelist_valid h nl) /\
+               (n0 `memP` nl \/ Mod.loc_disjoint (Mod.loc_buffer n0) (nodelist_fp0 nl))
+              ))
+    (ensures (unchanged_node_vals h0 h1 nl))
+    (decreases (length nl)) =
+  match nl with
+  | [] -> ()
+  | n :: nl' ->
+    nodelist_remains_aa_l nl;
+    aux_unchanged_payload h0 h1 h n0 nl';
+    assert (n0 `memP` nl ==> (n == n0 \/ n0 `memP` nl'));
+    let goal () = unchanged_node_val h0 h1 n in
+    FStar.Classical.or_elim #_ #_ #goal
+      (fun (_:unit{n0 `memP` nl}) ->
+         FStar.Classical.or_elim #_ #_ #goal
+           (fun (_:unit{n == n0}) -> ())
+           (fun (_:unit{n0 `memP` nl'}) ->
+              let i = nl' `index_of` n0 in
+              extract_nodelist_fp0 nl' i))
+      (fun (_:unit{Mod.loc_disjoint (Mod.loc_buffer n0) (nodelist_fp0 nl)}) -> ())
+
+let rec aux_unchanged_payload_transitive #t h0 h1 h2 (nl:nodelist t) :
+  Lemma
+    (requires (unchanged_node_vals h0 h1 nl /\
+               unchanged_node_vals h1 h2 nl))
+    (ensures (unchanged_node_vals h0 h2 nl)) =
+  match nl with
+  | [] -> ()
+  | _ :: nl' -> aux_unchanged_payload_transitive h0 h1 h2 nl'
+
 /// Now for the actual ST operations that will be exposed :)
 
 #set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 1"
