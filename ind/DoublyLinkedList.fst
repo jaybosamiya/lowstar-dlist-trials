@@ -1362,12 +1362,11 @@ let _auto_empty_dll (#t:Type) (h0:heap) (d:dll t) :
 
 /// Be able to easily reason about unchanged payloads
 
-let rec aux_unchanged_payload #t h0 h1 h n0 (nl:nodelist t) :
+let rec aux_unchanged_payload #t h0 h1 n0 (nl:nodelist t) :
   Lemma
     (requires (Mod.modifies (Mod.loc_buffer n0) h0 h1 /\
                (n0@h0).p == (n0@h1).p /\
-               (h == h0 \/ h == h1) /\
-               (nodelist_valid h nl) /\
+               (nodelist_aa_r nl) /\
                (n0 `memP` nl \/ Mod.loc_disjoint (Mod.loc_buffer n0) (nodelist_fp0 nl))
               ))
     (ensures (unchanged_node_vals h0 h1 nl))
@@ -1375,8 +1374,7 @@ let rec aux_unchanged_payload #t h0 h1 h n0 (nl:nodelist t) :
   match nl with
   | [] -> ()
   | n :: nl' ->
-    nodelist_remains_aa_l nl;
-    aux_unchanged_payload h0 h1 h n0 nl';
+    aux_unchanged_payload h0 h1 n0 nl';
     assert (n0 `memP` nl ==> (n == n0 \/ n0 `memP` nl'));
     let goal () = unchanged_node_val h0 h1 n in
     FStar.Classical.or_elim #_ #_ #goal
