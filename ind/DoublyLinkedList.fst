@@ -1489,6 +1489,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
                          (Mod.loc_union
                             (Mod.loc_buffer e)
                             (Mod.loc_buffer (e@h0).flink))) h0 h1 /\
+         (dll_fp0 y `loc_equiv` B.loc_union (dll_fp0 d) (Mod.loc_buffer n)) /\
          dll_valid h1 y)) =
   let h0 = ST.get () in
   // assert (length (reveal d.nodes) > 0);
