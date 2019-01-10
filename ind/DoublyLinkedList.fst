@@ -1527,7 +1527,8 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
                             (Mod.loc_buffer e)
                             (Mod.loc_buffer (e@h0).flink))) h0 h1 /\
          (dll_fp0 y `loc_equiv` B.loc_union (dll_fp0 d) (Mod.loc_buffer n)) /\
-         dll_valid h1 y)) =
+         dll_valid h1 y /\
+         unchanged_node_vals h0 h1 (reveal y.nodes))) =
   let h0 = ST.get () in
   // assert (length (reveal d.nodes) > 0);
   lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
@@ -1613,6 +1614,14 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
     // assert (last f' == p3);
     // assert (is_null ((last f').ptail@h1).flink);
     let y = tot_defragmentable_fragment_to_dll h1 f' in
+    assume (n `memP` reveal y.nodes);
+    assume (e `memP` reveal y.nodes);
+    assume (e2 `memP` reveal y.nodes);
+    aux_unchanged_payload h0 h0' n (reveal y.nodes);
+    aux_unchanged_payload h0' h0'' e (reveal y.nodes);
+    aux_unchanged_payload h0'' h1 e2 (reveal y.nodes);
+    aux_unchanged_payload_transitive h0 h0' h0'' (reveal y.nodes);
+    aux_unchanged_payload_transitive h0 h0'' h1 (reveal y.nodes);
     y
   )
 
