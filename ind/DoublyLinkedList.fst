@@ -1509,6 +1509,11 @@ let dll_insert_at_tail (#t:Type) (d:dll t) (n:pointer (node t)) :
 
 #reset-options
 
+let _l_insert_after (x0:'a) (l:list 'a{x0 `memP` l}) (x:'a) : GTot (list 'a) =
+  let l1, x1 :: l2 = lemma_split_using l x0; split_using l x0 in
+  assert (x0 == x1);
+  l1 `append` (x0 :: (x :: l2))
+
 #set-options "--z3rlimit 1000 --initial_fuel 2 --initial_ifuel 1"
 
 let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t)) :
@@ -1528,7 +1533,8 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
                             (Mod.loc_buffer (e@h0).flink))) h0 h1 /\
          (dll_fp0 y `loc_equiv` B.loc_union (dll_fp0 d) (Mod.loc_buffer n)) /\
          dll_valid h1 y /\
-         unchanged_node_vals h0 h1 (reveal y.nodes))) =
+         unchanged_node_vals h0 h1 (reveal y.nodes) /\
+         reveal y.nodes == _l_insert_after e (reveal d.nodes) n)) =
   let h0 = ST.get () in
   // assert (length (reveal d.nodes) > 0);
   lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
@@ -1536,7 +1542,9 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
   let e1 = (!*e).blink in
   let e2 = (!*e).flink in
   if is_null e2 then (
-    dll_insert_at_tail d n
+    let y = dll_insert_at_tail d n in
+    assume (reveal y.nodes == _l_insert_after e (reveal d.nodes) n);
+    y
   ) else (
     extract_nodelist_fp0 (reveal d.nodes) (reveal d.nodes `index_of` e);
     lemma_unsnoc_is_last (reveal d.nodes);
@@ -1622,6 +1630,7 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
     aux_unchanged_payload h0'' h1 e2 (reveal y.nodes);
     aux_unchanged_payload_transitive h0 h0' h0'' (reveal y.nodes);
     aux_unchanged_payload_transitive h0 h0'' h1 (reveal y.nodes);
+    assume (reveal y.nodes == _l_insert_after e (reveal d.nodes) n);
     y
   )
 
