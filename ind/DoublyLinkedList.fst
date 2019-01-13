@@ -1660,16 +1660,23 @@ let dll_insert_before (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node 
                             (Mod.loc_union
                                (Mod.loc_buffer (e@h0).blink)
                                (Mod.loc_buffer e)))) h0 h1 /\
-         dll_valid h1 y)) =
+         (dll_fp0 y `loc_equiv` B.loc_union (dll_fp0 d) (Mod.loc_buffer n)) /\
+         dll_valid h1 y /\
+         unchanged_node_vals h0 h1 (reveal y.nodes) /\
+         reveal y.nodes == _l_insert_before e (reveal d.nodes) n)) =
   let h0 = ST.get () in
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
   let e1 = (!*e).blink in
   lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
   if is_null e1 then (
-    dll_insert_at_head d n
+    let y = dll_insert_at_head d n in
+    assume (reveal y.nodes == _l_insert_before e (reveal d.nodes) n);
+    y
   ) else (
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
-    dll_insert_after d e1 n
+    let y = dll_insert_after d e1 n in
+    assume (reveal y.nodes == _l_insert_before e (reveal d.nodes) n);
+    y
   )
 
 #reset-options
