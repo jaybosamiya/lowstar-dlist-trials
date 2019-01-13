@@ -1636,6 +1636,10 @@ let dll_insert_after (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t
 
 #reset-options
 
+let _l_insert_before (x0:'a) (l:list 'a{x0 `memP` l}) (x:'a) : GTot (list 'a) =
+  let l1, l2 = split_using l x0 in
+  l1 `append` (x :: l2)
+
 #set-options "--z3rlimit 50"
 
 let dll_insert_before (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node t)) :
