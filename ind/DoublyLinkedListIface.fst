@@ -475,7 +475,15 @@ let dll_insert_after #t n' d n =
   let h1 = HST.get () in
   assert (_pred_nl_disjoint h0 (as_list h1 d)); // OBSERVE
   _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d);
-  assume (B.modifies (fp_dll h1 d) h0 h1);
+  _lemma_insertion_maintains_memP (as_list h0 d) (as_list h1 d) n' n n';
+  _lemma_next_node_in_list h0 n' d;
+  FStar.Classical.arrow_to_impl #((n'@h0).DLL.flink =!= B.null)
+    #((n'@h0).DLL.flink =!= B.null /\ (n'@h0).DLL.flink `L.memP` as_list h1 d)
+    (fun _ ->
+       _lemma_insertion_maintains_memP (as_list h0 d) (as_list h1 d) n' n (n'@h0).DLL.flink);
+  _lemma_node_in_list_is_included n' (as_list h1 d);
+  _lemma_node_in_list_or_null_is_included (n'@h0).DLL.flink (as_list h1 d);
+  // assert (B.modifies (fp_dll h1 d) h0 h1);
   HST.pop_frame ()
 
 #reset-options
