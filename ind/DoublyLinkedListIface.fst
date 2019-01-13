@@ -367,13 +367,37 @@ let dll_insert_at_tail #t d n =
 
 #reset-options
 
+#set-options "--z3rlimit 80 --max_fuel 2 --max_ifuel 1"
+
 let dll_insert_before #t n' d n =
-  admit (); // TODO: Need to prove a bunch of things to make this happen
-  d *= DLL.dll_insert_before (!*d) n' n
+  HST.push_frame ();
+  let h0 = HST.get () in
+  let y = DLL.dll_insert_before (!*d) n' n in
+  let h' = HST.get () in
+  d *= y;
+  let h1 = HST.get () in
+  assert (_pred_nl_disjoint h0 (as_list h1 d)); // OBSERVE
+  _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d);
+  assume (B.modifies (fp_dll h1 d) h0 h1);
+  HST.pop_frame ()
+
+#reset-options
+
+#set-options "--z3rlimit 80 --max_fuel 2 --max_ifuel 1"
 
 let dll_insert_after #t n' d n =
-  admit (); // TODO: Need to prove a bunch of things to make this happen
-  d *= DLL.dll_insert_after (!*d) n' n
+  HST.push_frame ();
+  let h0 = HST.get () in
+  let y = DLL.dll_insert_after (!*d) n' n in
+  let h' = HST.get () in
+  d *= y;
+  let h1 = HST.get () in
+  assert (_pred_nl_disjoint h0 (as_list h1 d)); // OBSERVE
+  _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d);
+  assume (B.modifies (fp_dll h1 d) h0 h1);
+  HST.pop_frame ()
+
+#reset-options
 
 let dll_remove_head #t d =
   admit (); // TODO: Need to prove a bunch of things to make this happen
