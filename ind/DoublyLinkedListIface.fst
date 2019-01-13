@@ -402,8 +402,12 @@ let dll_insert_before #t n' d n =
   // assert (fp_dll h1 d `B.loc_includes` (B.loc_buffer (d@h0).DLL.lhead));
   // assert (fp_dll h1 d `B.loc_includes` (B.loc_buffer (d@h0).DLL.ltail));
   // assert (fp_dll h1 d `B.loc_includes` (B.loc_buffer n));
-  assume (fp_dll h1 d `B.loc_includes` (B.loc_buffer n'));
-  assume (fp_dll h1 d `B.loc_includes` (B.loc_buffer (n'@h0).DLL.blink));
+  assume (n' `L.memP` as_list h1 d);
+  assume ((n'@h0).DLL.blink =!= B.null ==> (n'@h0).DLL.blink `L.memP` as_list h1 d);
+  _lemma_node_in_list_is_included n' (as_list h1 d);
+  _lemma_node_in_list_or_null_is_included (n'@h0).DLL.blink (as_list h1 d);
+  // assert (fp_dll h1 d `B.loc_includes` (B.loc_buffer n'));
+  // assert (fp_dll h1 d `B.loc_includes` (B.loc_buffer (n'@h0).DLL.blink));
   // assert (B.modifies (fp_dll h1 d) h0 h1);
   HST.pop_frame ()
 
