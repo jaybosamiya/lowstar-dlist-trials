@@ -368,6 +368,22 @@ let _lemma_next_node_in_list (h:HS.mem) (n:node 'a) (d:dll 'a) :
     assume (L.index_of l n < L.length l - 1);
     DLL.extract_nodelist_conn h l (L.index_of l n))
 
+(** Insertion operations maintain membership *)
+let rec _lemma_insertion_maintains_memP (l1 l2:list 'a) (x0 x1 x:'a) :
+  Lemma
+    (requires ((x0 `L.memP` l1) /\
+               ((l2 == DLL._l_insert_before x0 l1 x1) \/
+                (l2 == DLL._l_insert_after x0 l1 x1)) /\
+               x `L.memP` l1))
+    (ensures (x `L.memP` l2)) =
+  match l1 with
+  | [_] -> ()
+  | x0' :: l1' ->
+    FStar.Classical.or_elim #_ #_ #(fun () -> x `L.memP` l2)
+      (fun (_:unit{x0' == x0 \/ x0' == x}) -> ())
+      (fun (_:unit{x0' =!= x0 /\ x0' =!= x}) ->
+         _lemma_insertion_maintains_memP l1' (L.tl l2) x0 x1 x)
+
 /// Moving forwards or backwards in a list
 
 let next_node d n =
