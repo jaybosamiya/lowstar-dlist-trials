@@ -378,7 +378,12 @@ let dll_insert_before #t n' d n =
   let h1 = HST.get () in
   assert (_pred_nl_disjoint h0 (as_list h1 d)); // OBSERVE
   _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d);
-  assume (B.modifies (fp_dll h1 d) h0 h1);
+  // assert (fp_dll h1 d `B.loc_includes` (B.loc_buffer (d@h0).DLL.lhead));
+  // assert (fp_dll h1 d `B.loc_includes` (B.loc_buffer (d@h0).DLL.ltail));
+  // assert (fp_dll h1 d `B.loc_includes` (B.loc_buffer n));
+  assume (fp_dll h1 d `B.loc_includes` (B.loc_buffer n'));
+  assume (fp_dll h1 d `B.loc_includes` (B.loc_buffer (n'@h0).DLL.blink));
+  // assert (B.modifies (fp_dll h1 d) h0 h1);
   HST.pop_frame ()
 
 #reset-options
