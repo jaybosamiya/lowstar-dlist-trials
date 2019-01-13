@@ -318,6 +318,18 @@ let _auto_unchanged_node_vals_stays_valid h0 h1 d d2 =
     | n :: ns -> aux ns in
   aux (as_list h1 d)
 
+(** If a node belongs to a dll, then its fp is included *)
+let rec _lemma_node_in_list_is_included (n:node 'a) (nl:list (node 'a)) :
+  Lemma
+    (requires (n `L.memP` nl))
+    (ensures (DLL.nodelist_fp0 nl `B.loc_includes` fp_node n)) =
+  match nl with
+  | [_] -> ()
+  | n' :: ns ->
+    FStar.Classical.or_elim #_ #_ #(fun () -> DLL.nodelist_fp0 nl `B.loc_includes` fp_node n)
+      (fun (_:unit{n == n'}) -> ())
+      (fun (_:unit{n =!= n'}) -> _lemma_node_in_list_is_included n ns)
+
 /// Moving forwards or backwards in a list
 
 let next_node d n =
@@ -461,14 +473,4 @@ let auto_node_val_unchanged_staying_unchanged h0 h1 n =()
 /// look at things.
 
 let auto_node_in_list_is_included h0 n d =
-  let rec aux (n:node 'a) (nl:list (node 'a)) :
-    Lemma
-      (requires (n `L.memP` nl))
-      (ensures (DLL.nodelist_fp0 nl `B.loc_includes` fp_node n)) =
-    match nl with
-    | [_] -> ()
-    | n' :: ns ->
-      FStar.Classical.or_elim #_ #_ #(fun () -> DLL.nodelist_fp0 nl `B.loc_includes` fp_node n)
-        (fun (_:unit{n == n'}) -> ())
-        (fun (_:unit{n =!= n'}) -> aux n ns) in
-  aux n (as_list h0 d)
+  _lemma_node_in_list_is_included n (as_list h0 d)
