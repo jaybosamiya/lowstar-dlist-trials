@@ -447,8 +447,14 @@ let dll_insert_before #t n' d n =
   // assert (fp_dll h1 d `B.loc_includes` (B.loc_buffer (d@h0).DLL.lhead));
   // assert (fp_dll h1 d `B.loc_includes` (B.loc_buffer (d@h0).DLL.ltail));
   // assert (fp_dll h1 d `B.loc_includes` (B.loc_buffer n));
-  assume (n' `L.memP` as_list h1 d);
-  assume ((n'@h0).DLL.blink =!= B.null ==> (n'@h0).DLL.blink `L.memP` as_list h1 d);
+  _lemma_insertion_maintains_memP (as_list h0 d) (as_list h1 d) n' n n';
+  // assert (n' `L.memP` as_list h1 d);
+  _lemma_prev_node_in_list h0 n' d;
+  FStar.Classical.arrow_to_impl #((n'@h0).DLL.blink =!= B.null)
+    #((n'@h0).DLL.blink =!= B.null /\ (n'@h0).DLL.blink `L.memP` as_list h1 d)
+    (fun _ ->
+       _lemma_insertion_maintains_memP (as_list h0 d) (as_list h1 d) n' n (n'@h0).DLL.blink);
+  // assert ((n'@h0).DLL.blink =!= B.null ==> (n'@h0).DLL.blink `L.memP` as_list h1 d);
   _lemma_node_in_list_is_included n' (as_list h1 d);
   _lemma_node_in_list_or_null_is_included (n'@h0).DLL.blink (as_list h1 d);
   // assert (fp_dll h1 d `B.loc_includes` (B.loc_buffer n'));
