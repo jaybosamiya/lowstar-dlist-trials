@@ -330,6 +330,15 @@ let rec _lemma_node_in_list_is_included (n:node 'a) (nl:list (node 'a)) :
       (fun (_:unit{n == n'}) -> ())
       (fun (_:unit{n =!= n'}) -> _lemma_node_in_list_is_included n ns)
 
+(** If a node_or_null is null or belongs to a dll, then its fp is included *)
+let _lemma_node_in_list_or_null_is_included (n:B.pointer_or_null (DLL.node 'a)) (nl:list (node 'a)) :
+  Lemma
+    (requires (n =!= B.null ==> n `L.memP` nl))
+    (ensures (DLL.nodelist_fp0 nl `B.loc_includes` B.loc_buffer n)) =
+  FStar.Classical.arrow_to_impl
+  #(n =!= B.null) #(DLL.nodelist_fp0 nl `B.loc_includes` B.loc_buffer n)
+    (fun _ -> _lemma_node_in_list_is_included n nl)
+
 /// Moving forwards or backwards in a list
 
 let next_node d n =
