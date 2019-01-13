@@ -339,6 +339,35 @@ let _lemma_node_in_list_or_null_is_included (n:B.pointer_or_null (DLL.node 'a)) 
   #(n =!= B.null) #(DLL.nodelist_fp0 nl `B.loc_includes` B.loc_buffer n)
     (fun _ -> _lemma_node_in_list_is_included n nl)
 
+(** If a node is in the list, then the node before it is also in the list if it is not null *)
+let _lemma_prev_node_in_list (h:HS.mem) (n:node 'a) (d:dll 'a) :
+  Lemma
+    (requires (dll_valid h d /\ n `L.memP` as_list h d))
+    (ensures (let n' = (n@h).DLL.blink in
+              n' =!= B.null ==> n' `L.memP` as_list h d)) =
+  let n' = (n@h).DLL.blink in
+  let l = as_list h d in
+  FStar.Classical.arrow_to_impl
+  #(n' =!= B.null) #(n' =!= B.null /\ n' `L.memP` l)
+  (fun _ ->
+    lemma_node_in_valid_dll_is_valid h d n;
+    DLL.extract_nodelist_conn h l (L.index_of l n - 1))
+
+(** If a node is in the list, then the node after it is also in the list if it is not null *)
+let _lemma_next_node_in_list (h:HS.mem) (n:node 'a) (d:dll 'a) :
+  Lemma
+    (requires (dll_valid h d /\ n `L.memP` as_list h d))
+    (ensures (let n' = (n@h).DLL.flink in
+              n' =!= B.null ==> n' `L.memP` as_list h d)) =
+  let n' = (n@h).DLL.flink in
+  let l = as_list h d in
+  FStar.Classical.arrow_to_impl
+  #(n' =!= B.null) #(n' =!= B.null /\ n' `L.memP` l)
+  (fun _ ->
+    lemma_node_in_valid_dll_is_valid h d n;
+    assume (L.index_of l n < L.length l - 1);
+    DLL.extract_nodelist_conn h l (L.index_of l n))
+
 /// Moving forwards or backwards in a list
 
 let next_node d n =
