@@ -1681,6 +1681,11 @@ let dll_insert_before (#t:Type) (d:dll t) (e:pointer (node t)) (n:pointer (node 
 
 #reset-options
 
+unfold
+let _aux_fp_split_by_node (d0 d1:dll 'a) (n:pointer (node 'a)) =
+  dll_fp0 d0 `loc_equiv` B.loc_union (dll_fp0 d1) (Mod.loc_buffer n) /\
+  dll_fp0 d1 `B.loc_disjoint` Mod.loc_buffer n
+
 #set-options "--z3rlimit 20"
 
 let dll_remove_head (#t:Type) (d:dll t) :
