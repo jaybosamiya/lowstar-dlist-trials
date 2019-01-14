@@ -489,16 +489,37 @@ let dll_insert_after #t n' d n =
 #reset-options
 
 let dll_remove_head #t d =
-  admit (); // TODO: Need to prove a bunch of things to make this happen
-  d *= DLL.dll_remove_head (!*d)
+  HST.push_frame ();
+  let h0 = HST.get () in
+  let y = DLL.dll_remove_head (!*d) in
+  let h' = HST.get () in
+  d *= y;
+  let h1 = HST.get () in
+  // TODO: _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d);
+  HST.pop_frame ();
+  admit ()
 
 let dll_remove_tail #t d =
-  admit (); // TODO: Need to prove a bunch of things to make this happen
-  d *= DLL.dll_remove_tail (!*d)
+  HST.push_frame ();
+  let h0 = HST.get () in
+  let y = DLL.dll_remove_tail (!*d) in
+  let h' = HST.get () in
+  d *= y;
+  let h1 = HST.get () in
+  // TODO: _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d);
+  HST.pop_frame ();
+  admit ()
 
 let dll_remove_mid #t d n =
-  admit (); // TODO: Need to prove a bunch of things to make this happen
-  d *= DLL.dll_remove_node (!*d) n
+  HST.push_frame ();
+  let h0 = HST.get () in
+  let y = DLL.dll_remove_node (!*d) n in
+  let h' = HST.get () in
+  d *= y;
+  let h1 = HST.get () in
+  // TODO: _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d);
+  HST.pop_frame ();
+  admit ()
 
 /// Automatic validity maintenance
 ///
