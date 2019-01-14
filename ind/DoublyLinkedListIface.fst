@@ -319,15 +319,13 @@ let _auto_unchanged_node_vals_stays_valid h0 h1 d d2 =
   aux (as_list h1 d)
 
 (** If a dll is assigned to, its original nodes stay unchanged *)
-val _auto_unchanged_node_vals_stays_valid0 (h0 h1:HS.mem) (d:dll 'a) :
+val _lemma_unchanged_node_vals_stays_valid0 (h0 h1:HS.mem) (d:dll 'a) :
   Lemma
     (requires (B.modifies (B.loc_buffer d) h0 h1 /\
                B.loc_buffer d `B.loc_disjoint` DLL.dll_fp0 (d@h0) /\
                B.live h0 d))
     (ensures (unchanged_node_vals h0 h1 (as_list h0 d)))
-    [SMTPat (B.modifies (B.loc_buffer d) h0 h1);
-     SMTPat (unchanged_node_vals h0 h1 (as_list h0 d))]
-let _auto_unchanged_node_vals_stays_valid0 h0 h1 d =
+let _lemma_unchanged_node_vals_stays_valid0 h0 h1 d =
   let rec aux nl : Lemma
     (requires (
        B.modifies (B.loc_buffer d) h0 h1 /\
