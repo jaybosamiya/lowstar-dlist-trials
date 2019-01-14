@@ -217,13 +217,17 @@ val dll_insert_after (#t:Type0) (n':node t) (d:dll t) (n:node t) :
          unchanged_node_vals h0 h1 (as_list h1 d) /\
          as_list h1 d == l_insert_after n' (as_list h0 d) n))
 
-// TODO: Connect [fp_dll h0 d] and [fp_dll h1 d] in these.
+unfold
+let aux_fp_split_by_node (h0 h1:HS.mem) (d:dll 'a) (n:node 'a) =
+  fp_dll h0 d `loc_equiv` B.loc_union (fp_dll h1 d) (fp_node n) /\
+  fp_dll h1 d `B.loc_disjoint` fp_node n
 
 val dll_remove_head (#t:Type0) (d:dll t) :
   HST.Stack unit
     (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h0 d) h0 h1 /\
+         aux_fp_split_by_node h0 h1 d (L.hd (as_list h0 d)) /\
          dll_valid h1 d /\
          unchanged_node_vals h0 h1 (as_list h0 d) /\
          as_list h1 d == l_remove_head (as_list h0 d)))
@@ -233,6 +237,7 @@ val dll_remove_tail (#t:Type0) (d:dll t) :
     (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h0 d) h0 h1 /\
+         aux_fp_split_by_node h0 h1 d (L.last (as_list h0 d)) /\
          dll_valid h1 d /\
          unchanged_node_vals h0 h1 (as_list h0 d) /\
          as_list h1 d == l_remove_tail (as_list h0 d)))
@@ -242,6 +247,7 @@ val dll_remove_mid (#t:Type0) (d:dll t) (n:node t) :
     (requires (fun h0 -> dll_valid h0 d /\ n `L.memP` as_list h0 d))
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h0 d) h0 h1 /\
+         aux_fp_split_by_node h0 h1 d n /\
          dll_valid h1 d /\
          unchanged_node_vals h0 h1 (as_list h0 d) /\
          as_list h1 d == l_remove_mid (as_list h0 d) n))
