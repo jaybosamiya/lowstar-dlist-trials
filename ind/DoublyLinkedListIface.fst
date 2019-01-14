@@ -506,6 +506,8 @@ let dll_insert_after #t n' d n =
 
 #reset-options
 
+#set-options "--z3rlimit 40 --max_fuel 2 --max_ifuel 1"
+
 let dll_remove_head #t d =
   HST.push_frame ();
   let h0 = HST.get () in
@@ -513,9 +515,11 @@ let dll_remove_head #t d =
   let h' = HST.get () in
   d *= y;
   let h1 = HST.get () in
-  // TODO: _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d);
-  HST.pop_frame ();
-  admit ()
+  _lemma_unchanged_node_vals_stays_valid0 h' h1 d;
+  _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h0 d);
+  HST.pop_frame ()
+
+#reset-options
 
 let dll_remove_tail #t d =
   HST.push_frame ();
