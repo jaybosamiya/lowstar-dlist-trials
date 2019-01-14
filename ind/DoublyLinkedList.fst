@@ -1695,7 +1695,10 @@ let dll_remove_head (#t:Type) (d:dll t) :
          (length (reveal d.nodes) > 0)))
     (ensures (fun h0 y h1 ->
          Mod.modifies (Mod.loc_buffer (d.lhead@h0).flink) h0 h1 /\
-         dll_valid h1 y)) =
+         _aux_fp_split_by_node d y d.lhead /\
+         dll_valid h1 y /\
+         unchanged_node_vals h0 h1 (reveal d.nodes) /\
+         reveal y.nodes == tl (reveal d.nodes))) =
   let h0 = ST.get () in
   let e = d.lhead in
   let e2 = (!*e).flink in
@@ -1711,6 +1714,7 @@ let dll_remove_head (#t:Type) (d:dll t) :
     let f' = Frag1 p2 in
     piece_remains_valid_b h0 h1 p2;
     let y = tot_defragmentable_fragment_to_dll h1 f' in
+    aux_unchanged_payload h0 h1 e2 (reveal d.nodes);
     y
   )
 
