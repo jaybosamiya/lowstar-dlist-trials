@@ -383,7 +383,7 @@ let _lemma_next_node_in_list (h:HS.mem) (n:node 'a) (d:dll 'a) :
   #(n' =!= B.null) #(n' =!= B.null /\ n' `L.memP` l)
   (fun _ ->
     lemma_node_in_valid_dll_is_valid h d n;
-    assume (L.index_of l n < L.length l - 1);
+    L.lemma_unsnoc_is_last l;
     DLL.extract_nodelist_conn h l (L.index_of l n))
 
 (** Insertion operations maintain membership *)
