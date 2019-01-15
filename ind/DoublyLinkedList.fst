@@ -1720,6 +1720,27 @@ let dll_remove_head (#t:Type) (d:dll t) :
 
 #reset-options
 
+let rec _lemma_only_head_can_point_left_to_null (#t:Type) (h0:heap) (e:pointer (node t)) (l:nodelist t) :
+  Lemma
+    (requires (e `memP` l /\ (e@h0).blink == null /\ nodelist_conn h0 l))
+    (ensures (e == hd l)) =
+  match l with
+  | [_] -> ()
+  | _ ->
+    FStar.Classical.or_elim #(e == hd l) #(e =!= hd l) #(fun () -> e == hd l)
+      (fun _ -> ())
+      (fun _ ->
+         _lemma_only_head_can_point_left_to_null h0 e (tl l);
+         extract_nodelist_conn h0 l 0)
+
+let rec _lemma_only_tail_can_point_right_to_null (#t:Type) (h0:heap) (e:pointer (node t)) (l:nodelist t) :
+  Lemma
+    (requires (e `memP` l /\ (e@h0).flink == null /\ nodelist_conn h0 l))
+    (ensures (e == last l)) =
+  match l with
+  | [_] -> ()
+  | _ -> _lemma_only_tail_can_point_right_to_null h0 e (tl l)
+
 #set-options "--z3rlimit 50"
 
 let dll_remove_tail (#t:Type) (d:dll t) :
