@@ -1743,6 +1743,24 @@ let rec _lemma_only_tail_can_point_right_to_null (#t:Type) (h0:heap) (e:pointer 
   | [_] -> ()
   | _ -> _lemma_only_tail_can_point_right_to_null h0 e (tl l)
 
+let rec _lemma_all_nodes_are_unique (#t:Type) (h0:heap) (l:nodelist t) (i j:nat) :
+  Lemma
+    (requires (
+        (nodelist_conn h0 l) /\
+        (i < length l) /\
+        (j < length l) /\
+        (((hd l)@h0).blink == null) /\
+        (index l i == index l j)))
+    (ensures (i = j)) =
+  match i, j with
+  | 0, 0 -> ()
+  | 0, _ -> extract_nodelist_conn h0 l (j - 1)
+  | _, 0 -> extract_nodelist_conn h0 l (i - 1)
+  | _ ->
+    extract_nodelist_conn h0 l (i - 1);
+    extract_nodelist_conn h0 l (j - 1);
+    _lemma_all_nodes_are_unique h0 l (i - 1) (j - 1)
+
 #set-options "--z3rlimit 50"
 
 let dll_remove_tail (#t:Type) (d:dll t) :
