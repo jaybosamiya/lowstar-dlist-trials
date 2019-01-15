@@ -1752,13 +1752,17 @@ let dll_remove_tail (#t:Type) (d:dll t) :
          (length (reveal d.nodes) > 0)))
     (ensures (fun h0 y h1 ->
          Mod.modifies (Mod.loc_buffer (d.ltail@h0).blink) h0 h1 /\
-         dll_valid h1 y)) =
+         _aux_fp_split_by_node d y d.ltail /\
+         dll_valid h1 y /\
+         unchanged_node_vals h0 h1 (reveal d.nodes) /\
+         reveal y.nodes == fst (unsnoc (reveal d.nodes)))) =
   let h0 = ST.get () in
   let e = d.ltail in
   let e1 = (!*e).blink in
   lemma_dll_links_contained h0 d (length (reveal d.nodes) - 1);
   lemma_unsnoc_is_last (reveal d.nodes);
   if is_null e1 then (
+    _lemma_only_head_can_point_left_to_null h0 e (reveal d.nodes);
     empty_list
   ) else (
     extract_nodelist_contained h0 (reveal d.nodes) (length (reveal d.nodes) - 2);
@@ -1769,11 +1773,13 @@ let dll_remove_tail (#t:Type) (d:dll t) :
     let h1 = ST.get () in
     let f = tot_dll_to_fragment_split h0 d e1 e in
     let Frag2 p1 p2 = f in
-    // assert (p2.phead == e);
-    // assert (p2.ptail == e);
+    lemma_snoc_length (reveal p1.pnodes, e);
+    // assert (reveal p1.pnodes == fst (unsnoc (reveal d.nodes)));
     let f' = Frag1 p1 in
     piece_remains_valid_f h0 h1 p1;
     let y = tot_defragmentable_fragment_to_dll h1 f' in
+    aux_unchanged_payload h0 h1 e1 (reveal d.nodes);
+    // assert (reveal y.nodes == reveal p1.pnodes);
     y
   )
 
