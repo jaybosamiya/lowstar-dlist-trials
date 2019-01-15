@@ -521,6 +521,8 @@ let dll_remove_head #t d =
 
 #reset-options
 
+#set-options "--z3rlimit 40 --max_fuel 2 --max_ifuel 1"
+
 let dll_remove_tail #t d =
   HST.push_frame ();
   let h0 = HST.get () in
@@ -528,9 +530,20 @@ let dll_remove_tail #t d =
   let h' = HST.get () in
   d *= y;
   let h1 = HST.get () in
-  // TODO: _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d);
-  HST.pop_frame ();
-  admit ()
+
+  FStar.Classical.arrow_to_impl
+  #(L.length (G.reveal (d@h0).DLL.nodes) >= 2)
+  #(DLL.dll_fp0 (d@h0) `B.loc_includes` B.loc_buffer ((d@h0).DLL.ltail@h0).DLL.blink)
+    (fun _ ->
+       DLL.extract_nodelist_conn h0 (G.reveal (d@h0).DLL.nodes) (L.length (G.reveal (d@h0).DLL.nodes) - 2);
+       DLL.extract_nodelist_fp0 (G.reveal (d@h0).DLL.nodes) (L.length (G.reveal (d@h0).DLL.nodes) - 2);
+       L.lemma_unsnoc_is_last (G.reveal (d@h0).DLL.nodes));
+
+  _lemma_unchanged_node_vals_stays_valid0 h' h1 d;
+  _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h0 d);
+  HST.pop_frame ()
+
+#reset-options
 
 let dll_remove_mid #t d n =
   HST.push_frame ();
