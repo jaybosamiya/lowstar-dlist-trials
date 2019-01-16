@@ -1803,7 +1803,12 @@ let dll_remove_tail (#t:Type) (d:dll t) :
 
 #reset-options
 
-#set-options "--z3rlimit 400"
+let _l_remove_mid (l:list 'a{length l > 0}) (x:'a {x `memP` l}) : GTot (list 'a) =
+  let l1, x0 :: l2 = lemma_split_using l x; split_using l x in
+  assert (x == x0);
+  l1 `append` l2
+
+#set-options "--z3rlimit 400 --initial_fuel 2 --initial_ifuel 2 --query_stats"
 
 let dll_remove_node (#t:Type) (d:dll t) (e:pointer (node t)) :
   StackInline (dll t)
@@ -1818,17 +1823,27 @@ let dll_remove_node (#t:Type) (d:dll t) (e:pointer (node t)) :
                          (Mod.loc_union
                             (Mod.loc_buffer (e@h0).blink)
                             (Mod.loc_buffer (e@h0).flink))) h0 h1 /\
-         dll_valid h1 y)) =
+         _aux_fp_split_by_node d y e /\
+         dll_valid h1 y /\
+         unchanged_node_vals h0 h1 (reveal d.nodes) /\
+         reveal y.nodes == _l_remove_mid (reveal d.nodes) e)) =
   let h0 = ST.get () in
   extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
   let e1 = (!*e).blink in
   let e2 = (!*e).flink in
   lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
   if is_null e1 then (
+    _lemma_only_head_can_point_left_to_null h0 e (reveal d.nodes);
     dll_remove_head d
   ) else if is_null e2 then (
-    dll_remove_tail d
+    _lemma_only_tail_can_point_right_to_null h0 e (reveal d.nodes);
+    let y = dll_remove_tail d in
+    let h1 = ST.get () in
+    // assume (unchanged_node_vals h0 h1 (reveal d.nodes));
+    assume (reveal y.nodes == _l_remove_mid (reveal d.nodes) e);
+    y
   ) else (
+    admit ();
     lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
     extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
     extract_nodelist_aa_r (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
@@ -1851,5 +1866,8 @@ let dll_remove_node (#t:Type) (d:dll t) (e:pointer (node t)) :
     piece_remains_valid_b h0' h1 p2';
     let y = tot_defragmentable_fragment_to_dll h1 f' in
     // assert (dll_valid h1 y);
+    assume (_aux_fp_split_by_node d y e);
+    assume (unchanged_node_vals h0 h1 (reveal d.nodes));
+    assume (reveal y.nodes == _l_remove_mid (reveal d.nodes) e);
     y
   )
