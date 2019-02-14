@@ -1913,6 +1913,7 @@ let dll_append (#t:Type) (d1 d2:dll t) :
          Mod.modifies (Mod.loc_union
                             (Mod.loc_buffer d1.ltail)
                             (Mod.loc_buffer d2.lhead)) h0 h1 /\
+         dll_fp0 y `loc_equiv` (dll_fp0 d1 `B.loc_union` dll_fp0 d2) /\
          dll_valid h1 y /\
          unchanged_node_vals h0 h1 (reveal y.nodes) /\
          reveal y.nodes == reveal d1.nodes `append` reveal d2.nodes)) =

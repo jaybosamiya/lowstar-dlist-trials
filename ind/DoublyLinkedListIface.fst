@@ -578,6 +578,24 @@ let dll_remove_mid #t d n =
 
 #reset-options
 
+#set-options "--z3rlimit 20 --max_fuel 2 --max_ifuel 1"
+
+let dll_append #t d1 d2 =
+  HST.push_frame ();
+  let h0 = HST.get () in
+  let y = DLL.dll_append (!*d1) (!*d2) in
+  let h' = HST.get () in
+  d1 *= y;
+  let h1 = HST.get () in
+  assert (_pred_nl_disjoint h0 (as_list h0 d1));
+  assert (_pred_nl_disjoint h0 (as_list h0 d2));
+  DLL.nodelist_append_fp0 (as_list h0 d1) (as_list h0 d2);
+  assert (_pred_nl_disjoint h0 (as_list h1 d1));
+  _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d1);
+  HST.pop_frame ()
+
+#reset-options
+
 /// Automatic validity maintenance
 ///
 /// These are lemmas that you shouldn't really need to refer to

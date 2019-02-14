@@ -166,6 +166,9 @@ let l_remove_mid (l:list 'a{L.length l > 0}) (x:'a {x `L.memP` l}) : GTot (list 
   assert (x == x0);
   l1 `L.append` l2
 
+let l_append (l1 l2:list 'a) : GTot (list 'a) =
+  l1 `L.append` l2
+
 /// Useful "shortform" for equivalence of [loc]s
 
 let loc_equiv (a b:B.loc) =
@@ -251,6 +254,18 @@ val dll_remove_mid (#t:Type0) (d:dll t) (n:node t) :
          dll_valid h1 d /\
          unchanged_node_vals h0 h1 (as_list h0 d) /\
          as_list h1 d == l_remove_mid (as_list h0 d) n))
+
+val dll_append (#t:Type0) (d1 d2:dll t) :
+  HST.Stack unit
+    (requires (fun h0 ->
+         dll_valid h0 d1 /\
+         dll_valid h0 d2 /\
+         fp_dll h0 d1 `B.loc_disjoint` fp_dll h0 d2))
+    (ensures (fun h0 () h1 ->
+         B.modifies (fp_dll h0 d1 `B.loc_union` fp_dll h0 d2) h0 h1 /\
+         dll_valid h1 d1 /\
+         unchanged_node_vals h0 h1 (as_list h1 d1) /\
+         as_list h1 d1 == as_list h0 d1 `l_append` as_list h1 d2))
 
 /// Automatic validity maintenance
 ///
