@@ -1959,3 +1959,58 @@ let dll_append (#t:Type) (d1 d2:dll t) :
   )
 
 #reset-options
+
+#set-options "--z3rlimit 40 --max_fuel 2 --max_ifuel 1"
+
+let dll_split_using (#t:Type) (d:dll t) (e:pointer (node t)) :
+  StackInline (dll t * dll t)
+    (requires (fun h0 ->
+         (dll_valid h0 d) /\
+         (e `memP` reveal d.nodes)))
+    (ensures (fun h0 (y1, y2) h1 ->
+         Mod.modifies (Mod.loc_union
+                         (Mod.loc_union
+                            (Mod.loc_buffer (d.lhead@h0).flink)
+                            (Mod.loc_buffer (d.ltail@h0).blink))
+                         (Mod.loc_union
+                            (Mod.loc_buffer (e@h0).blink)
+                            (Mod.loc_buffer e))) h0 h1 /\
+         dll_valid h1 y1 /\
+         dll_valid h1 y2 /\
+         dll_fp0 d `loc_equiv` (dll_fp0 y1 `Mod.loc_union` dll_fp0 y2) /\
+         dll_fp0 y1 `Mod.loc_disjoint` dll_fp0 y2 /\
+         unchanged_node_vals h0 h1 (reveal d.nodes) /\
+         (reveal y1.nodes, reveal y2.nodes) == split_using (reveal d.nodes) e)) =
+  let h0 = ST.get () in
+  extract_nodelist_contained h0 (reveal d.nodes) (reveal d.nodes `index_of` e);
+  let e1 = (!*e).blink in
+  lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
+  if is_null e1 then (
+    let d1, d2 = empty_list, d in
+    let h1 = ST.get () in
+    aux_unchanged_payload_nomod h0 h1 (reveal d.nodes);
+    _lemma_only_head_can_point_left_to_null h0 e (reveal d.nodes);
+    d1, d2
+  ) else (
+    lemma_dll_links_contained h0 d (reveal d.nodes `index_of` e);
+    extract_nodelist_conn h0 (reveal d.nodes) (reveal d.nodes `index_of` e - 1);
+    !=|> e1;
+    let h0' = ST.get () in
+    !<|= e;
+    let h1 = ST.get () in
+    //
+    let Frag2 p1 p2 = tot_dll_to_fragment_split h0 d e1 e in
+    lemma_unsnoc_is_last (reveal p1.pnodes);
+    piece_remains_valid_f h0 h0' p1;
+    piece_remains_valid h0 h0' (Mod.loc_buffer e1) p2;
+    piece_remains_valid h0' h1 (Mod.loc_buffer e) p1;
+    piece_remains_valid_b h0' h1 p2;
+    let d1 = tot_piece_to_dll h1 p1 in
+    let d2 = tot_piece_to_dll h1 p2 in
+    aux_unchanged_payload h0 h0' e1 (reveal d.nodes);
+    aux_unchanged_payload h0' h1 e (reveal d.nodes);
+    aux_unchanged_payload_transitive h0 h0' h1 (reveal d.nodes);
+    d1, d2
+  )
+
+#reset-options
