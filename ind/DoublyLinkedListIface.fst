@@ -594,6 +594,52 @@ let dll_append #t d1 d2 =
 
 #reset-options
 
+#set-options "--z3rlimit 100 --max_fuel 2 --max_ifuel 1"
+
+let dll_split_using #t d1 d2 n =
+  let h00 = HST.get () in
+  HST.push_frame ();
+  let h0 = HST.get () in
+  let y1, y2 = DLL.dll_split_using (!*d1) n in
+  let h0' = HST.get () in
+  d1 *= y1;
+  let h0'' = HST.get () in
+  d2 *= y2;
+  let h1 = HST.get () in
+  assert (B.loc_buffer d1 `B.loc_disjoint` DLL.dll_fp0 (d1@h0));
+  assert (DLL.dll_fp0 (d1@h0) `B.loc_includes` DLL.dll_fp0 y1);
+  FStar.Classical.arrow_to_impl
+  #(L.length (G.reveal (d1@h0).DLL.nodes) >= 2)
+  #(DLL.dll_fp0 (d1@h0) `B.loc_includes` B.loc_buffer ((d1@h0).DLL.ltail@h0).DLL.blink)
+    (fun _ ->
+       DLL.extract_nodelist_conn h0 (G.reveal (d1@h0).DLL.nodes) (L.length (G.reveal (d1@h0).DLL.nodes) - 2);
+       DLL.extract_nodelist_fp0 (G.reveal (d1@h0).DLL.nodes) (L.length (G.reveal (d1@h0).DLL.nodes) - 2);
+       L.lemma_unsnoc_is_last (G.reveal (d1@h0).DLL.nodes));
+  _lemma_prev_node_in_list h0 n d1;
+  _lemma_node_in_list_or_null_is_included ((n@h0).DLL.blink) (G.reveal (d1@h0).DLL.nodes);
+  _lemma_node_in_list_is_included n (G.reveal (d1@h0).DLL.nodes);
+  assert (B.loc_buffer d1 `B.loc_disjoint` DLL.dll_fp0 (d1@h0'));
+  _lemma_unchanged_node_vals_stays_valid0 h0' h0'' d1;
+  _lemma_unchanged_node_vals_transitive h0 h0' h0'' (as_list h0 d1);
+  //
+  assume (unchanged_node_vals h0'' h1 (as_list h0 d1));
+  assert (_pred_nl_disjoint h0 (as_list h0 d1));
+  assert (_pred_nl_disjoint h0 (as_list h1 d1));
+  assert (_pred_nl_disjoint h0 (as_list h1 d2));
+  _lemma_unchanged_node_vals_transitive h0 h0'' h1 (as_list h0 d1);
+  assume (dll_valid h1 d1);
+  assume (dll_valid h1 d2);
+  HST.pop_frame ();
+  let h11 = HST.get () in
+  B.popped_modifies h1 h11;
+  let loc = B.loc_region_only false (HS.get_tip h1) in
+  _lemma_nodelist_contained_in_unmodified_mem h1 h11 loc (as_list h11 d1);
+  _lemma_nodelist_contained_in_unmodified_mem h1 h11 loc (as_list h11 d2);
+  _lemma_nodelist_conn_in_unmodified_mem h1 h11 loc (as_list h11 d1);
+  _lemma_nodelist_conn_in_unmodified_mem h1 h11 loc (as_list h11 d2)
+
+#reset-options
+
 /// Automatic validity maintenance
 ///
 /// These are lemmas that you shouldn't really need to refer to
