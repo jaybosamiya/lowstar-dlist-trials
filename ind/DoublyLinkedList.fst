@@ -1426,7 +1426,84 @@ let rec aux_unchanged_payload_append #t h0 h1 (nl1 nl2:nodelist t) :
 
 /// Now for the actual ST operations that will be exposed :)
 
-#set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 1"
+let ghost_aux_dll_insert_at_head
+    (#t:Type) (d:dll t) (n:pointer (node t))
+    (h0 h0' h1:heap)
+  : Ghost (dll t)
+      (requires (
+          (Mod.modifies (Mod.loc_buffer n) h0 h0') /\
+          (Mod.modifies (Mod.loc_buffer d.lhead) h0' h1) /\
+          d.lhead =!= null /\
+          (d.lhead@h0').flink == (d.lhead@h1).flink /\
+          (n@h1 |> d.lhead) /\
+          (n <| d.lhead@h1) /\
+          ((n@h1).blink == null) /\
+          (dll_valid h0 d) /\
+          (h0 `contains` n) /\
+          (node_not_in_dll h0 n d)))
+      (ensures (
+          fun y ->
+            Mod.modifies (Mod.loc_union
+                            (Mod.loc_buffer n)
+                            (Mod.loc_buffer d.lhead)) h0 h1 /\
+            dll_valid h1 y /\
+            reveal y.nodes == n :: reveal d.nodes)) =
+  let h = d.lhead in
+  let Frag1 p1 = tot_dll_to_fragment h0 d in
+  let p = tot_node_to_piece h0 n in
+  let f' = Frag2 p p1 in
+  // assert (fragment_valid h1 [p]);
+  // assert (fragment_ghostly_connections f);
+  // assert (length f = 1);
+  // assert (h1 `contains` (hd f).phead);
+  piece_remains_valid h0 h0' (Mod.loc_buffer n) p1;
+  // assert (piece_valid h0' (hd f));
+  piece_remains_valid_b h0' h1 p1;
+  // assert (h1 `contains` (hd f).ptail);
+  // assert (nodelist_contained h1 (reveal (hd f).pnodes));
+  // assert (piece_contained h1 (hd f));
+  // assert (fragment_contained h1 f);
+  // assert (fragment_aa f);
+  // assert (nodelist_conn h1 (reveal (f.[0]).pnodes));
+  // assert (fragment_conn h1 f);
+  // assert (fragment_valid h1 f);
+  // assert (fragment_valid h1 f');
+  // assert (fragment_defragmentable h1 f');
+  // assert (length f' > 0);
+  // assert (is_null ((hd f').phead@h1).blink);
+  // assert (is_null ((last f').ptail@h0).flink);
+  // assert (is_null ((last f').ptail@h0').flink);
+  // assert (is_null ((last f').ptail@h1).flink);
+  let y = tot_defragmentable_fragment_to_dll h1 f' in
+  // assert (dll_valid h1 y);
+  y
+
+inline_for_extraction
+let aux_dll_insert_at_head
+    (#t:Type) (d:dll t) (n:pointer (node t))
+    (h0 h0' h1:heap)
+  : Pure (dll t)
+      (requires (
+          (Mod.modifies (Mod.loc_buffer n) h0 h0') /\
+          (Mod.modifies (Mod.loc_buffer d.lhead) h0' h1) /\
+          d.lhead =!= null /\
+          (d.lhead@h0').flink == (d.lhead@h1).flink /\
+          (n@h1 |> d.lhead) /\
+          (n <| d.lhead@h1) /\
+          ((n@h1).blink == null) /\
+          (dll_valid h0 d) /\
+          (h0 `contains` n) /\
+          (node_not_in_dll h0 n d)))
+      (ensures (
+          fun y ->
+            Mod.modifies (Mod.loc_union
+                            (Mod.loc_buffer n)
+                            (Mod.loc_buffer d.lhead)) h0 h1 /\
+            dll_valid h1 y /\
+            reveal y.nodes == n :: reveal d.nodes)) =
+  { lhead = n ;
+    ltail = d.ltail ;
+    nodes = (ghost_aux_dll_insert_at_head d n h0 h0' h1).nodes }
 
 let dll_insert_at_head (#t:Type) (d:dll t) (n:pointer (node t)) :
   StackInline (dll t)
@@ -1457,37 +1534,8 @@ let dll_insert_at_head (#t:Type) (d:dll t) (n:pointer (node t)) :
     aux_unchanged_payload h0' h1 h (reveal d.nodes);
     aux_unchanged_payload_transitive h0 h0' h1 (reveal d.nodes);
     //
-    let Frag1 p1 = tot_dll_to_fragment h0 d in
-    let p = tot_node_to_piece h0 n in
-    let f' = Frag2 p p1 in
-    // assert (fragment_valid h1 [p]);
-    // assert (fragment_ghostly_connections f);
-    // assert (length f = 1);
-    // assert (h1 `contains` (hd f).phead);
-    piece_remains_valid h0 h0' (Mod.loc_buffer n) p1;
-    // assert (piece_valid h0' (hd f));
-    piece_remains_valid_b h0' h1 p1;
-    // assert (h1 `contains` (hd f).ptail);
-    // assert (nodelist_contained h1 (reveal (hd f).pnodes));
-    // assert (piece_contained h1 (hd f));
-    // assert (fragment_contained h1 f);
-    // assert (fragment_aa f);
-    // assert (nodelist_conn h1 (reveal (f.[0]).pnodes));
-    // assert (fragment_conn h1 f);
-    // assert (fragment_valid h1 f);
-    // assert (fragment_valid h1 f');
-    // assert (fragment_defragmentable h1 f');
-    // assert (length f' > 0);
-    // assert (is_null ((hd f').phead@h1).blink);
-    // assert (is_null ((last f').ptail@h0).flink);
-    // assert (is_null ((last f').ptail@h0').flink);
-    // assert (is_null ((last f').ptail@h1).flink);
-    let y = tot_defragmentable_fragment_to_dll h1 f' in
-    // assert (dll_valid h1 y);
-    y
+    aux_dll_insert_at_head d n h0 h0' h1
   )
-
-#reset-options
 
 #set-options "--z3rlimit 500 --max_fuel 2 --max_ifuel 1"
 
