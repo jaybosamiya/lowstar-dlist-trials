@@ -318,6 +318,16 @@ let _auto_unchanged_node_vals_stays_valid h0 h1 d d2 =
     | n :: ns -> aux ns in
   aux (as_list h1 d)
 
+(** If a nodelist is disjoint from a modification, it stays unchanged *)
+let rec _lemma_unchanged_node_vals_when_disjoint (h0 h1:HS.mem) loc nl : Lemma
+    (requires (
+        B.modifies loc h0 h1 /\
+        DLL.nodelist_fp0 nl `B.loc_disjoint` loc))
+    (ensures (unchanged_node_vals h0 h1 nl)) =
+  match nl with
+  | [] -> ()
+  | n :: ns -> _lemma_unchanged_node_vals_when_disjoint h0 h1 loc ns
+
 (** If a dll is assigned to, its original nodes stay unchanged *)
 val _lemma_unchanged_node_vals_stays_valid0 (h0 h1:HS.mem) (d:dll 'a) :
   Lemma
@@ -326,15 +336,7 @@ val _lemma_unchanged_node_vals_stays_valid0 (h0 h1:HS.mem) (d:dll 'a) :
                B.live h0 d))
     (ensures (unchanged_node_vals h0 h1 (as_list h0 d)))
 let _lemma_unchanged_node_vals_stays_valid0 h0 h1 d =
-  let rec aux nl : Lemma
-    (requires (
-       B.modifies (B.loc_buffer d) h0 h1 /\
-       DLL.nodelist_fp0 nl `B.loc_disjoint` B.loc_buffer d))
-    (ensures (unchanged_node_vals h0 h1 nl)) =
-    match nl with
-    | [] -> ()
-    | n :: ns -> aux ns in
-  aux (as_list h0 d)
+  _lemma_unchanged_node_vals_when_disjoint h0 h1 (B.loc_buffer d) (as_list h0 d)
 
 (** If a node belongs to a dll, then its fp is included *)
 let rec _lemma_node_in_list_is_included (n:node 'a) (nl:list (node 'a)) :
@@ -622,7 +624,8 @@ let dll_split_using #t d1 d2 n =
   _lemma_unchanged_node_vals_stays_valid0 h0' h0'' d1;
   _lemma_unchanged_node_vals_transitive h0 h0' h0'' (as_list h0 d1);
   //
-  assume (unchanged_node_vals h0'' h1 (as_list h0 d1));
+  _lemma_unchanged_node_vals_when_disjoint h0'' h1 (B.loc_buffer d2) (as_list h0 d1);
+  assert (unchanged_node_vals h0'' h1 (as_list h0 d1));
   assert (_pred_nl_disjoint h0 (as_list h0 d1));
   assert (_pred_nl_disjoint h0 (as_list h1 d1));
   assert (_pred_nl_disjoint h0 (as_list h1 d2));
