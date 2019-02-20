@@ -630,8 +630,14 @@ let dll_split_using #t d1 d2 n =
   assert (_pred_nl_disjoint h0 (as_list h1 d1));
   assert (_pred_nl_disjoint h0 (as_list h1 d2));
   _lemma_unchanged_node_vals_transitive h0 h0'' h1 (as_list h0 d1);
-  assume (dll_valid h1 d1);
-  assume (dll_valid h1 d2);
+  assert (dll_valid h0'' d1);
+  _lemma_nodelist_conn_in_unmodified_mem h0'' h1 (B.loc_buffer d2) (as_list h0'' d1);
+  _lemma_nodelist_contained_in_unmodified_mem h0'' h1 (B.loc_buffer d2) (as_list h0'' d1);
+  assert (dll_valid h1 d1);
+  _lemma_nodelist_conn_in_unmodified_mem h0' h0'' (B.loc_buffer d1) (G.reveal y2.DLL.nodes);
+  _lemma_nodelist_contained_in_unmodified_mem h0' h0'' (B.loc_buffer d1) (G.reveal y2.DLL.nodes);
+  assert (DLL.dll_valid h0'' y2);
+  assert (dll_valid h1 d2);
   HST.pop_frame ();
   let h11 = HST.get () in
   B.popped_modifies h1 h11;
