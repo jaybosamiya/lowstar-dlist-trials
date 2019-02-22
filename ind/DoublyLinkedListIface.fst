@@ -75,6 +75,19 @@ let node_val n =
 let node_of v =
   B.alloca (DLL.empty_node v) 1ul
 
+/// Abstract Predicate to help "recall" that updating the payload
+/// leaves connections unchanged
+
+let unchanged_node_connections h0 h1 n =
+  (n@h0).DLL.flink == (n@h1).DLL.flink /\
+  (n@h0).DLL.blink == (n@h1).DLL.blink
+
+/// Be able to modify the payload of a node easily, without affecting
+/// membership
+
+let node_update n v =
+  n *= { !*n with DLL.p = v }
+
 /// Abstract Predicate to help "recall" that [g_node_val] remains
 /// unchanged for nodes, across multiple [mem]s
 

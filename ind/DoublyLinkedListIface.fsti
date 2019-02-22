@@ -59,8 +59,22 @@ val node_of (v:'a) :
          node_valid h1 n /\
          v == g_node_val h1 n))
 
-// TODO: Add [node_update] to update a [node]'s payload, without
-//       needing to remove/re-add things into [dll]s.
+/// Abstract Predicate to help "recall" that updating the payload
+/// leaves connections unchanged
+
+val unchanged_node_connections (h0 h1:HS.mem) (n:node 'a) : GTot prop
+
+/// Be able to modify the payload of a node easily, without affecting
+/// membership
+
+val node_update (n:node 'a) (v:'a) :
+  HST.StackInline (unit)
+    (requires (fun h0 -> node_valid h0 n))
+    (ensures (fun h0 () h1 ->
+         B.modifies (fp_node n) h0 h1 /\
+         node_valid h1 n /\
+         v == g_node_val h1 n /\
+         unchanged_node_connections h0 h1 n))
 
 /// Abstract Predicate to help "recall" that [g_node_val] remains
 /// unchanged for nodes, across multiple [mem]s
@@ -376,3 +390,7 @@ val auto_node_in_list_is_included (h0:HS.mem) (n:node 'a) (d:dll 'a) :
     [SMTPat (B.loc_includes (fp_dll h0 d) (fp_node n));
      SMTPat (dll_valid h0 d);
      SMTPat (node_valid h0 n)]
+
+/// Properties related to unchanged connections
+
+// TODO
