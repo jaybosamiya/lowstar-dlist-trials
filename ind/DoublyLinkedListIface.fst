@@ -721,6 +721,8 @@ let auto_unchanged_node_connections_list_unchanged h0 h1 d n =
   DLL.extract_nodelist_fp0 (as_list h0 d) (as_list h0 d `L.index_of` n);
   assert (B.loc_disjoint (B.loc_buffer d) (B.loc_buffer n))
 
+#set-options "--z3rlimit 10"
+
 let auto_unchanged_node_connections_dll_valid h0 h1 d (n:node 'a) =
   DLL.extract_nodelist_fp0 (as_list h0 d) (as_list h0 d `L.index_of` n);
   assert (d@h0 == d@h1);
@@ -785,7 +787,12 @@ let auto_unchanged_node_connections_dll_valid h0 h1 d (n:node 'a) =
     (fun _ ->
        let l, _ = L.unsnoc (as_list h1 d) in
        let i = as_list h1 d `L.index_of` n in
-       assume (i < L.length (as_list h1 d) - 1);
+       assert (i < L.length (as_list h1 d));
+       assert (i = L.length (as_list h1 d) ==> (d@h1).DLL.ltail == n);
+       assert ((d@h1).DLL.ltail =!= n);
+       assert (i < L.length (as_list h1 d) - 1);
        L.lemma_unsnoc_length (as_list h1 d);
        L.lemma_unsnoc_index (as_list h1 d) i;
        DLL.extract_nodelist_fp0 l (l `L.index_of` n))
+
+#reset-options
