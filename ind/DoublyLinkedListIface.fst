@@ -774,6 +774,18 @@ let auto_unchanged_node_connections_dll_valid h0 h1 d (n:node 'a) =
           (fun _ -> DLL.extract_nodelist_fp0 ns (ns `L.index_of` n)) in
   aux2 #[] (as_list h1 d);
   assert (DLL.nodelist_conn h1 (as_list h1 d));
-  assume (((d@h1).DLL.lhead@h1).DLL.blink == B.null);
-  assume (((d@h1).DLL.ltail@h1).DLL.flink == B.null);
-  ()
+  FStar.Classical.arrow_to_impl
+  #((d@h1).DLL.lhead =!= n) #(((d@h1).DLL.lhead@h1).DLL.blink == B.null)
+    (fun _ ->
+       let l = L.tl (as_list h1 d) in
+       DLL.extract_nodelist_fp0 l (l `L.index_of` n));
+  L.lemma_unsnoc_is_last (as_list h1 d);
+  FStar.Classical.arrow_to_impl
+  #((d@h1).DLL.ltail =!= n) #(((d@h1).DLL.ltail@h1).DLL.flink == B.null)
+    (fun _ ->
+       let l, _ = L.unsnoc (as_list h1 d) in
+       let i = as_list h1 d `L.index_of` n in
+       assume (i < L.length l);
+       L.lemma_unsnoc_length (as_list h1 d);
+       L.lemma_unsnoc_index (as_list h1 d) i;
+       DLL.extract_nodelist_fp0 l (l `L.index_of` n))
