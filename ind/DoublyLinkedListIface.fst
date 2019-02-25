@@ -708,3 +708,72 @@ let auto_node_val_unchanged_staying_unchanged h0 h1 n =()
 
 let auto_node_in_list_is_included h0 n d =
   _lemma_node_in_list_is_included n (as_list h0 d)
+
+/// Properties related to unchanged connections
+///
+/// These are lemmas that you shouldn't really need to refer to
+/// manually. If you do, it is (likely) a bug wrt the patterns, and
+/// you should ask someone who knows about how this library works to
+/// look at things.
+
+let auto_unchanged_node_connections_list_unchanged h0 h1 d n =
+  assert (B.loc_disjoint (B.loc_buffer d) (DLL.dll_fp0 (d@h0)));
+  DLL.extract_nodelist_fp0 (as_list h0 d) (as_list h0 d `L.index_of` n);
+  assert (B.loc_disjoint (B.loc_buffer d) (B.loc_buffer n))
+
+let auto_unchanged_node_connections_dll_valid h0 h1 d (n:node 'a) =
+  DLL.extract_nodelist_fp0 (as_list h0 d) (as_list h0 d `L.index_of` n);
+  assert (d@h0 == d@h1);
+  assert (as_list h0 d == as_list h1 d);
+  let rec aux1 #nl' (nl:list (node 'a)) :
+    Lemma
+      (requires (
+          (B.modifies (B.loc_buffer n) h0 h1) /\
+          (DLL.nodelist_contained h0 nl) /\
+          (DLL.nodelist_aa_r nl) /\
+          (nl' `L.append` nl == as_list h1 d) /\
+          (n `L.memP` nl \/ B.loc_buffer n `B.loc_disjoint` DLL.nodelist_fp0 nl)))
+      (ensures (DLL.nodelist_contained h1 nl))
+      (decreases (L.length nl)) =
+    match nl with
+    | [] -> ()
+    | x :: xs ->
+      let nl1', nl1 = L.snoc (nl', x), xs in
+      L.append_l_cons x xs nl';
+      aux1 #nl1' nl1 in
+  aux1 #[] (as_list h1 d);
+  assert (DLL.nodelist_contained h1 (as_list h1 d));
+  assert ((d@h1).DLL.lhead =!= B.null);
+  assert ((d@h1).DLL.ltail =!= B.null);
+  let rec aux2 #nl' (nl:list (node 'a)) :
+    Lemma
+      (requires (
+          (B.modifies (B.loc_buffer n) h0 h1) /\
+          unchanged_node_connections h0 h1 n /\
+          (DLL.nodelist_contained h0 nl) /\
+          (DLL.nodelist_contained h1 nl) /\
+          (DLL.nodelist_conn h0 nl) /\
+          (DLL.nodelist_aa_r nl) /\
+          (nl' `L.append` nl == as_list h1 d) /\
+          (n `L.memP` nl \/ B.loc_buffer n `B.loc_disjoint` DLL.nodelist_fp0 nl)))
+      (ensures (DLL.nodelist_conn h1 nl))
+      (decreases (L.length nl)) =
+    match nl with
+    | [] -> ()
+    | n1 :: rest ->
+      match rest with
+      | [] -> ()
+      | n2 :: ns ->
+        let nl1', nl1 = L.snoc (nl', n1), rest in
+        L.append_l_cons n1 rest nl';
+        aux2 #nl1' nl1;
+        assert (DLL.nodelist_conn h1 rest);
+        FStar.Classical.arrow_to_impl #(n `L.memP` rest) #((n1@h1).DLL.flink == (n1@h0).DLL.flink)
+          (fun _ -> DLL.extract_nodelist_fp0 rest (rest `L.index_of` n));
+        FStar.Classical.arrow_to_impl #(n `L.memP` ns) #((n2@h1).DLL.blink == (n2@h0).DLL.blink)
+          (fun _ -> DLL.extract_nodelist_fp0 ns (ns `L.index_of` n)) in
+  aux2 #[] (as_list h1 d);
+  assert (DLL.nodelist_conn h1 (as_list h1 d));
+  assume (((d@h1).DLL.lhead@h1).DLL.blink == B.null);
+  assume (((d@h1).DLL.ltail@h1).DLL.flink == B.null);
+  ()

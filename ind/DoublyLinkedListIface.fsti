@@ -392,5 +392,31 @@ val auto_node_in_list_is_included (h0:HS.mem) (n:node 'a) (d:dll 'a) :
      SMTPat (node_valid h0 n)]
 
 /// Properties related to unchanged connections
+///
+/// These are lemmas that you shouldn't really need to refer to
+/// manually. If you do, it is (likely) a bug wrt the patterns, and
+/// you should ask someone who knows about how this library works to
+/// look at things.
 
-// TODO
+val auto_unchanged_node_connections_list_unchanged (h0 h1:HS.mem) (d:dll 'a) (n:node 'a) :
+  Lemma
+    (requires (dll_valid h0 d /\
+               n `L.memP` as_list h0 d /\
+               B.modifies (fp_node n) h0 h1 /\
+               unchanged_node_connections h0 h1 n))
+    (ensures (as_list h1 d == as_list h0 d))
+    [SMTPat (as_list h1 d);
+     SMTPat (dll_valid h0 d);
+     SMTPat (B.modifies (fp_node n) h0 h1);
+     SMTPat (unchanged_node_connections h0 h1 n)]
+
+val auto_unchanged_node_connections_dll_valid (h0 h1:HS.mem) (d:dll 'a) (n:node 'a) :
+  Lemma
+    (requires (dll_valid h0 d /\
+               n `L.memP` as_list h0 d /\
+               B.modifies (fp_node n) h0 h1 /\
+               unchanged_node_connections h0 h1 n))
+    (ensures (dll_valid h1 d))
+    [SMTPat (dll_valid h1 d);
+     SMTPat (B.modifies (fp_node n) h0 h1);
+     SMTPat (unchanged_node_connections h0 h1 n)]
