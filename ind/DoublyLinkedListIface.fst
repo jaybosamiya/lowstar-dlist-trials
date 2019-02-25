@@ -785,7 +785,7 @@ let auto_unchanged_node_connections_dll_valid h0 h1 d (n:node 'a) =
     (fun _ ->
        let l, _ = L.unsnoc (as_list h1 d) in
        let i = as_list h1 d `L.index_of` n in
-       assume (i < L.length l);
+       assume (i < L.length (as_list h1 d) - 1);
        L.lemma_unsnoc_length (as_list h1 d);
        L.lemma_unsnoc_index (as_list h1 d) i;
        DLL.extract_nodelist_fp0 l (l `L.index_of` n))

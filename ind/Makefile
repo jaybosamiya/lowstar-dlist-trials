@@ -1,7 +1,7 @@
 FSTAR := fstar.exe --query_stats --use_hints --record_hints --cache_checked_modules
 
 # List of everything
-all: DoublyLinkedList DoublyLinkedListIface
+all: DoublyLinkedList DoublyLinkedListIface iDoublyLinkedListIface
 
 # Cleanup
 cleanhints:
@@ -16,6 +16,9 @@ clean: cleanchecked
 nuke: cleanhints cleanchecked
 	@echo "Nuked everything!"
 
-# Generic Rule
+# Generic Rules
 %: %.fst
+	$(FSTAR) $<
+
+i%: %.fsti
 	$(FSTAR) $<
