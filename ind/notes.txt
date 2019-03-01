@@ -11,8 +11,8 @@ FStar version tested
 F* 0.9.7.0~dev
 platform=Linux_x86_64
 compiler=OCaml 4.05.0
-date=2018-12-18T18:12:03-0500
-commit=30801ec5bb7dfa867ef166d74b9b2684cb1f5db1
+date=<not set>
+commit=7f6fce2a7bdd6326d623453f9f7977945854a713
 ```
 
 
@@ -23,8 +23,8 @@ TODO
 [X] Add License to Project
 [ ] Test with KreMLin
 [ ] Write interfaces to get it working with QUIC
-[ ] Think about making "modifies" postconditions stronger
-[ ] Figure out the StackInline issue that I had postponed until now
-[ ] Figure out why there are hint failures
+[X] Think about making "modifies" postconditions stronger
+[X] Figure out the StackInline issue that I had postponed until now
+[X] Figure out why there are hint failures
 [ ] Figure out why the proof is so slow
 [ ] Update README
