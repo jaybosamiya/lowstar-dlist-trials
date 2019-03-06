@@ -28,3 +28,9 @@ TODO
 [X] Figure out why there are hint failures
 [ ] Figure out why the proof is so slow
 [ ] Update README
+[ ] Allow checking if at start or at end
+[ ] Write a list-reversal example
+[ ] Expose a fp disjoint for two nodes in a list to be able to talk about unchanged payloads when one of the nodes changes
+[ ] Prove something like append+split == identity
+[ ] Write example for `node (node 'a)`
+[ ] Update to malloc instead of alloca
