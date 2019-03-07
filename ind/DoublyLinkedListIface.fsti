@@ -434,3 +434,49 @@ val auto_unchanged_node_connections_dll_valid (h0 h1:HS.mem) (d:dll 'a) (n:node 
     [SMTPat (dll_valid h1 d);
      SMTPat (B.modifies (fp_node n) h0 h1);
      SMTPat (unchanged_node_connections h0 h1 n)]
+
+/// Properties related to pushes and pops
+///
+/// These are lemmas that you shouldn't really need to refer to
+/// manually. If you do, it is (likely) a bug wrt the patterns, and
+/// you should ask someone who knows about how this library works to
+/// look at things.
+
+val auto_dll_valid_on_push (h0 h1:HS.mem) (d:dll 'a) :
+  Lemma
+    (requires (
+        dll_valid h0 d /\
+        HS.fresh_frame h0 h1))
+    (ensures (dll_valid h1 d))
+    [SMTPat (dll_valid h1 d);
+     SMTPat (HS.fresh_frame h0 h1)]
+
+val auto_dll_fp_on_push (h0 h1:HS.mem) (d:dll 'a) :
+  Lemma
+    (requires (
+        dll_valid h0 d /\
+        HS.fresh_frame h0 h1))
+    (ensures ((fp_dll h0 d == fp_dll h1 d) /\
+              (B.loc_disjoint (fp_dll h1 d) (B.loc_region_only false (HS.get_tip h1)))))
+    [SMTPat (fp_dll h1 d);
+     SMTPat (HS.fresh_frame h0 h1)]
+
+val auto_dll_valid_on_pop (h0 h1:HS.mem) (d:dll 'a) :
+  Lemma
+    (requires (
+        dll_valid h0 d /\
+        HS.popped h0 h1 /\
+        B.loc_disjoint (fp_dll h0 d) (B.loc_region_only false (HS.get_tip h0))))
+    (ensures (dll_valid h1 d))
+    [SMTPat (dll_valid h1 d);
+     SMTPat (HS.popped h0 h1)]
+
+val auto_dll_fp_on_pop (h0 h1:HS.mem) (d:dll 'a) :
+  Lemma
+    (requires (
+        dll_valid h0 d /\
+        HS.popped h0 h1 /\
+        B.loc_disjoint (fp_dll h0 d) (B.loc_region_only false (HS.get_tip h0))))
+    (ensures (fp_dll h0 d == fp_dll h1 d))
+    [SMTPat (fp_dll h1 d);
+     SMTPat (HS.popped h0 h1)]

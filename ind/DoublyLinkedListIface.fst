@@ -829,3 +829,18 @@ let auto_unchanged_node_connections_dll_valid h0 h1 d (n:node 'a) =
        DLL.extract_nodelist_fp0 l (l `L.index_of` n))
 
 #reset-options
+
+/// Properties related to pushes and pops
+///
+/// These are lemmas that you shouldn't really need to refer to
+/// manually. If you do, it is (likely) a bug wrt the patterns, and
+/// you should ask someone who knows about how this library works to
+/// look at things.
+
+let auto_dll_valid_on_push h0 h1 d = ()
+
+let auto_dll_fp_on_push h0 h1 d = ()
+
+let auto_dll_valid_on_pop h0 h1 d = _lemma_dll_valid_and_unchanged_through_pop h0 h1 d
+
+let auto_dll_fp_on_pop h0 h1 d = _lemma_dll_valid_and_unchanged_through_pop h0 h1 d
