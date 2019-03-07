@@ -185,11 +185,11 @@ let _auto_dll_valid_and_unchanged_through_push h0 h1 d =
 val _lemma_dll_valid_and_unchanged_through_pop (h0 h1:HS.mem) (d:dll 'a) :
   Lemma
     (requires (dll_valid h0 d /\ HS.popped h0 h1 /\
-              B.loc_disjoint (fp_dll h0 d) (B.loc_all_regions_from false (HS.get_tip h0))))
+              B.loc_disjoint (fp_dll h0 d) (B.loc_region_only false (HS.get_tip h0))))
     (ensures (dll_valid h1 d /\ d@h0 == d@h1))
 let _lemma_dll_valid_and_unchanged_through_pop h0 h1 d =
   B.popped_modifies h0 h1;
-  assert (B.loc_all_regions_from false (HS.get_tip h0) `B.loc_includes`
+  assert (B.loc_region_only false (HS.get_tip h0) `B.loc_includes`
             B.loc_region_only false (HS.get_tip h0)); // OBSERVE
   let loc = B.loc_region_only false (HS.get_tip h0) in
   _lemma_nodelist_contained_in_unmodified_mem h0 h1 loc (as_list h1 d);
