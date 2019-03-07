@@ -472,41 +472,38 @@ val auto_unchanged_node_connections_dll_valid (h0 h1:HS.mem) (d:dll 'a) (n:node 
 /// you should ask someone who knows about how this library works to
 /// look at things.
 
-val auto_dll_valid_on_push (h0 h1:HS.mem) (d:dll 'a) :
+val auto_dll_push_pop (h0 h1 h2 h3:HS.mem) (d:dll 'a) :
   Lemma
     (requires (
-        dll_valid h0 d /\
-        HS.fresh_frame h0 h1))
-    (ensures (dll_valid h1 d))
-    [SMTPat (dll_valid h1 d);
+        HS.fresh_frame h0 h1 /\
+        B.loc_disjoint (fp_dll h2 d) (B.loc_region_only false (HS.get_tip h2)) /\
+        HS.get_tip h1 == HS.get_tip h2 /\
+        dll_valid h2 d /\
+        HS.popped h2 h3))
+    (ensures (dll_valid h3 d))
+    [SMTPat (dll_valid h3 d);
+     SMTPat (HS.fresh_frame h0 h1);
+     SMTPat (HS.popped h2 h3)]
+
+val auto_dll_fp_push_pop (h0 h1 h2 h3:HS.mem) (d:dll 'a) :
+  Lemma
+    (requires (
+        HS.fresh_frame h0 h1 /\
+        B.loc_disjoint (fp_dll h2 d) (B.loc_region_only false (HS.get_tip h2)) /\
+        HS.get_tip h1 == HS.get_tip h2 /\
+        dll_valid h2 d /\
+        HS.popped h2 h3))
+    (ensures (fp_dll h3 d == fp_dll h2 d))
+    [SMTPat (fp_dll h3 d);
+     SMTPat (HS.fresh_frame h0 h1);
+     SMTPat (HS.popped h2 h3)]
+
+val auto_dll_fp_disjoint_push (h0 h1:HS.mem) (d:dll 'a) :
+  Lemma
+    (requires (
+        HS.fresh_frame h0 h1 /\
+        dll_valid h0 d))
+    (ensures (
+        B.loc_disjoint (fp_dll h1 d) (B.loc_region_only false (HS.get_tip h1))))
+    [SMTPat (B.loc_disjoint (fp_dll h1 d) (B.loc_region_only false (HS.get_tip h1)));
      SMTPat (HS.fresh_frame h0 h1)]
-
-val auto_dll_fp_on_push (h0 h1:HS.mem) (d:dll 'a) :
-  Lemma
-    (requires (
-        dll_valid h0 d /\
-        HS.fresh_frame h0 h1))
-    (ensures ((fp_dll h0 d == fp_dll h1 d) /\
-              (B.loc_disjoint (fp_dll h1 d) (B.loc_region_only false (HS.get_tip h1)))))
-    [SMTPat (fp_dll h1 d);
-     SMTPat (HS.fresh_frame h0 h1)]
-
-val auto_dll_valid_on_pop (h0 h1:HS.mem) (d:dll 'a) :
-  Lemma
-    (requires (
-        dll_valid h0 d /\
-        HS.popped h0 h1 /\
-        B.loc_disjoint (fp_dll h0 d) (B.loc_region_only false (HS.get_tip h0))))
-    (ensures (dll_valid h1 d))
-    [SMTPat (dll_valid h1 d);
-     SMTPat (HS.popped h0 h1)]
-
-val auto_dll_fp_on_pop (h0 h1:HS.mem) (d:dll 'a) :
-  Lemma
-    (requires (
-        dll_valid h0 d /\
-        HS.popped h0 h1 /\
-        B.loc_disjoint (fp_dll h0 d) (B.loc_region_only false (HS.get_tip h0))))
-    (ensures (fp_dll h0 d == fp_dll h1 d))
-    [SMTPat (fp_dll h1 d);
-     SMTPat (HS.popped h0 h1)]
