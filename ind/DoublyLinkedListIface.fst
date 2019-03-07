@@ -419,6 +419,36 @@ let rec _lemma_insertion_maintains_memP (l1 l2:list 'a) (x0 x1 x:'a) :
 
 /// Moving forwards or backwards in a list
 
+let has_next d n =
+  let h0 = HST.get () in
+  DLL.lemma_dll_links_contained h0 (d@h0) (as_list h0 d `L.index_of` n);
+  L.lemma_unsnoc_is_last (as_list h0 d);
+  let y = not (B.is_null (!*n).DLL.flink) in
+  FStar.Classical.or_elim #_ #_ #(fun () ->
+      y <==> as_list h0 d `L.index_of` n < L.length (as_list h0 d) - 1)
+    (fun (_:unit{y}) -> ())
+    (fun (_:unit{not y}) ->
+       DLL._lemma_only_tail_can_point_right_to_null h0 n (as_list h0 d);
+       DLL._lemma_all_nodes_are_unique h0 (as_list h0 d)
+         (as_list h0 d `L.index_of` n)
+         (L.length (as_list h0 d) - 1));
+  y
+
+let has_prev d n =
+  let h0 = HST.get () in
+  DLL.lemma_dll_links_contained h0 (d@h0) (as_list h0 d `L.index_of` n);
+  L.lemma_unsnoc_is_last (as_list h0 d);
+  let y = not (B.is_null (!*n).DLL.blink) in
+  FStar.Classical.or_elim #_ #_ #(fun () ->
+      y <==> as_list h0 d `L.index_of` n > 0)
+    (fun (_:unit{y}) -> ())
+    (fun (_:unit{not y}) ->
+       DLL._lemma_only_head_can_point_left_to_null h0 n (as_list h0 d);
+       DLL._lemma_all_nodes_are_unique h0 (as_list h0 d)
+         (as_list h0 d `L.index_of` n)
+         0);
+  y
+
 let next_node d n =
   let h0 = HST.get () in
   lemma_node_in_valid_dll_is_valid h0 d n;
