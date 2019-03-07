@@ -6,8 +6,9 @@ module B = LowStar.Buffer
 module DLL = DoublyLinkedListIface
 module L = FStar.List.Tot
 
+open DLL
+
 let main () : HST.Stack (unit) (fun _ -> True) (fun _ _ _ -> True) =
-  let open DLL in
   HST.push_frame ();
   let d : dll UInt32.t = dll_new () in
   let n1 = node_of 1ul in
