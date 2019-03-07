@@ -732,6 +732,18 @@ let auto_node_val_staying_unchanged h0 h1 l n = ()
 
 let auto_node_val_unchanged_staying_unchanged h0 h1 n =()
 
+let auto_node_vals_staying_unchanged h0 h1 loc d =
+  let rec aux loc nl : Lemma
+      (requires (
+          B.modifies loc h0 h1 /\
+          DLL.nodelist_contained h0 nl /\
+          B.loc_disjoint (DLL.nodelist_fp0 nl) loc))
+      (ensures (unchanged_node_vals h0 h1 nl)) =
+    match nl with
+    | [] -> ()
+    | hd :: tl -> aux loc tl in
+  aux loc (as_list h1 d)
+
 /// Properties of nodes inside and outside lists
 ///
 /// These are lemmas that you shouldn't really need to refer to
