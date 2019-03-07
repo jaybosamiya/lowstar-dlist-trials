@@ -744,6 +744,11 @@ let auto_node_vals_staying_unchanged h0 h1 loc d =
     | hd :: tl -> aux loc tl in
   aux loc (as_list h1 d)
 
+let rec auto_unchanged_node_vals_transitive h0 h1 h2 l =
+  match l with
+  | [] -> ()
+  | hd :: tl -> auto_unchanged_node_vals_transitive h0 h1 h2 tl
+
 /// Properties of nodes inside and outside lists
 ///
 /// These are lemmas that you shouldn't really need to refer to

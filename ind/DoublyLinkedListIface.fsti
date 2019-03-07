@@ -410,6 +410,17 @@ val auto_node_vals_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:dll 'a) :
     [SMTPat (unchanged_node_vals h0 h1 (as_list h1 d));
      SMTPat (B.modifies l h0 h1)] // XXX: Little worried about this trigger
 
+val auto_unchanged_node_vals_transitive (h0 h1 h2:HS.mem) (l:list (node 'a)) :
+  Lemma
+    (requires (unchanged_node_vals h0 h1 l /\
+               unchanged_node_vals h1 h2 l))
+    (ensures (unchanged_node_vals h0 h2 l))
+    [SMTPatOr [
+        [SMTPat (unchanged_node_vals h0 h1 l); SMTPat (unchanged_node_vals h1 h2 l)];
+        [SMTPat (unchanged_node_vals h0 h1 l); SMTPat (unchanged_node_vals h0 h2 l)];
+        [SMTPat (unchanged_node_vals h1 h2 l); SMTPat (unchanged_node_vals h0 h2 l)];
+      ]]
+
 /// Properties of nodes inside and outside lists
 ///
 /// These are lemmas that you shouldn't really need to refer to
