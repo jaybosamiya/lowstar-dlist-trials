@@ -367,7 +367,7 @@ val auto_dll_as_list_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:dll 'a) :
                B.modifies l h0 h1 /\
                B.loc_disjoint (fp_dll h0 d) l))
     (ensures (as_list h1 d == as_list h0 d))
-    [SMTPat (as_list h1 d); SMTPat (dll_valid h0 d); SMTPat (B.modifies l h0 h1)]
+    [SMTPat (as_list h1 d); SMTPat (B.modifies l h0 h1)]
 
 val auto_node_val_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:node 'a) :
   Lemma
@@ -375,14 +375,14 @@ val auto_node_val_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:node 'a) :
                B.modifies l h0 h1 /\
                B.loc_disjoint (fp_node n) l))
     (ensures (g_node_val h1 n == g_node_val h0 n))
-    [SMTPat (g_node_val h1 n); SMTPat (node_valid h0 n); SMTPat (B.modifies l h0 h1)]
+    [SMTPat (g_node_val h1 n); SMTPat (B.modifies l h0 h1)]
 
 val auto_node_val_unchanged_staying_unchanged (h0 h1:HS.mem) (n:node 'a) :
   Lemma
     (requires (node_valid h0 n /\
                unchanged_node_val h0 h1 n))
     (ensures (g_node_val h1 n == g_node_val h0 n))
-    [SMTPat (g_node_val h1 n); SMTPat (node_valid h0 n); SMTPat (unchanged_node_val h0 h1 n)]
+    [SMTPat (g_node_val h1 n); SMTPat (unchanged_node_val h0 h1 n)]
 
 /// Properties of nodes inside and outside lists
 ///
@@ -397,9 +397,7 @@ val auto_node_in_list_is_included (h0:HS.mem) (n:node 'a) (d:dll 'a) :
                node_valid h0 n /\
                n `L.memP` as_list h0 d))
     (ensures (B.loc_includes (fp_dll h0 d) (fp_node n)))
-    [SMTPat (B.loc_includes (fp_dll h0 d) (fp_node n));
-     SMTPat (dll_valid h0 d);
-     SMTPat (node_valid h0 n)]
+    [SMTPat (B.loc_includes (fp_dll h0 d) (fp_node n))]
 
 /// Properties related to unchanged connections
 ///
@@ -416,7 +414,6 @@ val auto_unchanged_node_connections_list_unchanged (h0 h1:HS.mem) (d:dll 'a) (n:
                unchanged_node_connections h0 h1 n))
     (ensures (as_list h1 d == as_list h0 d))
     [SMTPat (as_list h1 d);
-     SMTPat (dll_valid h0 d);
      SMTPat (B.modifies (fp_node n) h0 h1);
      SMTPat (unchanged_node_connections h0 h1 n)]
 
