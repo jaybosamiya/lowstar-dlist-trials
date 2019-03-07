@@ -322,7 +322,7 @@ val auto_dll_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:dl
                B.modifies l h0 h1 /\
                B.loc_disjoint (fp_dll h0 d) l))
     (ensures (dll_valid h1 d))
-    [SMTPat (dll_valid h0 d); SMTPat (dll_valid h1 d); SMTPat (B.modifies l h0 h1)]
+    [SMTPat (dll_valid h1 d); SMTPat (B.modifies l h0 h1)]
 
 val auto_node_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:node 'a) :
   Lemma
@@ -330,14 +330,14 @@ val auto_node_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:n
                B.modifies l h0 h1 /\
                B.loc_disjoint (fp_node n) l))
     (ensures (node_valid h1 n))
-    [SMTPat (node_valid h0 n); SMTPat (node_valid h1 n); SMTPat (B.modifies l h0 h1)]
+    [SMTPat (node_valid h1 n); SMTPat (B.modifies l h0 h1)]
 
 val auto_node_remains_unchanged_upon_staying_unchanged_val (h0 h1:HS.mem) (n:node 'a) :
   Lemma
     (requires (node_valid h0 n /\
                unchanged_node_val h0 h1 n))
     (ensures (node_valid h1 n))
-    [SMTPat (node_valid h1 n); SMTPat (node_valid h0 n); SMTPat (unchanged_node_val h0 h1 n)]
+    [SMTPat (node_valid h1 n); SMTPat (unchanged_node_val h0 h1 n)]
 
 /// Automatic footprint maintenance
 ///
@@ -352,7 +352,7 @@ val auto_dll_fp_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:dll 'a) :
                B.modifies l h0 h1 /\
                B.loc_disjoint (fp_dll h0 d) l))
     (ensures (fp_dll h1 d == fp_dll h0 d))
-    [SMTPat (fp_dll h1 d); SMTPat (dll_valid h0 d); SMTPat (B.modifies l h0 h1)]
+    [SMTPat (fp_dll h1 d); SMTPat (B.modifies l h0 h1)]
 
 /// Automatic value maintenance
 ///
