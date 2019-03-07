@@ -20,3 +20,15 @@ let main () : HST.Stack (unit) (fun _ -> True) (fun _ _ _ -> True) =
   let t = node_val n1' in
   assert (t == 1ul); // Yay!
   HST.pop_frame ()
+
+let reverse (d:dll 'a) :
+  HST.Stack (unit)
+    (fun h0 -> dll_valid h0 d)
+    (fun h0 () h1 -> dll_valid h1 d /\ as_list h1 d == L.rev (as_list h0 d)) =
+  HST.push_frame ();
+  if is_empty d then (
+    ()
+  ) else (
+    admit ()
+  );
+  HST.pop_frame ()
