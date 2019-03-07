@@ -106,6 +106,9 @@ let as_list h d =
 let dll_new () =
   B.alloca DLL.empty_list 1ul
 
+let is_empty d =
+  B.is_null (!*d).DLL.lhead
+
 let dll_head d =
   (!*d).DLL.lhead
 

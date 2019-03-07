@@ -102,6 +102,13 @@ val dll_new (u:unit)  :
          dll_valid h1 d /\
          as_list h1 d == []))
 
+val is_empty (d:dll 'a) :
+  HST.StackInline (bool)
+    (requires (fun h0 -> dll_valid h0 d))
+    (ensures (fun h0 y h1 ->
+         (h0 == h1) /\
+         (y <==> as_list h0 d == [])))
+
 val dll_head (d:dll 'a) :
   HST.StackInline (node 'a)
     (requires (fun h0 -> dll_valid h0 d /\ L.length (as_list h0 d) > 0))
