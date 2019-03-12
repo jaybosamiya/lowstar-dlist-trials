@@ -12,3 +12,10 @@
 + Proofs being too slow to work with
   + See ~dll_insert_after~ or ~dll_remove_node~ from impl
 + Review of interface: Let's postpone until I make a PR to push the interface into the examples/ master
+
+
+----
+
+
++ TODO: Look at LowStar.Regional
+  - Did Merkle trees using it
