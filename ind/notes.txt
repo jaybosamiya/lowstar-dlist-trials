@@ -33,3 +33,4 @@ TODO
 [ ] Prove something like append+split == identity
 [ ] Write example for `node (node 'a)`
 [ ] Update to malloc instead of alloca
+[ ] Write example for incrementing all nodes' values by 1
