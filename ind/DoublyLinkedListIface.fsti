@@ -309,7 +309,7 @@ val dll_append (#t:Type0) (d1 d2:dll t) :
          B.modifies (fp_dll h0 d1 `B.loc_union` fp_dll h0 d2) h0 h1 /\ // TODO: fp update?
          dll_valid h1 d1 /\
          unchanged_node_vals h0 h1 (as_list h1 d1) /\
-         as_list h1 d1 == as_list h0 d1 `l_append` as_list h1 d2))
+         as_list h1 d1 == as_list h0 d1 `l_append` as_list h0 d2))
 
 val dll_split_using (#t:Type0) (d1 d2:dll t) (n:node t) :
   HST.Stack unit
