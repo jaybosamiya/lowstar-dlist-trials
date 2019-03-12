@@ -1,0 +1,14 @@
++ How to handle ~unchanged_node_vals~ and ~unchanged_node_connections~
+  + Monotonicity?
+    + (Impossible?) to express in current model due to a recursion needed.
+  + Current method makes it difficult for users of the library to prove it directly
+    + See ~Example.reverse~ (and its usage in ~Example.main~).
++ How to handle ~malloc~
+  + Currently using ~alloca~ instead. Need to change it.
+  + Maybe pass in an ~rid~?
++ Proofs being too massive/manual
+  + See ~dll_insert_after~ from impl
+  + See ~dll_split~ from iface-impl
++ Proofs being too slow to work with
+  + See ~dll_insert_after~ or ~dll_remove_node~ from impl
++ Review of interface: Let's postpone until I make a PR to push the interface into the examples/ master
