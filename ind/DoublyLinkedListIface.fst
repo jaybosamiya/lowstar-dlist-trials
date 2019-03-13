@@ -91,7 +91,7 @@ let node_update n v =
 /// Abstract Predicate to help "recall" that [g_node_val] remains
 /// unchanged for nodes, across multiple [mem]s
 
-let unchanged_node_val h0 h1 n =
+let unchanged_node_val (h0 h1:HS.mem) (n:node 'a) : GTot prop =
   (B.live h0 n ==>
    (g_node_val h0 n == g_node_val h1 n /\ B.live h1 n))
 
@@ -425,6 +425,56 @@ let rec _lemma_insertion_maintains_memP (l1 l2:list 'a) (x0 x1 x:'a) :
       (fun (_:unit{x0' =!= x0 /\ x0' =!= x}) ->
          _lemma_insertion_maintains_memP l1' (L.tl l2) x0 x1 x)
 
+(** Unchanged node vals means that the payloads maintain the changes
+    that happened *)
+let rec _lemma_unchanged_node_vals_maintains_changes (h0 h1:HS.mem) (l:list (node 'a)) :
+  Lemma
+    (requires (DLL.nodelist_contained h0 l /\ unchanged_node_vals h0 h1 l))
+    (ensures (g_node_vals h1 l == g_node_vals h0 l)) =
+  match l with
+  | [] -> ()
+  | h :: t ->
+    _lemma_unchanged_node_vals_maintains_changes h0 h1 t
+
+(** Containment holds before/after [append]ing *)
+let rec _lemma_append_contains (h0:HS.mem) (l1 l2:list (node 'a)) :
+  Lemma
+    (ensures (
+        (DLL.nodelist_contained h0 (l1 `L.append` l2)) <==>
+        (DLL.nodelist_contained h0 l1 /\ DLL.nodelist_contained h0 l2))) =
+  match l1 with
+  | [] -> ()
+  | h :: t -> _lemma_append_contains h0 t l2
+
+(** [g_node_vals] before/after [append]ing *)
+let rec _lemma_append_g_node_vals (h0:HS.mem) (l1 l2:list (node 'a)) :
+  Lemma
+    (ensures (
+        (g_node_vals h0 (l1 `L.append` l2) == g_node_vals h0 l1 `L.append` g_node_vals h0 l2))) =
+  match l1 with
+  | [] -> ()
+  | h :: t -> _lemma_append_g_node_vals h0 t l2
+
+(** [unchanged_node_val] before/after [append]ing *)
+let rec _lemma_unchanged_node_vals_append (h0 h1:HS.mem) (l1 l2:list (node 'a)) :
+  Lemma
+    (ensures (
+        (unchanged_node_vals h0 h1 (l1 `L.append` l2) <==>
+         (unchanged_node_vals h0 h1 l1 /\ unchanged_node_vals h0 h1 l2)))) =
+  match l1 with
+  | [] -> ()
+  | h :: t -> _lemma_unchanged_node_vals_append h0 h1 t l2
+
+(** Getting a specific node from an [unchanged_node_val] *)
+let rec _lemma_extract_unchanged_node_val (h0 h1:HS.mem) (n:node 'a) (l:list (node 'a)) :
+  Lemma
+    (requires (unchanged_node_vals h0 h1 l /\ n `L.memP` l))
+    (ensures (unchanged_node_val h0 h1 n)) =
+  let h :: t = l in
+  FStar.Classical.or_elim #_ #_ #(fun () -> unchanged_node_val h0 h1 n)
+    (fun (_:unit{n == h}) -> ())
+    (fun (_:unit{n =!= h}) -> _lemma_extract_unchanged_node_val h0 h1 n t)
+
 /// Moving forwards or backwards in a list
 
 let has_next d n =
@@ -478,6 +528,7 @@ let prev_node d n =
 #set-options "--z3rlimit 20 --max_fuel 2 --max_ifuel 1"
 
 let dll_insert_at_head #t d n =
+  let h00 = HST.get () in
   HST.push_frame ();
   let h0 = HST.get () in
   let y = DLL.dll_insert_at_head (!*d) n in
@@ -485,13 +536,16 @@ let dll_insert_at_head #t d n =
   d *= y;
   let h1 = HST.get () in
   _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d);
-  HST.pop_frame ()
+  HST.pop_frame ();
+  let h11 = HST.get () in
+  _lemma_unchanged_node_vals_maintains_changes h00 h11 (as_list h1 d)
 
 #reset-options
 
 #set-options "--z3rlimit 40 --max_fuel 2 --max_ifuel 1"
 
 let dll_insert_at_tail #t d n =
+  let h00 = HST.get () in
   HST.push_frame ();
   let h0 = HST.get () in
   let y = DLL.dll_insert_at_tail (!*d) n in
@@ -500,7 +554,15 @@ let dll_insert_at_tail #t d n =
   let h1 = HST.get () in
   assert (_pred_nl_disjoint h0 (as_list h1 d)); // OBSERVE
   _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d);
-  HST.pop_frame ()
+  HST.pop_frame ();
+  let h11 = HST.get () in
+  _lemma_append_contains h00 (as_list h0 d) [n];
+  _lemma_unchanged_node_vals_maintains_changes h00 h11 (as_list h1 d);
+  _lemma_append_g_node_vals h11 (as_list h0 d) [n];
+  L.lemma_unsnoc_is_last (as_list h1 d);
+  _lemma_extract_unchanged_node_val h0 h1 n (as_list h1 d);
+  _lemma_append_g_node_vals h00 (as_list h0 d) [n];
+  _lemma_unchanged_node_vals_append h00 h11 (as_list h0 d) [n]
 
 #reset-options
 
