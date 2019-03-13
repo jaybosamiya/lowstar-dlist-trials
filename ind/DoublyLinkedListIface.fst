@@ -569,6 +569,7 @@ let dll_insert_at_tail #t d n =
 #set-options "--z3rlimit 80 --max_fuel 2 --max_ifuel 1"
 
 let dll_insert_before #t n' d n =
+  let h00 = HST.get () in
   HST.push_frame ();
   let h0 = HST.get () in
   let y = DLL.dll_insert_before (!*d) n' n in
@@ -593,13 +594,16 @@ let dll_insert_before #t n' d n =
   // assert (fp_dll h1 d `B.loc_includes` (B.loc_buffer n'));
   // assert (fp_dll h1 d `B.loc_includes` (B.loc_buffer (n'@h0).DLL.blink));
   // assert (B.modifies (fp_dll h1 d) h0 h1);
-  HST.pop_frame ()
+  HST.pop_frame ();
+  let h11 = HST.get () in
+  admit ()
 
 #reset-options
 
 #set-options "--z3rlimit 80 --max_fuel 2 --max_ifuel 1"
 
 let dll_insert_after #t n' d n =
+  let h00 = HST.get () in
   HST.push_frame ();
   let h0 = HST.get () in
   let y = DLL.dll_insert_after (!*d) n' n in
@@ -617,13 +621,16 @@ let dll_insert_after #t n' d n =
   _lemma_node_in_list_is_included n' (as_list h1 d);
   _lemma_node_in_list_or_null_is_included (n'@h0).DLL.flink (as_list h1 d);
   // assert (B.modifies (fp_dll h1 d) h0 h1);
-  HST.pop_frame ()
+  HST.pop_frame ();
+  let h11 = HST.get () in
+  admit ()
 
 #reset-options
 
 #set-options "--z3rlimit 40 --max_fuel 2 --max_ifuel 1"
 
 let dll_remove_head #t d =
+  let h00 = HST.get () in
   HST.push_frame ();
   let h0 = HST.get () in
   let y = DLL.dll_remove_head (!*d) in
@@ -632,13 +639,16 @@ let dll_remove_head #t d =
   let h1 = HST.get () in
   _lemma_unchanged_node_vals_stays_valid0 h' h1 d;
   _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h0 d);
-  HST.pop_frame ()
+  HST.pop_frame ();
+  let h11 = HST.get () in
+  admit ()
 
 #reset-options
 
 #set-options "--z3rlimit 40 --max_fuel 2 --max_ifuel 1"
 
 let dll_remove_tail #t d =
+  let h00 = HST.get () in
   HST.push_frame ();
   let h0 = HST.get () in
   let y = DLL.dll_remove_tail (!*d) in
@@ -656,13 +666,16 @@ let dll_remove_tail #t d =
 
   _lemma_unchanged_node_vals_stays_valid0 h' h1 d;
   _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h0 d);
-  HST.pop_frame ()
+  HST.pop_frame ();
+  let h11 = HST.get () in
+  admit ()
 
 #reset-options
 
 #set-options "--z3rlimit 40 --max_fuel 2 --max_ifuel 1"
 
 let dll_remove_mid #t d n =
+  let h00 = HST.get () in
   HST.push_frame ();
   let h0 = HST.get () in
   let y = DLL.dll_remove_node (!*d) n in
@@ -689,13 +702,16 @@ let dll_remove_mid #t d n =
 
   _lemma_unchanged_node_vals_stays_valid0 h' h1 d;
   _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h0 d);
-  HST.pop_frame ()
+  HST.pop_frame ();
+  let h11 = HST.get () in
+  admit ()
 
 #reset-options
 
 #set-options "--z3rlimit 20 --max_fuel 2 --max_ifuel 1"
 
 let dll_append #t d1 d2 =
+  let h00 = HST.get () in
   HST.push_frame ();
   let h0 = HST.get () in
   let y = DLL.dll_append (!*d1) (!*d2) in
@@ -705,7 +721,9 @@ let dll_append #t d1 d2 =
   DLL.nodelist_append_fp0 (as_list h0 d1) (as_list h0 d2);
   assert (_pred_nl_disjoint h0 (as_list h1 d1)); // OBSERVE
   _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d1);
-  HST.pop_frame ()
+  HST.pop_frame ();
+  let h11 = HST.get () in
+  admit ()
 
 #reset-options
 
@@ -758,7 +776,8 @@ let dll_split_using #t d1 d2 n =
   _lemma_nodelist_contained_in_unmodified_mem h1 h11 loc (as_list h11 d1);
   _lemma_nodelist_contained_in_unmodified_mem h1 h11 loc (as_list h11 d2);
   _lemma_nodelist_conn_in_unmodified_mem h1 h11 loc (as_list h11 d1);
-  _lemma_nodelist_conn_in_unmodified_mem h1 h11 loc (as_list h11 d2)
+  _lemma_nodelist_conn_in_unmodified_mem h1 h11 loc (as_list h11 d2);
+  admit ()
 
 #reset-options
 
@@ -795,26 +814,19 @@ let auto_dll_fp_upon_staying_unchanged h0 h1 l d = ()
 
 let auto_dll_as_list_staying_unchanged h0 h1 l d =()
 
-let auto_node_val_staying_unchanged h0 h1 l n = ()
-
-let auto_node_val_unchanged_staying_unchanged h0 h1 n =()
-
-let auto_node_vals_staying_unchanged h0 h1 loc d =
+let auto_dll_as_payload_list_staying_unchanged h0 h1 loc d =
   let rec aux loc nl : Lemma
       (requires (
           B.modifies loc h0 h1 /\
           DLL.nodelist_contained h0 nl /\
           B.loc_disjoint (DLL.nodelist_fp0 nl) loc))
-      (ensures (unchanged_node_vals h0 h1 nl)) =
+      (ensures (g_node_vals h0 nl == g_node_vals h1 nl)) =
     match nl with
     | [] -> ()
     | hd :: tl -> aux loc tl in
   aux loc (as_list h1 d)
 
-let rec auto_unchanged_node_vals_transitive h0 h1 h2 l =
-  match l with
-  | [] -> ()
-  | hd :: tl -> auto_unchanged_node_vals_transitive h0 h1 h2 tl
+let auto_node_val_staying_unchanged h0 h1 l n = ()
 
 /// Properties of nodes inside and outside lists
 ///
@@ -825,6 +837,9 @@ let rec auto_unchanged_node_vals_transitive h0 h1 h2 l =
 
 let auto_node_in_list_is_included h0 n d =
   _lemma_node_in_list_is_included n (as_list h0 d)
+
+let auto_node_in_list_is_valid h0 n d =
+  DLL.extract_nodelist_contained h0 (as_list h0 d) (as_list h0 d `L.index_of` n)
 
 /// Properties related to unchanged connections
 ///
