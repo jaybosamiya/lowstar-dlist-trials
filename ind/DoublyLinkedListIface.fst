@@ -95,6 +95,11 @@ let unchanged_node_val h0 h1 n =
   (B.live h0 n ==>
    (g_node_val h0 n == g_node_val h1 n /\ B.live h1 n))
 
+let rec unchanged_node_vals (h0 h1:HS.mem) (ns:list (node 'a)) : GTot prop =
+  match ns with
+  | [] -> True
+  | n :: ns' -> unchanged_node_val h0 h1 n /\ unchanged_node_vals h0 h1 ns'
+
 /// Viewing ghostly state of a list
 
 let as_list h d =
