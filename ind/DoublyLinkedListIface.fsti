@@ -76,19 +76,18 @@ val node_update (n:node 'a) (v:'a) :
          v == g_node_val h1 n /\
          unchanged_node_connections h0 h1 n))
 
-/// Abstract Predicate to help "recall" that [g_node_val] remains
-/// unchanged for nodes, across multiple [mem]s
-
-val unchanged_node_val (h0 h1:HS.mem) (n:node 'a) : GTot prop
-
-let rec unchanged_node_vals (h0 h1:HS.mem) (ns:list (node 'a)) : GTot prop =
-  match ns with
-  | [] -> True
-  | n :: ns' -> unchanged_node_val h0 h1 n /\ unchanged_node_vals h0 h1 ns'
-
-/// Viewing ghostly state of a DoublyLinkedList as a list
+/// Viewing ghostly state of a DoublyLinkedList as a list of nodes,
+/// and as list of payloads
 
 val as_list (h:HS.mem) (d:dll 'a) : GTot (list (node 'a))
+
+let rec g_node_vals (h:HS.mem) (l:list (node 'a)) : GTot (list 'a) =
+  match l with
+  | [] -> []
+  | hd :: tl -> g_node_val h hd :: g_node_vals h tl
+
+let as_payload_list (h:HS.mem) (d:dll 'a) : GTot (list 'a) =
+  g_node_vals h (as_list h d)
 
 /// Creating an empty DoublyLinkedList, and quickly accessing the head
 /// and tail of a DoublyLinkedList
@@ -189,10 +188,18 @@ let l_insert_before (x0:'a) (l:list 'a{x0 `L.memP` l}) (x:'a) : GTot (list 'a) =
   let l1, l2 = L.split_using l x0 in
   l1 `L.append` (x :: l2)
 
+let l_insert_before' (i:nat) (l:list 'a) (x:'a) : GTot (list 'a) =
+  let l1, l2 = L.splitAt i l in
+  l1 `L.append` (x :: l2)
+
 let l_insert_after (x0:'a) (l:list 'a{x0 `L.memP` l}) (x:'a) : GTot (list 'a) =
   let l1, x1 :: l2 = L.lemma_split_using l x0; L.split_using l x0 in
   assert (x0 == x1);
   l1 `L.append` (x0 :: (x :: l2))
+
+let l_insert_after' (i:nat) (l:list 'a{i < L.length l}) (x:'a) : GTot (list 'a) =
+  let l1, x1 :: l2 = L.lemma_splitAt_snd_length i l; L.splitAt i l in
+  l1 `L.append` ((L.index l i) :: (x :: l2))
 
 let l_remove_head (l:list 'a{L.length l > 0}) : GTot (list 'a) =
   match l with
@@ -207,11 +214,18 @@ let l_remove_mid (l:list 'a{L.length l > 0}) (x:'a {x `L.memP` l}) : GTot (list 
   assert (x == x0);
   l1 `L.append` l2
 
+let l_remove_mid' (l:list 'a{L.length l > 0}) (i:nat{i < L.length l}) : GTot (list 'a) =
+  let l1, x0 :: l2 = L.lemma_splitAt_snd_length i l; L.splitAt i l in
+  l1 `L.append` l2
+
 let l_append (l1 l2:list 'a) : GTot (list 'a) =
   l1 `L.append` l2
 
 let l_split_using (l:list 'a) (x:'a{x `L.memP` l}) : GTot (list 'a * list 'a) =
   L.split_using l x
+
+let l_split_using' (l:list 'a) (i:nat) : GTot (list 'a * list 'a) =
+  L.splitAt i l
 
 /// Useful "shortform" for equivalence of [loc]s
 
@@ -231,7 +245,7 @@ val dll_insert_at_head (#t:Type0) (d:dll t) (n:node t) :
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d `loc_equiv` B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
-         unchanged_node_vals h0 h1 (as_list h1 d) /\
+         as_payload_list h1 d == l_insert_at_head (as_payload_list h0 d) (g_node_val h0 n) /\
          as_list h1 d == l_insert_at_head (as_list h0 d) n))
 
 val dll_insert_at_tail (#t:Type0) (d:dll t) (n:node t) :
@@ -241,7 +255,7 @@ val dll_insert_at_tail (#t:Type0) (d:dll t) (n:node t) :
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d `loc_equiv` B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
-         unchanged_node_vals h0 h1 (as_list h1 d) /\
+         as_payload_list h1 d == l_insert_at_tail (as_payload_list h0 d) (g_node_val h0 n) /\
          as_list h1 d == l_insert_at_tail (as_list h0 d) n))
 
 val dll_insert_before (#t:Type0) (n':node t) (d:dll t) (n:node t) :
@@ -251,7 +265,8 @@ val dll_insert_before (#t:Type0) (n':node t) (d:dll t) (n:node t) :
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d `loc_equiv` B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
-         unchanged_node_vals h0 h1 (as_list h1 d) /\
+         as_payload_list h1 d == l_insert_before'
+           (as_list h0 d `L.index_of` n') (as_payload_list h0 d) (g_node_val h0 n) /\
          as_list h1 d == l_insert_before n' (as_list h0 d) n))
 
 val dll_insert_after (#t:Type0) (n':node t) (d:dll t) (n:node t) :
@@ -261,7 +276,9 @@ val dll_insert_after (#t:Type0) (n':node t) (d:dll t) (n:node t) :
          B.modifies (fp_dll h1 d) h0 h1 /\
          fp_dll h1 d `loc_equiv` B.loc_union (fp_dll h0 d) (fp_node n) /\
          dll_valid h1 d /\ node_valid h1 n /\
-         unchanged_node_vals h0 h1 (as_list h1 d) /\
+         L.length (as_payload_list h0 d) = L.length (as_list h0 d) /\ // TODO: Why?!
+         as_payload_list h1 d == l_insert_after'
+           (as_list h0 d `L.index_of` n') (as_payload_list h0 d) (g_node_val h0 n) /\
          as_list h1 d == l_insert_after n' (as_list h0 d) n))
 
 unfold
@@ -276,7 +293,9 @@ val dll_remove_head (#t:Type0) (d:dll t) :
          B.modifies (fp_dll h0 d) h0 h1 /\
          aux_fp_split_by_node h0 h1 d (L.hd (as_list h0 d)) /\
          dll_valid h1 d /\
-         unchanged_node_vals h0 h1 (as_list h0 d) /\
+         node_valid h1 (L.hd (as_list h0 d)) /\
+         g_node_val h0 (L.hd (as_list h0 d)) == g_node_val h1 (L.hd (as_list h0 d)) /\
+         as_payload_list h1 d == l_remove_head (as_payload_list h0 d) /\
          as_list h1 d == l_remove_head (as_list h0 d)))
 
 val dll_remove_tail (#t:Type0) (d:dll t) :
@@ -286,7 +305,9 @@ val dll_remove_tail (#t:Type0) (d:dll t) :
          B.modifies (fp_dll h0 d) h0 h1 /\
          aux_fp_split_by_node h0 h1 d (L.last (as_list h0 d)) /\
          dll_valid h1 d /\
-         unchanged_node_vals h0 h1 (as_list h0 d) /\
+         node_valid h1 (L.last (as_list h0 d)) /\
+         g_node_val h0 (L.last (as_list h0 d)) == g_node_val h1 (L.last (as_list h0 d)) /\
+         as_payload_list h1 d == l_remove_tail (as_payload_list h0 d) /\
          as_list h1 d == l_remove_tail (as_list h0 d)))
 
 val dll_remove_mid (#t:Type0) (d:dll t) (n:node t) :
@@ -296,7 +317,9 @@ val dll_remove_mid (#t:Type0) (d:dll t) (n:node t) :
          B.modifies (fp_dll h0 d) h0 h1 /\
          aux_fp_split_by_node h0 h1 d n /\
          dll_valid h1 d /\
-         unchanged_node_vals h0 h1 (as_list h0 d) /\
+         g_node_val h0 n == g_node_val h1 n /\
+         L.length (as_payload_list h0 d) = L.length (as_list h0 d) /\ // TODO: Why?!
+         as_payload_list h1 d == l_remove_mid' (as_payload_list h0 d) (as_list h0 d `L.index_of` n) /\
          as_list h1 d == l_remove_mid (as_list h0 d) n))
 
 val dll_append (#t:Type0) (d1 d2:dll t) :
@@ -308,7 +331,7 @@ val dll_append (#t:Type0) (d1 d2:dll t) :
     (ensures (fun h0 () h1 ->
          B.modifies (fp_dll h0 d1 `B.loc_union` fp_dll h0 d2) h0 h1 /\ // TODO: fp update?
          dll_valid h1 d1 /\
-         unchanged_node_vals h0 h1 (as_list h1 d1) /\
+         as_payload_list h1 d1 == as_payload_list h0 d1 `l_append` as_payload_list h0 d2 /\
          as_list h1 d1 == as_list h0 d1 `l_append` as_list h1 d2))
 
 val dll_split_using (#t:Type0) (d1 d2:dll t) (n:node t) :
@@ -323,7 +346,7 @@ val dll_split_using (#t:Type0) (d1 d2:dll t) (n:node t) :
          B.modifies (fp_dll h0 d1 `B.loc_union` fp_dll h0 d2) h0 h1 /\ // TODO: fp update?
          dll_valid h1 d1 /\
          dll_valid h1 d2 /\
-         unchanged_node_vals h0 h1 (as_list h0 d1) /\
+         (as_payload_list h1 d1, as_payload_list h1 d2) == l_split_using' (as_payload_list h0 d1) (as_list h0 d1 `L.index_of` n) /\
          (as_list h1 d1, as_list h1 d2) == l_split_using (as_list h0 d1) n))
 
 /// Automatic validity maintenance
@@ -348,13 +371,6 @@ val auto_node_remains_valid_upon_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:n
                B.loc_disjoint (fp_node n) l))
     (ensures (node_valid h1 n))
     [SMTPat (node_valid h1 n); SMTPat (B.modifies l h0 h1)]
-
-val auto_node_remains_unchanged_upon_staying_unchanged_val (h0 h1:HS.mem) (n:node 'a) :
-  Lemma
-    (requires (node_valid h0 n /\
-               unchanged_node_val h0 h1 n))
-    (ensures (node_valid h1 n))
-    [SMTPat (node_valid h1 n); SMTPat (unchanged_node_val h0 h1 n)]
 
 /// Automatic footprint maintenance
 ///
@@ -386,6 +402,14 @@ val auto_dll_as_list_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:dll 'a) :
     (ensures (as_list h1 d == as_list h0 d))
     [SMTPat (as_list h1 d); SMTPat (B.modifies l h0 h1)]
 
+val auto_dll_as_payload_list_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:dll 'a) :
+  Lemma
+    (requires (dll_valid h0 d /\
+               B.modifies l h0 h1 /\
+               B.loc_disjoint (fp_dll h0 d) l))
+    (ensures (as_payload_list h1 d == as_payload_list h0 d))
+    [SMTPat (as_payload_list h1 d); SMTPat (B.modifies l h0 h1)]
+
 val auto_node_val_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:node 'a) :
   Lemma
     (requires (node_valid h0 n /\
@@ -393,33 +417,6 @@ val auto_node_val_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (n:node 'a) :
                B.loc_disjoint (fp_node n) l))
     (ensures (g_node_val h1 n == g_node_val h0 n))
     [SMTPat (g_node_val h1 n); SMTPat (B.modifies l h0 h1)]
-
-val auto_node_val_unchanged_staying_unchanged (h0 h1:HS.mem) (n:node 'a) :
-  Lemma
-    (requires (node_valid h0 n /\
-               unchanged_node_val h0 h1 n))
-    (ensures (g_node_val h1 n == g_node_val h0 n))
-    [SMTPat (g_node_val h1 n); SMTPat (unchanged_node_val h0 h1 n)]
-
-val auto_node_vals_staying_unchanged (h0 h1:HS.mem) (l:B.loc) (d:dll 'a) :
-  Lemma
-    (requires (dll_valid h0 d /\
-               B.modifies l h0 h1 /\
-               B.loc_disjoint (fp_dll h0 d) l))
-    (ensures (unchanged_node_vals h0 h1 (as_list h1 d)))
-    [SMTPat (unchanged_node_vals h0 h1 (as_list h1 d));
-     SMTPat (B.modifies l h0 h1)] // XXX: Little worried about this trigger
-
-val auto_unchanged_node_vals_transitive (h0 h1 h2:HS.mem) (l:list (node 'a)) :
-  Lemma
-    (requires (unchanged_node_vals h0 h1 l /\
-               unchanged_node_vals h1 h2 l))
-    (ensures (unchanged_node_vals h0 h2 l))
-    [SMTPatOr [
-        [SMTPat (unchanged_node_vals h0 h1 l); SMTPat (unchanged_node_vals h1 h2 l)];
-        [SMTPat (unchanged_node_vals h0 h1 l); SMTPat (unchanged_node_vals h0 h2 l)];
-        [SMTPat (unchanged_node_vals h1 h2 l); SMTPat (unchanged_node_vals h0 h2 l)];
-      ]]
 
 /// Properties of nodes inside and outside lists
 ///
@@ -431,10 +428,17 @@ val auto_unchanged_node_vals_transitive (h0 h1 h2:HS.mem) (l:list (node 'a)) :
 val auto_node_in_list_is_included (h0:HS.mem) (n:node 'a) (d:dll 'a) :
   Lemma
     (requires (dll_valid h0 d /\
-               node_valid h0 n /\
                n `L.memP` as_list h0 d))
     (ensures (B.loc_includes (fp_dll h0 d) (fp_node n)))
     [SMTPat (B.loc_includes (fp_dll h0 d) (fp_node n))]
+
+val auto_node_in_list_is_valid (h0:HS.mem) (n:node 'a) (d:dll 'a) :
+  Lemma
+    (requires (dll_valid h0 d /\
+               n `L.memP` as_list h0 d))
+    (ensures (node_valid h0 n))
+    [SMTPat (node_valid h0 n);
+     SMTPat (dll_valid h0 d)]
 
 /// Properties related to unchanged connections
 ///

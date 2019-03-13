@@ -8,7 +8,7 @@ module L = FStar.List.Tot
 
 open DLL
 
-let rec l_reverse (l:list 'a) : GTot (list 'a) =
+let rec l_reverse (l:list 'a) : GTot (y:list 'a) =
   match l with
   | [] -> []
   | hd :: tl ->
@@ -20,7 +20,7 @@ let rec reverse (d:dll 'a) :
     (fun h0 () h1 ->
        dll_valid h1 d /\
        as_list h1 d == l_reverse (as_list h0 d) /\
-       unchanged_node_vals h0 h1 (as_list h0 d) /\
+       as_payload_list h1 d == l_reverse (as_payload_list h0 d) /\
        B.modifies (fp_dll h0 d) h0 h1 /\
        fp_dll h0 d `loc_equiv` fp_dll h1 d) =
   HST.push_frame ();
@@ -30,8 +30,7 @@ let rec reverse (d:dll 'a) :
     let n = dll_head d in
     dll_remove_head d;
     reverse d;
-    dll_insert_at_tail d n;
-    admit ()
+    dll_insert_at_tail d n
   );
   HST.pop_frame ()
 
@@ -44,6 +43,8 @@ let main () : HST.Stack (unit) (fun _ -> True) (fun _ _ _ -> True) =
   dll_insert_at_tail d n2;
   let h0 = HST.get () in
   reverse d;
+  let h1 = HST.get () in
+  assert (n2 `L.memP` as_list h1 d); // OBSERVE. TODO: WHY????!???
   let n1' = dll_head d in
   let t = node_val n1' in
   assert (t == 2ul); // Yay!
