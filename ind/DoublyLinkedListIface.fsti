@@ -333,7 +333,9 @@ val dll_append (#t:Type0) (d1 d2:dll t) :
          dll_valid h0 d2 /\
          fp_dll h0 d1 `B.loc_disjoint` fp_dll h0 d2))
     (ensures (fun h0 () h1 ->
-         B.modifies (fp_dll h0 d1 `B.loc_union` fp_dll h0 d2) h0 h1 /\ // TODO: fp update?
+         B.modifies (fp_dll h0 d1 `B.loc_union` fp_dll h0 d2) h0 h1 /\
+         fp_strictly_disjoint_union (B.loc_union (fp_dll h1 d1) (fp_dll h1 d2))
+           (fp_dll h0 d1) (fp_dll h0 d2) /\
          dll_valid h1 d1 /\
          as_payload_list h1 d1 == as_payload_list h0 d1 `l_append` as_payload_list h0 d2 /\
          as_list h1 d1 == as_list h0 d1 `l_append` as_list h0 d2))
@@ -347,7 +349,9 @@ val dll_split_using (#t:Type0) (d1 d2:dll t) (n:node t) :
          fp_dll h0 d1 `B.loc_disjoint` fp_dll h0 d2 /\
          as_list h0 d2 == []))
     (ensures (fun h0 () h1 ->
-         B.modifies (fp_dll h0 d1 `B.loc_union` fp_dll h0 d2) h0 h1 /\ // TODO: fp update?
+         B.modifies (fp_dll h0 d1 `B.loc_union` fp_dll h0 d2) h0 h1 /\
+         fp_strictly_disjoint_union (B.loc_union (fp_dll h1 d1) (fp_dll h1 d2))
+           (fp_dll h0 d1) (fp_dll h0 d2) /\
          dll_valid h1 d1 /\
          dll_valid h1 d2 /\
          (as_payload_list h1 d1, as_payload_list h1 d2) == l_split_using' (as_payload_list h0 d1) (as_list h0 d1 `L.index_of` n) /\
