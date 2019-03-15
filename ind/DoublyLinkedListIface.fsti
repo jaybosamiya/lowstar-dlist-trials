@@ -282,9 +282,13 @@ val dll_insert_after (#t:Type0) (n':node t) (d:dll t) (n:node t) :
          as_list h1 d == l_insert_after n' (as_list h0 d) n))
 
 unfold
+let fp_strictly_disjoint_union (l l1 l2:B.loc) =
+  l `loc_equiv` B.loc_union l1 l2 /\
+  l1 `B.loc_disjoint` l2
+
+unfold
 let aux_fp_split_by_node (h0 h1:HS.mem) (d:dll 'a) (n:node 'a) =
-  fp_dll h0 d `loc_equiv` B.loc_union (fp_dll h1 d) (fp_node n) /\
-  fp_dll h1 d `B.loc_disjoint` fp_node n
+  fp_strictly_disjoint_union (fp_dll h0 d) (fp_dll h1 d) (fp_node n)
 
 val dll_remove_head (#t:Type0) (d:dll t) :
   HST.Stack unit
