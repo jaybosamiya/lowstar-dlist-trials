@@ -596,7 +596,36 @@ let dll_insert_before #t n' d n =
   // assert (B.modifies (fp_dll h1 d) h0 h1);
   HST.pop_frame ();
   let h11 = HST.get () in
-  admit ()
+  assume (g_node_vals h11 (let l1, l2 = L.split_using (as_list h00 d) n' in l1) == (
+      let l1, l2 = L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d)) in
+      l1));
+  assume (n `L.memP` as_list h1 d);
+  _lemma_extract_unchanged_node_val h0 h1 n (as_list h1 d);
+  // assert (g_node_val h1 n == g_node_val h0 n);
+  assume (g_node_vals h11 (let l1, l2 = L.split_using (as_list h00 d) n' in l2) == (
+      let l1, l2 = L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d)) in
+      l2));
+  _lemma_append_g_node_vals h11
+    (let l1, l2 = L.split_using (as_list h00 d) n' in l1)
+    (let l1, l2 = L.split_using (as_list h00 d) n' in (n :: l2));
+  assert (g_node_vals h11 (
+      let l1, l2 = L.split_using (as_list h00 d) n' in
+      l1 `L.append` (n :: l2)) == (
+      let l1, l2 = L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d)) in
+      l1 `L.append` ((g_node_val h00 n) :: l2)));
+  // assert (g_node_vals h11 (l_insert_before n' (as_list h00 d) n) == (
+  //     let l1, l2 = L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d)) in
+  //     l1 `L.append` ((g_node_val h00 n) :: l2)));
+  // assert (g_node_vals h11 (as_list h11 d) == (
+  //     let l1, l2 = L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d)) in
+  //     l1 `L.append` ((g_node_val h00 n) :: l2)));
+  // assert (as_payload_list h11 d == (
+  //     let l1, l2 = L.splitAt (as_list h00 d `L.index_of` n') (as_payload_list h00 d) in
+  //     l1 `L.append` ((g_node_val h00 n) :: l2)));
+  // assert (as_payload_list h11 d == l_insert_before'
+  //           (as_list h00 d `L.index_of` n') (as_payload_list h00 d) (g_node_val h00 n));
+  // admit
+    ()
 
 #reset-options
 
