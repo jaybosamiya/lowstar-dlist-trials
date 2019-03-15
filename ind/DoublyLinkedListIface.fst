@@ -425,6 +425,21 @@ let rec _lemma_insertion_maintains_memP (l1 l2:list 'a) (x0 x1 x:'a) :
       (fun (_:unit{x0' =!= x0 /\ x0' =!= x}) ->
          _lemma_insertion_maintains_memP l1' (L.tl l2) x0 x1 x)
 
+(** Insertion operations maintain [unchanged_node_vals] *)
+let rec _lemma_insertion_maintains_unchanged_node_vals (h0 h1:HS.mem) (l1 l2:list (node 'a)) (x0 x1:node 'a) :
+  Lemma
+    (requires ((x0 `L.memP` l1) /\
+               ((l2 == DLL._l_insert_before x0 l1 x1) \/
+                (l2 == DLL._l_insert_after x0 l1 x1)) /\
+               (unchanged_node_vals h0 h1 l2)))
+    (ensures (unchanged_node_vals h0 h1 l1)) =
+  match l1 with
+  | [_] -> ()
+  | x0' :: l1' ->
+    FStar.Classical.arrow_to_impl #(x0 =!= x0') #(unchanged_node_vals h0 h1 l1)
+      (fun _ ->
+         _lemma_insertion_maintains_unchanged_node_vals h0 h1 l1' (L.tl l2) x0 x1)
+
 (** Unchanged node vals means that the payloads maintain the changes
     that happened *)
 let rec _lemma_unchanged_node_vals_maintains_changes (h0 h1:HS.mem) (l:list (node 'a)) :
@@ -590,7 +605,6 @@ let dll_insert_at_tail #t d n =
 #reset-options
 
 #set-options "--z3rlimit 80 --max_fuel 2 --max_ifuel 1"
-#reset-options "--z3rlimit 30 --max_fuel 2 --max_ifuel 1" // temp
 
 let dll_insert_before #t n' d n =
   let h00 = HST.get () in
@@ -628,7 +642,8 @@ let dll_insert_before #t n' d n =
   _lemma_length_g_node_vals h00 (as_list h00 d);
   L.lemma_splitAt_append (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d));
   // assert ((as_list h00 d `L.index_of` n') < L.length (g_node_vals h00 (as_list h00 d)));
-  assume (unchanged_node_vals h0 h1 (as_list h0 d));
+  _lemma_insertion_maintains_unchanged_node_vals h0 h1 (as_list h0 d) (as_list h1 d) n' n;
+  // assert (unchanged_node_vals h0 h1 (as_list h0 d));
   _lemma_unchanged_node_vals_maintains_changes h00 h11 (as_list h00 d);
   // assert (g_node_vals h11 (as_list h00 d) == g_node_vals h00 (as_list h00 d));
   // assert (
@@ -678,8 +693,7 @@ let dll_insert_before #t n' d n =
   //     l1 `L.append` ((g_node_val h00 n) :: l2)));
   // assert (as_payload_list h11 d == l_insert_before'
   //           (as_list h00 d `L.index_of` n') (as_payload_list h00 d) (g_node_val h00 n));
-  admit
-    ()
+  ()
 
 #reset-options
 
