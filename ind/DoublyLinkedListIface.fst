@@ -475,6 +475,20 @@ let rec _lemma_extract_unchanged_node_val (h0 h1:HS.mem) (n:node 'a) (l:list (no
     (fun (_:unit{n == h}) -> ())
     (fun (_:unit{n =!= h}) -> _lemma_extract_unchanged_node_val h0 h1 n t)
 
+(** Connect [split_using] and [splitAt] *)
+let rec _lemma_split_using_splitAt (l:list 'a) (x:'a) :
+  Lemma
+    (requires (x `L.memP` l))
+    (ensures
+       (l `L.split_using` x == L.splitAt (l `L.index_of` x) l)) =
+  match l with
+  | [_] -> ()
+  | h :: t ->
+    FStar.Classical.arrow_to_impl
+    #(x `L.memP` t)
+    #(l `L.split_using` x == L.splitAt (l `L.index_of` x) l)
+      (fun _ -> _lemma_split_using_splitAt t x)
+
 /// Moving forwards or backwards in a list
 
 let has_next d n =
