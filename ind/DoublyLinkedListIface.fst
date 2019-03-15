@@ -27,7 +27,7 @@ module DLL = DoublyLinkedList
 module HS = FStar.HyperStack
 module HST = FStar.HyperStack.ST
 module G = FStar.Ghost
-module L = FStar.List.Tot
+module L = FStar.List.Pure
 module B = LowStar.Buffer
 
 open LowStar.BufferOps
@@ -581,6 +581,7 @@ let dll_insert_at_tail #t d n =
 #reset-options
 
 #set-options "--z3rlimit 80 --max_fuel 2 --max_ifuel 1"
+#reset-options "--z3rlimit 10 --max_fuel 2 --max_ifuel 1" // temp
 
 let dll_insert_before #t n' d n =
   let h00 = HST.get () in
@@ -610,15 +611,24 @@ let dll_insert_before #t n' d n =
   // assert (B.modifies (fp_dll h1 d) h0 h1);
   HST.pop_frame ();
   let h11 = HST.get () in
-  assume (g_node_vals h11 (let l1, l2 = L.split_using (as_list h00 d) n' in l1) == (
+  _lemma_split_using_splitAt (as_list h00 d) n';
+  L.lemma_splitAt_append (as_list h00 d `L.index_of` n') (as_list h00 d);
+  assume (g_node_vals h11 (let l1, l2 = L.splitAt (as_list h00 d `L.index_of` n') (as_list h00 d) in l1) == (
       let l1, l2 = L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d)) in
       l1));
-  assume (n `L.memP` as_list h1 d);
-  _lemma_extract_unchanged_node_val h0 h1 n (as_list h1 d);
-  // assert (g_node_val h1 n == g_node_val h0 n);
-  assume (g_node_vals h11 (let l1, l2 = L.split_using (as_list h00 d) n' in l2) == (
+  assume (g_node_vals h11 (let l1, l2 = L.splitAt (as_list h00 d `L.index_of` n') (as_list h00 d) in l2) == (
       let l1, l2 = L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d)) in
       l2));
+  assert (g_node_vals h11 (let l1, l2 = L.split_using (as_list h00 d) n' in l1) == (
+      let l1, l2 = L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d)) in
+      l1));
+  assert (g_node_vals h11 (let l1, l2 = L.split_using (as_list h00 d) n' in l2) == (
+      let l1, l2 = L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d)) in
+      l2));
+  _lemma_insertion_maintains_memP (as_list h0 d) (as_list h1 d) n' n n;
+  // assert (n `L.memP` as_list h1 d);
+  _lemma_extract_unchanged_node_val h0 h1 n (as_list h1 d);
+  // assert (g_node_val h1 n == g_node_val h0 n);
   _lemma_append_g_node_vals h11
     (let l1, l2 = L.split_using (as_list h00 d) n' in l1)
     (let l1, l2 = L.split_using (as_list h00 d) n' in (n :: l2));
@@ -638,7 +648,7 @@ let dll_insert_before #t n' d n =
   //     l1 `L.append` ((g_node_val h00 n) :: l2)));
   // assert (as_payload_list h11 d == l_insert_before'
   //           (as_list h00 d `L.index_of` n') (as_payload_list h00 d) (g_node_val h00 n));
-  // admit
+  admit
     ()
 
 #reset-options
