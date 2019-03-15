@@ -415,7 +415,7 @@ let rec _lemma_insertion_maintains_memP (l1 l2:list 'a) (x0 x1 x:'a) :
     (requires ((x0 `L.memP` l1) /\
                ((l2 == DLL._l_insert_before x0 l1 x1) \/
                 (l2 == DLL._l_insert_after x0 l1 x1)) /\
-               x `L.memP` l1))
+               (x `L.memP` l1 \/ x == x1)))
     (ensures (x `L.memP` l2)) =
   match l1 with
   | [_] -> ()
