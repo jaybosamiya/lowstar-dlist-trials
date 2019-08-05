@@ -43,7 +43,7 @@ let rec reverse (d:dll 'a) :
   if is_empty d then (
     ()
   ) else (
-    let n = dll_head d in
+    let n = coerce_non_null (dll_head d) in
     dll_remove_head d;
     reverse d;
     dll_insert_at_tail d n
@@ -61,7 +61,7 @@ let main () : HST.Stack (unit) (fun _ -> True) (fun _ _ _ -> True) =
   reverse d;
   let h1 = HST.get () in
   assert (n2 `L.memP` as_list h1 d); // OBSERVE. TODO: WHY????!???
-  let n1' = dll_head d in
+  let n1' = coerce_non_null (dll_head d) in
   let t = node_val n1' in
   assert (t == 2ul); // Yay!
   HST.pop_frame ()

@@ -130,7 +130,7 @@ let dll_head d =
 
 let dll_tail d =
   let h0 = HST.get () in
-  L.lemma_unsnoc_is_last (as_list h0 d);
+  if L.length (as_list h0 d) > 0 then L.lemma_unsnoc_is_last (as_list h0 d) else ();
   (!*d).DLL.ltail
 
 /// Useful auxiliary lemmas
