@@ -1,7 +1,7 @@
 FSTAR := fstar.exe --query_stats --use_hints --record_hints --cache_checked_modules
 
 # List of everything
-all: DoublyLinkedList DoublyLinkedListIface iDoublyLinkedListIface
+all: DoublyLinkedList DoublyLinkedListIface iDoublyLinkedListIface Example
 
 # Cleanup
 cleanhints:
