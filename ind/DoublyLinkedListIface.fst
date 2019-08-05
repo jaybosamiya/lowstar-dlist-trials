@@ -1,5 +1,5 @@
 (*
-   Copyright 2018 Jay Bosamiya
+   Copyright 2018-2019 Jay Bosamiya
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -760,7 +760,7 @@ let dll_insert_after #t n' d n =
     x == L.index (as_payload_list h00 d) (as_list h00 d `L.index_of` n'));
   assert (as_payload_list h11 d == l_insert_after'
             (as_list h00 d `L.index_of` n') (as_payload_list h00 d) (g_node_val h00 n));
-  admit ()
+  admit () (* Due to recent "double ghost" change *)
 
 #reset-options
 
@@ -778,7 +778,7 @@ let dll_remove_head #t d =
   _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h0 d);
   HST.pop_frame ();
   let h11 = HST.get () in
-  admit ()
+  admit () (* Due to recent "double ghost" change *)
 
 #reset-options
 
@@ -805,7 +805,7 @@ let dll_remove_tail #t d =
   _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h0 d);
   HST.pop_frame ();
   let h11 = HST.get () in
-  admit ()
+  admit () (* Due to recent "double ghost" change *)
 
 #reset-options
 
@@ -841,7 +841,7 @@ let dll_remove_mid #t d n =
   _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h0 d);
   HST.pop_frame ();
   let h11 = HST.get () in
-  admit ()
+  admit () (* Due to recent "double ghost" change *)
 
 #reset-options
 
@@ -860,7 +860,7 @@ let dll_append #t d1 d2 =
   _lemma_unchanged_node_vals_transitive h0 h' h1 (as_list h1 d1);
   HST.pop_frame ();
   let h11 = HST.get () in
-  admit ()
+  admit () (* Due to recent "double ghost" change *)
 
 #reset-options
 
@@ -914,7 +914,7 @@ let dll_split_using #t d1 d2 n =
   _lemma_nodelist_contained_in_unmodified_mem h1 h11 loc (as_list h11 d2);
   _lemma_nodelist_conn_in_unmodified_mem h1 h11 loc (as_list h11 d1);
   _lemma_nodelist_conn_in_unmodified_mem h1 h11 loc (as_list h11 d2);
-  admit ()
+  admit () (* Due to recent "double ghost" change *)
 
 #reset-options
 
