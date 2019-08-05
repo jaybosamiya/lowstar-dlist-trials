@@ -168,6 +168,26 @@ val dll_tail (d:dll 'a) :
 
 /// Moving forwards or backwards in a list
 
+val fast_has_next (d:dll 'a) (n:node 'a) :
+  HST.StackInline bool
+    (requires (fun h0 ->
+         dll_valid h0 d /\
+         node_valid h0 n /\
+         n `L.memP` as_list h0 d))
+    (ensures (fun h0 y h1 ->
+         (h0 == h1) /\
+         (y <==> L.index_of (as_list h0 d) n < L.length (as_list h0 d) - 1)))
+
+val fast_has_prev (d:dll 'a) (n:node 'a) :
+  HST.StackInline bool
+    (requires (fun h0 ->
+         dll_valid h0 d /\
+         node_valid h0 n /\
+         n `L.memP` as_list h0 d))
+    (ensures (fun h0 y h1 ->
+         (h0 == h1) /\
+         (y <==> L.index_of (as_list h0 d) n > 0)))
+
 val has_next (d:dll 'a) (n:nullable_node 'a) :
   HST.StackInline bool
     (requires (fun h0 ->

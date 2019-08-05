@@ -526,10 +526,8 @@ let rec _lemma_length_g_node_vals (h0:HS.mem) (l:list (node 'a)) :
 
 /// Moving forwards or backwards in a list
 
-let has_next d n =
+let fast_has_next d n =
   let h0 = HST.get () in
-  if is_null_node n then false else
-  let n = coerce_non_null n in
   DLL.lemma_dll_links_contained h0 (d@h0) (as_list h0 d `L.index_of` n);
   L.lemma_unsnoc_is_last (as_list h0 d);
   let y = not (B.is_null (!*n).DLL.flink) in
@@ -543,10 +541,8 @@ let has_next d n =
          (L.length (as_list h0 d) - 1));
   y
 
-let has_prev d n =
+let fast_has_prev d n =
   let h0 = HST.get () in
-  if is_null_node n then false else
-  let n = coerce_non_null n in
   DLL.lemma_dll_links_contained h0 (d@h0) (as_list h0 d `L.index_of` n);
   L.lemma_unsnoc_is_last (as_list h0 d);
   let y = not (B.is_null (!*n).DLL.blink) in
@@ -559,6 +555,20 @@ let has_prev d n =
          (as_list h0 d `L.index_of` n)
          0);
   y
+
+let has_next d n =
+  let h0 = HST.get () in
+  if is_null_node n then
+    false
+  else
+    fast_has_next d n
+
+let has_prev d n =
+  let h0 = HST.get () in
+  if is_null_node n then
+    false
+  else
+    fast_has_prev d n
 
 let next_node d n =
   let h0 = HST.get () in
