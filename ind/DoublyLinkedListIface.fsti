@@ -26,6 +26,9 @@ module B = LowStar.Buffer
 (** A singular node which stores a value of type [a] *)
 val node (a:Type0) : Type0
 
+(** A [node a] that may be null *)
+val nullable_node (a:Type0) : (t:Type0{node a `subtype_of` t})
+
 (** A doublylinkedlist of elements of type [a] *)
 val dll (a:Type0) : Type0
 
@@ -58,6 +61,39 @@ val node_of (v:'a) :
          B.fresh_loc (fp_node n) h0 h1 /\
          node_valid h1 n /\
          v == g_node_val h1 n))
+
+/// Nullable Nodes
+
+val null_node (#a:Type0) : nullable_node a
+
+val g_is_null_node (n:nullable_node 'a) : GTot (b:bool{b <==> n == null_node})
+
+val auto_node_subtype_or_null_of_nullable_node (#a:Type0) (n:nullable_node a) :
+  Lemma
+    (ensures ((n `has_type` node a) <==> not (g_is_null_node n)))
+    [SMTPatOr [
+        [SMTPat (g_is_null_node n)];
+        [SMTPat (n `has_type` node a)]]]
+
+inline_for_extraction
+let coerce_non_null (#a:Type0) (n:nullable_node a) :
+  Pure (node a)
+    (requires (not (g_is_null_node n)))
+    (ensures (fun _ -> True)) =
+  let coerce (#b #a:Type0) (x:a) : (* XXX: Why do we need to do this double layer thing?! *)
+    Pure b
+      (requires (x `has_type` b))
+      (ensures (fun _ -> True)) = x
+  in
+  coerce n
+
+let nullable_node_valid (h:HS.mem) (n:nullable_node 'a) =
+  g_is_null_node n \/ node_valid h (coerce_non_null n)
+
+val is_null_node (n:nullable_node 'a) :
+  HST.Stack bool
+    (requires (fun h0 -> nullable_node_valid h0 n))
+    (ensures (fun h0 b h1 -> h0 == h1 /\ b == g_is_null_node n))
 
 /// Abstract Predicate to help "recall" that updating the payload
 /// leaves connections unchanged
