@@ -720,6 +720,46 @@ let dll_insert_after #t n' d n =
   // assert (B.modifies (fp_dll h1 d) h0 h1);
   HST.pop_frame ();
   let h11 = HST.get () in
+  _lemma_split_using_splitAt (as_list h00 d) n';
+  _lemma_append_g_node_vals h11
+    (fst (L.splitAt (as_list h00 d `L.index_of` n') (as_list h00 d)))
+    (snd (L.splitAt (as_list h00 d `L.index_of` n') (as_list h00 d)));
+  L.lemma_splitAt_append (as_list h00 d `L.index_of` n') (as_list h00 d);
+  _lemma_length_g_node_vals h00 (as_list h00 d);
+  L.lemma_splitAt_append (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d));
+  _lemma_insertion_maintains_unchanged_node_vals h0 h1 (as_list h0 d) (as_list h1 d) n' n;
+  _lemma_unchanged_node_vals_maintains_changes h00 h11 (as_list h00 d);
+  L.lemma_splitAt_append (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d));
+  _lemma_length_g_node_vals h11 (fst (L.splitAt (as_list h00 d `L.index_of` n') (as_list h00 d)));
+  L.append_length_inv_head
+    (g_node_vals h11 (fst (L.splitAt (as_list h00 d `L.index_of` n') (as_list h00 d))))
+    (g_node_vals h11 (snd (L.splitAt (as_list h00 d `L.index_of` n') (as_list h00 d))))
+    (fst (L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d))))
+    (snd (L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d))));
+  _lemma_insertion_maintains_memP (as_list h0 d) (as_list h1 d) n' n n;
+  _lemma_extract_unchanged_node_val h0 h1 n (as_list h1 d);
+  _lemma_append_g_node_vals h11
+    (let l1, l2 = L.split_using (as_list h00 d) n' in l1)
+    (let l1, l2 = L.split_using (as_list h00 d) n' in (n :: l2));
+  assume (g_node_vals h11 (
+      let l1, l2 = L.split_using (as_list h00 d) n' in
+      l1 `L.append` (n :: l2)) == (
+      let l1, l2 = L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d)) in
+      l1 `L.append` ((g_node_val h00 n) :: l2)));
+  assert (g_node_vals h11 (l_insert_after n' (as_list h00 d) n) == (
+      let l1, x :: l2 = L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d)) in
+      l1 `L.append` (x :: (g_node_val h00 n) :: l2)));
+  assert (g_node_vals h11 (as_list h11 d) == (
+      let l1, x :: l2 = L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d)) in
+      l1 `L.append` (x :: (g_node_val h00 n) :: l2)));
+  assert (as_payload_list h11 d == (
+      let l1, (x :: l2) = L.splitAt (as_list h00 d `L.index_of` n') (as_payload_list h00 d) in
+      l1 `L.append` (x :: (g_node_val h00 n) :: l2)));
+  assume (
+    let l1, (x :: l2) = L.splitAt (as_list h00 d `L.index_of` n') (as_payload_list h00 d) in
+    x == L.index (as_payload_list h00 d) (as_list h00 d `L.index_of` n'));
+  assert (as_payload_list h11 d == l_insert_after'
+            (as_list h00 d `L.index_of` n') (as_payload_list h00 d) (g_node_val h00 n));
   admit ()
 
 #reset-options
