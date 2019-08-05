@@ -211,30 +211,32 @@ val has_prev (d:dll 'a) (n:nullable_node 'a) :
                 L.index_of (as_list h0 d) (coerce_non_null n) > 0))))
 
 val next_node (d:dll 'a) (n:node 'a) :
-  HST.StackInline (node 'a)
+  HST.StackInline (nullable_node 'a)
     (requires (fun h0 ->
          dll_valid h0 d /\
-         n `L.memP` as_list h0 d /\
-         L.index_of (as_list h0 d) n < L.length (as_list h0 d) - 1))
+         n `L.memP` as_list h0 d))
     (ensures (fun h0 n' h1 ->
          h0 == h1 /\
          dll_valid h1 d /\
          node_valid h1 n /\
          as_list h0 d == as_list h1 d /\
-         n' == L.index (as_list h0 d) (L.index_of (as_list h0 d) n + 1)))
+         (g_is_null_node n' = not (L.index_of (as_list h0 d) n < L.length (as_list h0 d) - 1)) /\
+         (n' =!= null_node ==>
+          coerce_non_null n' == L.index (as_list h0 d) (L.index_of (as_list h0 d) n + 1))))
 
 val prev_node (d:dll 'a) (n:node 'a) :
-  HST.StackInline (node 'a)
+  HST.StackInline (nullable_node 'a)
     (requires (fun h0 ->
          dll_valid h0 d /\
-         n `L.memP` as_list h0 d /\
-         L.index_of (as_list h0 d) n > 0))
+         n `L.memP` as_list h0 d))
     (ensures (fun h0 n' h1 ->
          h0 == h1 /\
          dll_valid h1 d /\
          node_valid h1 n /\
          as_list h0 d == as_list h1 d /\
-         n' == L.index (as_list h0 d) (L.index_of (as_list h0 d) n - 1)))
+         (g_is_null_node n' = not (L.index_of (as_list h0 d) n > 0)) /\
+         (n' =!= null_node ==>
+          coerce_non_null n' == L.index (as_list h0 d) (L.index_of (as_list h0 d) n - 1))))
 
 /// DoublyLinkedList operations on standard [list]s instead
 
