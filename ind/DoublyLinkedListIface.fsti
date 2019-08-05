@@ -168,25 +168,27 @@ val dll_tail (d:dll 'a) :
 
 /// Moving forwards or backwards in a list
 
-val has_next (d:dll 'a) (n:node 'a) :
+val has_next (d:dll 'a) (n:nullable_node 'a) :
   HST.StackInline bool
     (requires (fun h0 ->
          dll_valid h0 d /\
-         node_valid h0 n /\
-         n `L.memP` as_list h0 d))
+         nullable_node_valid h0 n /\
+         (n =!= null_node ==> coerce_non_null n `L.memP` as_list h0 d)))
     (ensures (fun h0 y h1 ->
          (h0 == h1) /\
-         (y <==> L.index_of (as_list h0 d) n < L.length (as_list h0 d) - 1)))
+         (y <==> (n =!= null_node /\
+                L.index_of (as_list h0 d) (coerce_non_null n) < L.length (as_list h0 d) - 1))))
 
-val has_prev (d:dll 'a) (n:node 'a) :
+val has_prev (d:dll 'a) (n:nullable_node 'a) :
   HST.StackInline bool
     (requires (fun h0 ->
          dll_valid h0 d /\
-         node_valid h0 n /\
-         n `L.memP` as_list h0 d))
+         nullable_node_valid h0 n /\
+         (n =!= null_node ==> coerce_non_null n `L.memP` as_list h0 d)))
     (ensures (fun h0 y h1 ->
          (h0 == h1) /\
-         (y <==> L.index_of (as_list h0 d) n > 0)))
+         (y <==> (n =!= null_node /\
+                L.index_of (as_list h0 d) (coerce_non_null n) > 0))))
 
 val next_node (d:dll 'a) (n:node 'a) :
   HST.StackInline (node 'a)
