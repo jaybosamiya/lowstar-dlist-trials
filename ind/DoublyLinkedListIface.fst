@@ -777,8 +777,7 @@ let dll_insert_after #t n' d n =
       l1 `L.append` (n :: l2)) == (
       let l1, l2 = L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d)) in
       l1 `L.append` ((g_node_val h00 n) :: l2)));
-  admit (); (* Due to random proof unstability. TODO: Fix this *)
-  assert (g_node_vals h11 (l_insert_after n' (as_list h00 d) n) == (
+  assume (g_node_vals h11 (l_insert_after n' (as_list h00 d) n) == (
       let l1, x :: l2 = L.splitAt (as_list h00 d `L.index_of` n') (g_node_vals h00 (as_list h00 d)) in
       l1 `L.append` (x :: (g_node_val h00 n) :: l2)));
   assert (g_node_vals h11 (as_list h11 d) == (
